@@ -91,22 +91,21 @@ class Template
         $this->setProperties($node, $context);
 
         // Create child nodes if applicable
-        /** @var Template $childNode */
+        /** @var Template $childNodeTemplate */
         foreach ($this->childNodes as $childNodeTemplate) {
             $context['parentNode'] = $node;
-            $childNodeTemplate->createOrFetch($node, $context);
+            $childNodeTemplate->createOrFetchAndApply($node, $context);
         }
     }
 
     /**
      * @param NodeInterface $parentNode
      * @param array $context
-     * @return NodeInterface
      */
-    public function createOrFetch(NodeInterface $parentNode, array $context)
+    public function createOrFetchAndApply(NodeInterface $parentNode, array $context)
     {
         if (!$this->isApplicable($context)) {
-            return null;
+            return;
         }
 
         if (!count($this->withItems)) {
