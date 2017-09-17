@@ -1,0 +1,13 @@
+Flowpack:
+  NodeTemplates:
+    defaultEelContext:
+      String: 'Neos\Eel\Helper\StringHelper'
+      Array: 'Neos\Eel\Helper\ArrayHelper'
+      Date: 'Neos\Eel\Helper\DateHelper'
+      Configuration: 'Neos\Eel\Helper\ConfigurationHelper'
+      Math: 'Neos\Eel\Helper\MathHelper'
+      Json: 'Neos\Eel\Helper\JsonHelper'
+      Security: 'Neos\Eel\Helper\SecurityHelper'
+      Translation: 'Neos\Flow\I18n\EelHelper\TranslationHelper'
+      Type: 'Neos\Eel\Helper\TypeHelper'
+      I18n: 'Neos\Flow\I18n\EelHelper\TranslationHelper'

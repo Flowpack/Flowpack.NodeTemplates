@@ -1,0 +1,13 @@
+{
+    "description": "Neos package to allow to modify nodes on creation via templates.",
+    "type": "neos-package",
+    "name": "flowpack/nodetemplates",
+    "require": {
+        "neos/neos-ui": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Flowpack\\NodeTemplates\\": "Classes/"
+        }
+    }
+}

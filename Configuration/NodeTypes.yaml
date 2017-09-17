@@ -1,0 +1,5 @@
+'Neos.Neos:Node':
+  options:
+    nodeCreationHandlers:
+      templateNodeCreationHandler:
+        nodeCreationHandler: 'Flowpack\NodeTemplates\NodeCreationHandler\TemplateNodeCreationHandler'
