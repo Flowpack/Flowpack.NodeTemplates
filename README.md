@@ -12,6 +12,8 @@ template is applied can be changed or removed by the editor.
 The desired node structure is defined in a declarative way in the NodeTypes.yaml
 under the path "options.template".
 
+*Please note that the node templates package only works when using the new React UI.*
+
 ## Hello world
 
 The following example will add a text child node with the content "Hello World"
