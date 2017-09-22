@@ -1,14 +1,12 @@
 <?php
 namespace Flowpack\NodeTemplates;
 
-use Flowpack\NodeTemplates\Service\EelEvaluationService;
-use Neos\ContentRepository\Domain\Model\NodeType;
-use Neos\Eel\FlowQuery\FlowQuery;
 use Neos\Flow\Annotations as Flow;
+use Flowpack\NodeTemplates\Service\EelEvaluationService;
+use Neos\Eel\FlowQuery\FlowQuery;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Utility as NodeUtility;
 use Neos\Neos\Service\NodeOperations;
-use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
 
 class Template
 {
@@ -64,8 +62,14 @@ class Template
      * @param string $when
      * @param array $withItems
      */
-    public function __construct($type = null, $name = null, array $properties = [], array $childNodes = [], $when = null, $withItems = null)
-    {
+    public function __construct(
+        $type = null,
+        $name = null,
+        array $properties = [],
+        array $childNodes = [],
+        $when = null,
+        $withItems = null
+    ) {
         $this->type = $type;
         $this->name = $name;
         $this->properties = $properties;
@@ -126,7 +130,16 @@ class Template
                 $node = $flowQuery->find($name)->get(0);
             }
             if (!$node instanceof NodeInterface) {
-                $node = $this->nodeOperations->create($parentNode, ['nodeType' => $this->type, 'nodeName' => $name], 'into');
+                $node = $this->nodeOperations->create($parentNode, ['nodeType' => $this->type, 'nodeName' => $name],
+                    'into');
+
+                // All document node types get a uri path segment; if it is not explicitly set in the properties,
+                // it should be built based on the title property
+                if ($node->getNodeType()->isOfType('Neos.Neos:Document')
+                    && isset($this->properties['title'])
+                    && !isset($this->properties['uriPathSegment'])) {
+                    $node->setProperty('uriPathSegment', NodeUtility::renderValidNodeName($this->properties['title']));
+                }
             }
             if ($node instanceof NodeInterface) {
                 $this->apply($node, $context);
@@ -158,15 +171,13 @@ class Template
      */
     protected function setProperties(NodeInterface $node, array $context)
     {
-        foreach ($this->properties as $property => $propertyValue)
-        {
+        foreach ($this->properties as $property => $propertyValue) {
             if (preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $propertyValue)) {
                 $propertyValue = $this->eelEvaluationService->evaluateEelExpression($propertyValue, $context);
             }
             $node->setProperty($property, $propertyValue);
         }
     }
-
 
 
 }
