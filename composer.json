@@ -1,5 +1,5 @@
 {
-    "description": "Neos package that allow to modify nodes on creation via templates.",
+    "description": "Neos package that allows to modify nodes on creation via templates.",
     "type": "neos-package",
     "name": "flowpack/nodetemplates",
     "require": {
