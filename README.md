@@ -17,7 +17,7 @@ under the path "options.template".
 ## TL;DR
 
 1. `composer require flowpack/nodetemplates`
-2. Add templates to your nodetypes configuratio in NodeTypes.yaml, as described in the examples below
+2. Add templates to your nodetypes configuration in NodeTypes.yaml, as described in the examples below
 3. Use the new React UI
 
 ## Hello world
