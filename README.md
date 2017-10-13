@@ -12,7 +12,13 @@ template is applied can be changed or removed by the editor.
 The desired node structure is defined in a declarative way in the NodeTypes.yaml
 under the path "options.template".
 
-*Please note that the node templates package only works when using the new React UI.*
+**Please note that the node templates package only works when using the new React UI.**
+
+## TL;DR
+
+1. `composer require flowpack/nodetemplates`
+2. Add templates to your nodetypes configuratio in NodeTypes.yaml, as described in the examples below
+3. Use the new React UI
 
 ## Hello world
 
