@@ -33,13 +33,13 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
         }
 
         $propertyMappingConfiguration = $this->propertyMapper->buildPropertyMappingConfiguration();
-        $propertyMappingConfiguration
-            ->forProperty('childNodes.*')
-            ->allowAllProperties()
-            ->forProperty('childNodes.*')
-            ->allowAllProperties()
-            ->forProperty('childNodes.*')
-            ->allowAllProperties();
+
+        $subPropertyMappingConfiguration = $propertyMappingConfiguration;
+        for ($i = 0; $i < 10; $i++) {
+            $subPropertyMappingConfiguration = $subPropertyMappingConfiguration
+                ->forProperty('childNodes.*')
+                ->allowAllProperties();
+        }
 
         /** @var Template $template */
         $template = $this->propertyMapper->convert($templateConfiguration, Template::class,
