@@ -36,7 +36,7 @@ class Template
     protected $when;
 
     /**
-     * @var array
+     * @var string
      */
     protected $withItems;
 
@@ -60,7 +60,7 @@ class Template
      * @param array $properties
      * @param array<Template> $childNodes
      * @param string $when
-     * @param array $withItems
+     * @param string $withItems
      */
     public function __construct(
         $type = null,
@@ -112,10 +112,13 @@ class Template
             return;
         }
 
-        if (!count($this->withItems)) {
+        $items = $this->withItems;
+        if (!$items) { // Not set
             $items = [false];
-        } else {
-            $items = $this->withItems;
+        } else if (preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $items)) { // Eel expression
+            $items = $this->eelEvaluationService->evaluateEelExpression($items, $context);
+        } else { // Yaml array converted to comma-delimited string
+            $items = explode(',', $items);
         }
 
         foreach ($items as $item) {
