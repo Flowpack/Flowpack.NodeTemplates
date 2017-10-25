@@ -6,6 +6,7 @@ use Flowpack\NodeTemplates\Service\EelEvaluationService;
 use Neos\Eel\FlowQuery\FlowQuery;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Utility as NodeUtility;
+use Neos\Flow\Persistence\Doctrine\PersistenceManager;
 use Neos\Neos\Service\NodeOperations;
 
 class Template
@@ -51,6 +52,12 @@ class Template
      * @Flow\Inject
      */
     protected $nodeOperations;
+
+    /**
+     * @var PersistenceManager
+     * @Flow\Inject
+     */
+    protected $persistenceManager;
 
     /**
      * Template constructor
@@ -176,6 +183,7 @@ class Template
     {
         foreach ($this->properties as $property => $propertyValue) {
             if (preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $propertyValue)) {
+                $this->persistenceManager->persistAll();
                 $propertyValue = $this->eelEvaluationService->evaluateEelExpression($propertyValue, $context);
             }
             $node->setProperty($property, $propertyValue);
