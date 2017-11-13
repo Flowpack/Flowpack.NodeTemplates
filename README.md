@@ -73,13 +73,68 @@ You could let the editor choose between different dummy texts like this:
                 text: '${"<p>" + data.dummyText + "</p>"}'
 ```
 
-## Loops and conditions
+## Conditions and loops
 
-TBD
+### Conditions
 
-## Accessing node data
+If you want to apply a template only under some conditions, you can use the ``when`` configuration
+key. It can be used in the main node template or in any child node template.
 
-TBD
+The following example hides a newly created node if the title entered in the node creation dialog
+contains the string "dummy":
+
+```yaml
+'Neos.NodeTypes:Page':
+  options:
+    template:
+      properties:
+        _hidden: true
+      when: '${String.indexOf(String.toLowerCase(data.title), "dummy") >= 0}'
+```
+
+As a ``when`` condition that evaluates to ``false`` prevents the whole template (and all child
+templates) from being applied, its most common use case is conditional child node creation.
+
+### Loops
+
+Loops can be used to create multiple child nodes. You can use ``withItems`` to define the items
+of the loop. When using EEL, be sure to return an array. In each child template, the current item
+is available in EEL expressions as the ``item`` context variable.
+
+The following example creates three different text child nodes in the main content collection:
+
+```yaml
+'Neos.NodeTypes:Page':
+  options:
+    template:
+      childNodes:
+        mainContentCollection:
+          name: 'main'
+          childNodes:
+            multipleTextNodes:
+              type: 'Neos.NodeTypes:Text'
+              properties:
+                text: '${"<p>" + item + "</p>"}'
+              withItems:
+                - 'Hello world'
+                - 'Different text'
+                - 'Yet another text'
+```
+
+We call conditions ``when`` and loops ``withItems`` (instead of ``if`` and ``forEach``),
+because it inspires a more declarative mood. The naming is inspired by Ansible.
+
+## EEL context variables
+
+There are several variables available in the EEL context that allow for accessing node data, for example:
+
+| Variable name  | Description                                                                               | Availability            |
+|----------------|-------------------------------------------------------------------------------------------|-------------------------|
+| data           | Data from the node creation dialog                                                        | Global (if data exists) |
+| triggeringNode | The main node whose creation triggered template processing                                | Global                  |
+| node           | The current node that has been created (equals triggeringNode for the outermost template) | Global                  |
+| parentNode     | The parentNode of the current node                                                        | Child nodes             |
+| item           | The current item inside a withItems loop                                                  | Inside withItems loop   |
 
 ## More examples
 
