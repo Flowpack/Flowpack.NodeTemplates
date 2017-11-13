@@ -98,8 +98,8 @@ templates) from being applied, its most common use case is conditional child nod
 ### Loops
 
 Loops can be used to create multiple child nodes. You can use ``withItems`` to define the items
-of the loop. When using EEL, be sure to return an array. In each child template, the current item
-is available in EEL expressions as the ``item`` context variable.
+of the loop. When using EEL, be sure to return an array. The current item is available in EEL 
+expressions as the ``item`` context variable.
 
 The following example creates three different text child nodes in the main content collection:
 
