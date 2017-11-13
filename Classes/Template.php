@@ -8,6 +8,7 @@ use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Utility as NodeUtility;
 use Neos\Flow\Persistence\Doctrine\PersistenceManager;
 use Neos\Neos\Service\NodeOperations;
+use Neos\Utility\ObjectAccess;
 
 class Template
 {
@@ -181,14 +182,16 @@ class Template
      */
     protected function setProperties(NodeInterface $node, array $context)
     {
-        foreach ($this->properties as $property => $propertyValue) {
+        foreach ($this->properties as $propertyName => $propertyValue) {
             if (preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $propertyValue)) {
                 $this->persistenceManager->persistAll();
                 $propertyValue = $this->eelEvaluationService->evaluateEelExpression($propertyValue, $context);
             }
-            $node->setProperty($property, $propertyValue);
+            if ($propertyName{0} === '_') {
+                ObjectAccess::setProperty($node, substr($propertyName, 1), $propertyValue);
+            } else {
+                $node->setProperty($propertyName, $propertyValue);
+            }
         }
     }
-
-
 }
