@@ -122,6 +122,7 @@ class Template
         }
 
         $items = $this->withItems;
+
         if (!$items) { // Not set
             $items = [false];
         } else if (preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $items)) { // Eel expression
@@ -131,7 +132,10 @@ class Template
         }
 
         foreach ($items as $item) {
-            $context['item'] = $item;
+            // only set item context if withItems is set in template to prevent losing item context from parent template
+            if ($this->withItems) {
+                $context['item'] = $item;
+            }
             $node = null;
             $name = $this->name;
             if (preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $name)) {
