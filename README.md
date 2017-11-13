@@ -126,7 +126,7 @@ because it inspires a more declarative mood. The naming is inspired by Ansible.
 
 ## EEL context variables
 
-There are several variables available in the EEL context that allow for accessing node data, for example:
+There are several variables available in the EEL context that allow for accessing node data, for example.
 
 | Variable name  | Description                                                                               | Availability            |
 |----------------|-------------------------------------------------------------------------------------------|-------------------------|
