@@ -105,7 +105,6 @@ class Template
         // Create child nodes if applicable
         /** @var Template $childNodeTemplate */
         foreach ($this->childNodes as $childNodeTemplate) {
-            $context['parentNode'] = $node;
             $childNodeTemplate->createOrFetchAndApply($node, $context);
         }
     }
@@ -116,6 +115,8 @@ class Template
      */
     public function createOrFetchAndApply(NodeInterface $parentNode, array $context)
     {
+        $context['parentNode'] = $parentNode;
+
         if (!$this->isApplicable($context)) {
             return;
         }
