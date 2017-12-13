@@ -131,10 +131,11 @@ class Template
             $items = explode(',', $items);
         }
 
-        foreach ($items as $item) {
+        foreach ($items as $key => $item) {
             // only set item context if withItems is set in template to prevent losing item context from parent template
             if ($this->withItems) {
                 $context['item'] = $item;
+                $context['key'] = $key;
             }
             $node = null;
             $name = $this->name;
