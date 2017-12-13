@@ -135,6 +135,7 @@ There are several variables available in the EEL context that allow for accessin
 | node           | The current node that has been created (equals triggeringNode for the outermost template) | Global                  |
 | parentNode     | The parentNode of the current node                                                        | Child nodes             |
 | item           | The current item inside a withItems loop                                                  | Inside withItems loop   |
+| key            | The current key inside a withItems loop                                                   | Inside withItems loop   |
 
 ## More examples
 
