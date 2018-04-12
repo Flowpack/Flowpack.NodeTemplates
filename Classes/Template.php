@@ -122,20 +122,6 @@ class Template
     }
 
     /**
-     * Signals that the given node template has been applied.
-     *
-     * @param NodeInterface $node
-     * @param array $context
-     * @param array $options
-     * @return void
-     * @Flow\Signal
-     * @api
-     */
-    public function emitNodeTemplateApplied(NodeInterface $node, array $context, array $options)
-    {
-    }
-
-    /**
      * @param NodeInterface $parentNode
      * @param array $context
      */
@@ -225,5 +211,19 @@ class Template
                 $node->setProperty($propertyName, $propertyValue);
             }
         }
+    }
+
+    /**
+     * Signals that a node template has been applied to the given node.
+     *
+     * @param NodeInterface $node
+     * @param array $context
+     * @param array $options
+     * @return void
+     * @Flow\Signal
+     * @api
+     */
+    public function emitNodeTemplateApplied(NodeInterface $node, array $context, array $options)
+    {
     }
 }
