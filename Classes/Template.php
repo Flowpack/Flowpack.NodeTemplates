@@ -33,6 +33,13 @@ class Template
     protected $childNodes;
 
     /**
+     * Options can be used to configure third party processing
+     *
+     * @var array
+     */
+    protected $options;
+
+    /**
      * @var string
      */
     protected $when;
@@ -67,6 +74,7 @@ class Template
      * @param string $name
      * @param array $properties
      * @param array<Template> $childNodes
+     * @param array $options
      * @param string $when
      * @param string $withItems
      */
@@ -75,6 +83,7 @@ class Template
         $name = null,
         array $properties = [],
         array $childNodes = [],
+        array $options = [],
         $when = null,
         $withItems = null
     ) {
@@ -82,6 +91,7 @@ class Template
         $this->name = $name;
         $this->properties = $properties;
         $this->childNodes = $childNodes;
+        $this->options = $options;
         $this->when = $when;
         $this->withItems = $withItems;
     }
@@ -107,6 +117,8 @@ class Template
         foreach ($this->childNodes as $childNodeTemplate) {
             $childNodeTemplate->createOrFetchAndApply($node, $context);
         }
+
+        $this->emitNodeTemplateApplied($node, $context, $this->options);
     }
 
     /**
@@ -199,5 +211,19 @@ class Template
                 $node->setProperty($propertyName, $propertyValue);
             }
         }
+    }
+
+    /**
+     * Signals that a node template has been applied to the given node.
+     *
+     * @param NodeInterface $node
+     * @param array $context
+     * @param array $options
+     * @return void
+     * @Flow\Signal
+     * @api
+     */
+    public function emitNodeTemplateApplied(NodeInterface $node, array $context, array $options)
+    {
     }
 }
