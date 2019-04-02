@@ -3,14 +3,13 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\NodeCreationHandler;
 
-
 use Neos\Flow\Annotations as Flow;
 use Flowpack\NodeTemplates\Service\EelEvaluationService;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\Neos\Ui\NodeCreationHandler\DocumentTitleNodeCreationHandler;
+use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
-class TemplatingDocumentTitleNodeCreationHandler extends DocumentTitleNodeCreationHandler
+class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerInterface
 {
     /**
      * @var EelEvaluationService
