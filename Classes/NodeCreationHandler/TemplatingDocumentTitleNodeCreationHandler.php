@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\NodeCreationHandler;
 
+use Neos\Eel\Package;
 use Neos\Flow\Annotations as Flow;
 use Flowpack\NodeTemplates\Service\EelEvaluationService;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
@@ -31,29 +32,28 @@ class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerI
      */
     public function handle(NodeInterface $node, array $data)
     {
+        $title = null;
+
         if (!$node->getNodeType()->isOfType('Neos.Neos:Document')) {
             return;
         }
 
-        $options = $node->getNodeType()->getOptions();
-        if (!empty($options['template']['properties']['title'])) {
-            $titleTemplate = $options['template']['properties']['title'];
+        $titleTemplate = $node->getNodeType()->getOptions()['template']['properties']['title'] ?? '';
 
-            if (preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $titleTemplate)) {
+        if ($titleTemplate === '') {
+            $title = $data['title'] ?? null;
+        } else {
+            if (preg_match(Package::EelExpressionRecognizer, $titleTemplate)) {
                 $context = [
                     'data' => $data,
                     'triggeringNode' => $node,
                 ];
 
-                $data['title'] = $this->eelEvaluationService->evaluateEelExpression($titleTemplate, $context);
-            } else {
-                $data['title'] = $titleTemplate;
+                $title = $this->eelEvaluationService->evaluateEelExpression($titleTemplate, $context);
             }
         }
 
-        if (isset($data['title'])) {
-            $node->setProperty('title', $data['title']);
-        }
-        $node->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($node, $data['title'] ?? null));
+        $node->setProperty('title', (string) $title);
+        $node->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($node, $title));
     }
 }
