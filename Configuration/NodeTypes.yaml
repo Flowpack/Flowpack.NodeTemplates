@@ -3,3 +3,9 @@
     nodeCreationHandlers:
       templateNodeCreationHandler:
         nodeCreationHandler: 'Flowpack\NodeTemplates\NodeCreationHandler\TemplateNodeCreationHandler'
+
+'Neos.Neos:Document':
+  options:
+    nodeCreationHandlers:
+      documentTitle:
+        nodeCreationHandler: 'Flowpack\NodeTemplates\NodeCreationHandler\TemplatingDocumentTitleNodeCreationHandler'
