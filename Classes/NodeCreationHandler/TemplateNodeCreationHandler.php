@@ -18,6 +18,12 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
     protected $propertyMapper;
 
     /**
+     * @var integer
+     * @Flow\InjectConfiguration(path="nodeCreationDepth")
+     */
+    protected $nodeCreationDepth;
+
+    /**
      * Create child nodes and change properties upon node creation
      *
      * @param NodeInterface $node The newly created node
@@ -35,7 +41,7 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
         $propertyMappingConfiguration = $this->propertyMapper->buildPropertyMappingConfiguration();
 
         $subPropertyMappingConfiguration = $propertyMappingConfiguration;
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < $this->nodeCreationDepth; $i++) {
             $subPropertyMappingConfiguration = $subPropertyMappingConfiguration
                 ->forProperty('childNodes.*')
                 ->allowAllProperties();

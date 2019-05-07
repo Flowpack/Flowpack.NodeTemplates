@@ -137,6 +137,16 @@ There are several variables available in the EEL context that allow for accessin
 | item           | The current item inside a withItems loop                                                  | Inside withItems loop   |
 | key            | The current key inside a withItems loop                                                   | Inside withItems loop   |
 
+## Node creation depth
+
+The node creation depth can be configured via Settings.yaml with `nodeCreationDepth`, defaults to `10`. 
+
+```yaml
+Flowpack:
+  NodeTemplates:
+    nodeCreationDepth: 10
+``` 
+
 ## More examples
 
 For more examples have a look at the node templates demo package:
