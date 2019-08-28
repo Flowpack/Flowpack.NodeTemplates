@@ -68,7 +68,7 @@ class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerI
             }
         }
 
-        if (!$uriPathSegment) {
+        if (!isset($uriPathSegment) || $uriPathSegment === '') {
             $uriPathSegment = $title;
         }
 
