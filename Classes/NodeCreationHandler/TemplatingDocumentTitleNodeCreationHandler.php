@@ -33,6 +33,7 @@ class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerI
     public function handle(NodeInterface $node, array $data)
     {
         $title = null;
+        $uriPathSegment = null;
 
         if (!$node->getNodeType()->isOfType('Neos.Neos:Document')) {
             return;
@@ -52,8 +53,26 @@ class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerI
                 $title = $this->eelEvaluationService->evaluateEelExpression($titleTemplate, $context);
             }
         }
+        
+        $uriPathSegmentTemplate = $node->getNodeType()->getOptions()['template']['properties']['uriPathSegment'] ?? '';
+        if ($uriPathSegmentTemplate === '') {
+            $uriPathSegment = $data['uriPathSegment'] ?? null;
+        } else {
+            if (preg_match(Package::EelExpressionRecognizer, $uriPathSegmentTemplate)) {
+                $context = [
+                    'data' => $data,
+                    'triggeringNode' => $node,
+                ];
+
+                $uriPathSegment = $this->eelEvaluationService->evaluateEelExpression($uriPathSegmentTemplate, $context);
+            }
+        }
+
+        if (!$uriPathSegment) {
+            $uriPathSegment = $title;
+        }
 
         $node->setProperty('title', (string) $title);
-        $node->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($node, $title));
+        $node->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($node, $uriPathSegment));
     }
 }
