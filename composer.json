@@ -4,6 +4,7 @@
     "name": "flowpack/nodetemplates",
     "license": "GPL-3.0+",
     "require": {
+        "neos/neos": "^5.0",
         "neos/neos-ui": "*"
     },
     "autoload": {
