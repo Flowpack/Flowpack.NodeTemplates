@@ -205,7 +205,7 @@ class Template
                 $this->persistenceManager->persistAll();
                 $propertyValue = $this->eelEvaluationService->evaluateEelExpression($propertyValue, $context);
             }
-            if ($propertyName{0} === '_') {
+            if ($propertyName[0] === '_') {
                 ObjectAccess::setProperty($node, substr($propertyName, 1), $propertyValue);
             } else {
                 $node->setProperty($propertyName, $propertyValue);
