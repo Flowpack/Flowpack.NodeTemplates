@@ -201,7 +201,8 @@ class Template
     protected function setProperties(NodeInterface $node, array $context)
     {
         foreach ($this->properties as $propertyName => $propertyValue) {
-            if (preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $propertyValue)) {
+            //evaluate Eel only on string properties
+            if (is_string($propertyValue) && preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $propertyValue)) {
                 $this->persistenceManager->persistAll();
                 $propertyValue = $this->eelEvaluationService->evaluateEelExpression($propertyValue, $context);
             }
