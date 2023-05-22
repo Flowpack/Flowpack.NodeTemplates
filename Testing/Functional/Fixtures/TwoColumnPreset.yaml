@@ -1,0 +1,16 @@
+template:
+  childNodes:
+    column0Tethered:
+      name: column0
+      childNodes:
+        content0:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          properties:
+            text: '<p>foo</p>'
+    column1Tethered:
+      name: column1
+      childNodes:
+        content0:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          properties:
+            text: '<p>bar</p>'

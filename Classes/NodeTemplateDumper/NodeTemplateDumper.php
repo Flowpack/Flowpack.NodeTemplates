@@ -18,33 +18,35 @@ class NodeTemplateDumper
      * Dump the node tree structure into a NodeTemplate Yaml structure.
      * References to Nodes and non-primitive property values are commented out in the Yaml.
      *
-     * @param Node|NodeInterface|TraversableNodeInterface $node specified root node of the node tree to dump
+     * @param Node|NodeInterface|TraversableNodeInterface $startingNode specified root node of the node tree to dump
      * @return string yaml representation of the node template
      */
-    public function createNodeTemplateYamlDumpFromSubtree(Node $node): string
+    public function createNodeTemplateYamlDumpFromSubtree(Node $startingNode): string
     {
         $comments = Comments::empty();
 
-        $nodeType = $node->getNodeType();
+        $nodeType = $startingNode->getNodeType();
         if ($nodeType->isOfType('Neos.Neos:Document')) {
-            $template = $this->nodeTemplateFromDocumentNodes([$node], $comments);
+            $template = $this->nodeTemplateFromDocumentNodes([$startingNode], $comments);
         } elseif ($nodeType->isOfType('Neos.Neos:Content') || $nodeType->isOfType('Neos.Neos:ContentCollection')) {
-            $template = $this->nodeTemplateFromContentNodes([$node], $comments);
+            $template = $this->nodeTemplateFromContentNodes([$startingNode], $comments);
         } else {
-            throw new \InvalidArgumentException("Node {$node->getIdentifier()} must be one of Neos.Neos:Document,Neos.Neos:Content,Neos.Neos:ContentCollection.");
+            throw new \InvalidArgumentException("Node {$startingNode->getIdentifier()} must be one of Neos.Neos:Document,Neos.Neos:Content,Neos.Neos:ContentCollection.");
         }
 
-        $templateInContext = [
-            "Your.NodeType" => [
-                "options" => [
-                    "template" => [
-                        "childNodes" => $template
-                    ]
-                ]
-            ]
+        foreach ($template as $firstEntry) {
+            break;
+        }
+        assert(isset($firstEntry));
+
+        $templateRoot = [
+            "template" => array_filter([
+                "properties" => $firstEntry["properties"] ?? null,
+                "childNodes" => $firstEntry["childNodes"] ?? null,
+            ])
         ];
 
-        $yaml = Yaml::dump($templateInContext, 99, 2, Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE | Yaml::DUMP_NULL_AS_TILDE);
+        $yaml = Yaml::dump($templateRoot, 99, 2, Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE | Yaml::DUMP_NULL_AS_TILDE);
 
         $yamlWithComments = $comments->renderCommentsInYamlDump($yaml);
 
@@ -58,22 +60,68 @@ class NodeTemplateDumper
         foreach ($nodes as $index => $node) {
             assert($node instanceof Node);
 
-            if ($node->isTethered()) {
-                throw new \Exception("@todo");
-            }
-
-            $template["page$index"] = array_filter([
-                "name" => "page-$index",
-                "type" => $node->getNodeType()->getName(),
+            $templatePart = array_filter([
                 "properties" => $this->nonDefaultConfiguredNodeProperties($node, $comments),
                 "childNodes" => array_merge(
-                    $this::nodeTemplateFromContentNodes(
+                    $this->nodeTemplateFromContentNodes(
                         $node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection"),
                         $comments
                     ),
-                    $this::nodeTemplateFromDocumentNodes($node->getChildNodes("Neos.Neos:Document"), $comments),
+                    $this->nodeTemplateFromDocumentNodes($node->getChildNodes("Neos.Neos:Document"), $comments),
                 )
             ]);
+
+            if ($templatePart === []) {
+                continue;
+            }
+
+            if ($node->isTethered()) {
+                $readableId = $node->getName() . 'Tethered';
+                $template[$readableId] = array_merge([
+                    "name" => $node->getName()
+                ], $templatePart);
+                continue;
+            }
+
+            $template["page$index"] = array_merge([
+                "type" => $node->getNodeType()->getName()
+            ], $templatePart);
+        }
+
+        return $template;
+    }
+
+    /** @param array<Node|NodeInterface> $nodes */
+    private function nodeTemplateFromContentNodes(array $nodes, Comments $comments): array
+    {
+        $template = [];
+        foreach ($nodes as $index => $node) {
+            assert($node instanceof Node);
+
+            $templatePart = array_filter([
+                "properties" => $this->nonDefaultConfiguredNodeProperties($node, $comments),
+                "childNodes" => $this->nodeTemplateFromContentNodes($node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection"), $comments)
+            ]);
+
+            if ($templatePart === []) {
+                continue;
+            }
+
+            if ($node->isTethered()) {
+                $readableId = [
+                    "main" => "mainContentCollection",
+                    "footer" => "footerContentCollection"
+                ][$node->getName()] ?? $node->getName() . 'Tethered';
+
+                $template[$readableId] = array_merge([
+                    "name" => $node->getName()
+                ], $templatePart);
+                continue;
+            }
+
+            $template["content$index"] = array_merge([
+                "type" => $node->getNodeType()->getName()
+            ], $templatePart);
         }
 
         return $template;
@@ -184,42 +232,5 @@ class NodeTemplateDumper
             return 'object(' . get_class($value) . ')';
         }
         return json_encode($value);
-    }
-
-    /** @param array<Node|NodeInterface> $nodes */
-    private function nodeTemplateFromContentNodes(array $nodes, Comments $comments): array
-    {
-        $template = [];
-        foreach ($nodes as $index => $node) {
-            assert($node instanceof Node);
-
-            $templatePart = array_filter([
-                "properties" => $this->nonDefaultConfiguredNodeProperties($node, $comments),
-                "childNodes" => $this->nodeTemplateFromContentNodes($node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection"), $comments)
-            ]);
-
-            if ($templatePart === []) {
-                continue;
-            }
-
-            if ($node->isTethered()) {
-
-                $readableId = [
-                    "main" => "mainContentCollection",
-                    "footer" => "footerContentCollection"
-                ][$node->getName()] ?? $node->getName() . 'Tethered';
-
-                $template[$readableId] = array_merge([
-                    "name" => $node->getName()
-                ], $templatePart);
-                continue;
-            }
-
-            $template["content$index"] = array_merge([
-                "type" => $node->getNodeType()->getName()
-            ], $templatePart);
-        }
-
-        return $template;
     }
 }
