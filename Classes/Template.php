@@ -158,9 +158,12 @@ class Template
                 $flowQuery = new FlowQuery(array($parentNode));
                 $node = $flowQuery->find($name)->get(0);
             }
+            $type = $this->type;
+            if (preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $type)) {
+                $type = $this->eelEvaluationService->evaluateEelExpression($this->type, $context);
+            }
             if (!$node instanceof NodeInterface) {
-                $node = $this->nodeOperations->create($parentNode, ['nodeType' => $this->type, 'nodeName' => $name],
-                    'into');
+                $node = $this->nodeOperations->create($parentNode, ['nodeType' => $type, 'nodeName' => $name], 'into');
 
                 // All document node types get a uri path segment; if it is not explicitly set in the properties,
                 // it should be built based on the title property
