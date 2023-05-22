@@ -42,7 +42,10 @@ class EelEvaluationService
             $this->defaultContextVariables = EelUtility::getDefaultContextVariables($this->defaultContext);
         }
         $contextVariables = array_merge($this->defaultContextVariables, $contextVariables);
-        return EelUtility::evaluateEelExpression($expression, $this->eelEvaluator, $contextVariables);
+        try {
+            return EelUtility::evaluateEelExpression($expression, $this->eelEvaluator, $contextVariables);
+        } catch (\Exception $exception) {
+            throw new \Exception(sprintf('EEL Expression "%s" in NodeType template caused an error.', $expression), 1684761760723, $exception);
+        }
     }
-
 }
