@@ -7,8 +7,15 @@ namespace Flowpack\NodeTemplates\NodeTemplateDumper;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Utility\Algorithms;
 
-/** @Flow\Scope("singleton") */
-class CommentService
+/**
+ * Since the yaml dumper doesn't support comments, we insert `Comment<id>` markers into the array via {@see Comments::addCommentAndGetMarker}
+ * that will be dumped and later can be processed via {@see Comments::renderCommentsInYamlDump}
+ *
+ * A comment is just a wrapper around a render function that will be called during {@see Comments::renderCommentsInYamlDump}
+ *
+ * @Flow\Proxy(false)
+ */
+class Comments
 {
     private const SERIALIZED_PATTERN = <<<'REGEX'
     /(?<indentation>[ ]*)(?<property>.*?): Comment<(?<identifier>[a-z0-9\-]{1,255})>/
@@ -17,10 +24,18 @@ class CommentService
     /** @var array<Comment> */
     private array $comments;
 
-    public function serialize(\Closure $commentRenderFunction): string
+    private function __construct()
+    {
+    }
+
+    public static function empty(): self
+    {
+        return new self();
+    }
+
+    public function addCommentAndGetMarker(Comment $comment): string
     {
         $identifier = Algorithms::generateUUID();
-        $comment = new Comment($commentRenderFunction);
         $this->comments[$identifier] = $comment;
         return 'Comment<' . $identifier . '>';
     }

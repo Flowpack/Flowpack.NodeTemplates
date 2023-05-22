@@ -15,12 +15,6 @@ use Symfony\Component\Yaml\Yaml;
 class NodeTemplateDumper
 {
     /**
-     * @Flow\Inject
-     * @var CommentService
-     */
-    protected $commentService;
-
-    /**
      * Dump the node tree structure into a NodeTemplate Yaml structure.
      * References to Nodes and non-primitive property values are commented out in the Yaml.
      *
@@ -29,11 +23,13 @@ class NodeTemplateDumper
      */
     public function createNodeTemplateYamlDumpFromSubtree(Node $node): string
     {
+        $comments = Comments::empty();
+
         $nodeType = $node->getNodeType();
         if ($nodeType->isOfType('Neos.Neos:Document')) {
-            $template = $this->nodeTemplateFromDocumentNodes([$node]);
+            $template = $this->nodeTemplateFromDocumentNodes([$node], $comments);
         } elseif ($nodeType->isOfType('Neos.Neos:Content') || $nodeType->isOfType('Neos.Neos:ContentCollection')) {
-            $template = $this->nodeTemplateFromContentNodes([$node]);
+            $template = $this->nodeTemplateFromContentNodes([$node], $comments);
         } else {
             throw new \InvalidArgumentException("Node {$node->getIdentifier()} must be one of Neos.Neos:Document,Neos.Neos:Content,Neos.Neos:ContentCollection.");
         }
@@ -50,13 +46,13 @@ class NodeTemplateDumper
 
         $yaml = Yaml::dump($templateInContext, 99, 2, Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE | Yaml::DUMP_NULL_AS_TILDE);
 
-        $yamlWithComments = $this->commentService->renderCommentsInYamlDump($yaml);
+        $yamlWithComments = $comments->renderCommentsInYamlDump($yaml);
 
         return $yamlWithComments;
     }
 
     /** @param array<Node|NodeInterface> $nodes */
-    private function nodeTemplateFromDocumentNodes(array $nodes): array
+    private function nodeTemplateFromDocumentNodes(array $nodes, Comments $comments): array
     {
         $template = [];
         foreach ($nodes as $index => $node) {
@@ -69,12 +65,13 @@ class NodeTemplateDumper
             $template["page$index"] = array_filter([
                 "name" => "page-$index",
                 "type" => $node->getNodeType()->getName(),
-                "properties" => $this->nonDefaultConfiguredNodeProperties($node),
+                "properties" => $this->nonDefaultConfiguredNodeProperties($node, $comments),
                 "childNodes" => array_merge(
                     $this::nodeTemplateFromContentNodes(
-                        $node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection")
+                        $node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection"),
+                        $comments
                     ),
-                    $this::nodeTemplateFromDocumentNodes($node->getChildNodes("Neos.Neos:Document")),
+                    $this::nodeTemplateFromDocumentNodes($node->getChildNodes("Neos.Neos:Document"), $comments),
                 )
             ]);
         }
@@ -82,7 +79,7 @@ class NodeTemplateDumper
         return $template;
     }
 
-    private function nonDefaultConfiguredNodeProperties(Node $node): array
+    private function nonDefaultConfiguredNodeProperties(Node $node, Comments $comments): array
     {
         $nodeType = $node->getNodeType();
         $nodeProperties = $node->getProperties();
@@ -115,40 +112,40 @@ class NodeTemplateDumper
             }
 
             if ($dataSourceIdentifier = $configuration["ui"]["inspector"]["editorOptions"]["dataSourceIdentifier"] ?? null) {
-                $filteredProperties[$propertyName] = $this->commentService->serialize(
+                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker(Comment::fromRenderer(
                     function ($indentation, $propertyName) use ($dataSourceIdentifier, $propertyValue) {
                         return $indentation . '# ' . $propertyName . ' -> Datasource "' . $dataSourceIdentifier . '" with value ' . $this->valueToDebugString($propertyValue);
                     }
-                );
+                ));
                 continue;
             }
 
             if (($configuration["type"] ?? null) === "reference") {
                 $nodeTypesInReference = $configuration["ui"]["inspector"]["editorOptions"]["nodeTypes"] ?? ["Neos.Neos:Document"];
-                $filteredProperties[$propertyName] = $this->commentService->serialize(
+                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker(Comment::fromRenderer(
                     function ($indentation, $propertyName) use ($nodeTypesInReference, $propertyValue) {
                         return $indentation . '# ' . $propertyName . ' -> Reference of NodeTypes (' . join(", ", $nodeTypesInReference) . ') with value ' . $this->valueToDebugString($propertyValue);
                     }
-                );
+                ));
                 continue;
             }
 
             if (($configuration["ui"]["inspector"]["editor"] ?? null) === 'Neos.Neos/Inspector/Editors/SelectBoxEditor') {
                 $selectBoxValues = array_keys($configuration["ui"]["inspector"]["editorOptions"]["values"] ?? []);
-                $filteredProperties[$propertyName] = $this->commentService->serialize(
+                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker(Comment::fromRenderer(
                     function ($indentation, $propertyName) use ($selectBoxValues, $propertyValue) {
                         return $indentation . '# ' . $propertyName . ' -> SelectBox of ' . mb_strimwidth(json_encode($selectBoxValues), 0, 60, " ...]") . ' with value ' . $this->valueToDebugString($propertyValue);
                     }
-                );
+                ));
                 continue;
             }
 
             if (is_object($propertyValue) || (is_array($propertyValue) && is_object(array_values($propertyValue)[0] ?? null))) {
-                $filteredProperties[$propertyName] = $this->commentService->serialize(
+                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker(Comment::fromRenderer(
                     function ($indentation, $propertyName) use ($propertyValue) {
                         return $indentation . '# ' . $propertyName . ' -> ' . $this->valueToDebugString($propertyValue);
                     }
-                );
+                ));
                 continue;
             }
 
@@ -190,15 +187,15 @@ class NodeTemplateDumper
     }
 
     /** @param array<Node|NodeInterface> $nodes */
-    private function nodeTemplateFromContentNodes(array $nodes): array
+    private function nodeTemplateFromContentNodes(array $nodes, Comments $comments): array
     {
         $template = [];
         foreach ($nodes as $index => $node) {
             assert($node instanceof Node);
 
             $templatePart = array_filter([
-                "properties" => $this->nonDefaultConfiguredNodeProperties($node),
-                "childNodes" => $this->nodeTemplateFromContentNodes($node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection"))
+                "properties" => $this->nonDefaultConfiguredNodeProperties($node, $comments),
+                "childNodes" => $this->nodeTemplateFromContentNodes($node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection"), $comments)
             ]);
 
             if ($templatePart === []) {
