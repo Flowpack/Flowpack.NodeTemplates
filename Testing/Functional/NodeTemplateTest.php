@@ -79,7 +79,7 @@ class NodeTemplateTest extends FunctionalTestCase
                 'parentDomAddress' => [
                     'contextPath' => $targetNodeContextPath,
                 ],
-                'nodeType' => 'Flowpack.NodeTemplates:Content.Columns.Two',
+                'nodeType' => $toBeCreatedNodeTypeName = 'Flowpack.NodeTemplates:Content.Columns.Two',
                 'data' => $nodeCreationDialogProperties,
                 'baseNodeType' => '',
             ],
@@ -89,7 +89,7 @@ class NodeTemplateTest extends FunctionalTestCase
         self::assertInstanceOf(ChangeCollection::class, $changeCollection);
         $changeCollection->apply();
 
-        $createdNode = $targetNode->getChildNodes('Flowpack.NodeTemplates:Content.Columns.Two')[0];
+        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName)[0];
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
 
@@ -97,6 +97,45 @@ class NodeTemplateTest extends FunctionalTestCase
 
         self::assertStringEqualsFile(__DIR__ . '/Fixtures/TwoColumnPreset.yaml', $dumpedYamlTemplate);
     }
+
+    /** @test */
+    public function testDynamicNodeCreationMatchesSnapshot(): void
+    {
+        $nodeCreationDialogProperties = [
+            'text' => '<p>bar</p>'
+        ];
+
+        $targetNode = $this->homePageNode->getNode('main');
+
+        $targetNodeContextPath = $targetNode->getContextPath();
+
+        $changeCollectionSerialized = [[
+            'type' => 'Neos.Neos.Ui:CreateInto',
+            'subject' => $targetNodeContextPath,
+            'payload' => [
+                'parentContextPath' => $targetNodeContextPath,
+                'parentDomAddress' => [
+                    'contextPath' => $targetNodeContextPath,
+                ],
+                'nodeType' => $toBeCreatedNodeTypeName = 'Flowpack.NodeTemplates:Content.Columns.Two.Dynamic',
+                'data' => $nodeCreationDialogProperties,
+                'baseNodeType' => '',
+            ],
+        ]];
+
+        $changeCollection = (new ChangeCollectionConverter())->convertFrom($changeCollectionSerialized, null);
+        self::assertInstanceOf(ChangeCollection::class, $changeCollection);
+        $changeCollection->apply();
+
+        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName)[0];
+
+        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
+
+        // file_put_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml', $dumpedYamlTemplate);
+
+        self::assertStringEqualsFile(__DIR__ . '/Fixtures/TwoColumnPreset.yaml', $dumpedYamlTemplate);
+    }
+
 
     public function tearDown(): void
     {

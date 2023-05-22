@@ -37,3 +37,30 @@
               type: 'Flowpack.NodeTemplates:Content.Text'
               properties:
                 text: '<p>bar</p>'
+
+'Flowpack.NodeTemplates:Content.Columns.Two.Dynamic':
+  superTypes:
+    'Neos.Neos:Content': true
+  ui:
+    creationDialog:
+      elements:
+        text:
+          type: string
+          ui:
+            editor: Neos.Neos/Inspector/Editors/TextFieldEditor
+  childNodes:
+    column0:
+      type: 'Neos.Neos:ContentCollection'
+    column1:
+      type: 'Neos.Neos:ContentCollection'
+  options:
+    template:
+      childNodes:
+        tetheredColumns:
+          withItems: ["column0", "column1"]
+          name: "${item}"
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                text: "${item == 'column0' ? '<p>foo</p>' : data.text}"
