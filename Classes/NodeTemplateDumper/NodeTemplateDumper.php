@@ -9,11 +9,18 @@ use Neos\ContentRepository\Domain\Model\Node;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Projection\Content\TraversableNodeInterface;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\I18n\EelHelper\TranslationHelper;
 use Symfony\Component\Yaml\Yaml;
 
 /** @Flow\Scope("singleton") */
 class NodeTemplateDumper
 {
+    /**
+     * @var TranslationHelper
+     * @Flow\Inject
+     */
+    protected $translationHelper;
+
     /**
      * Dump the node tree structure into a NodeTemplate Yaml structure.
      * References to Nodes and non-primitive property values are commented out in the Yaml.
@@ -159,45 +166,61 @@ class NodeTemplateDumper
                 continue;
             }
 
+            $label = $configuration["ui"]["label"] ?? null;
+            $augmentCommentWithLabel = fn (Comment $comment) => $comment;
+            if ($label) {
+                $label = $this->translationHelper->translate($label);
+                $augmentCommentWithLabel = fn (Comment $comment) => Comment::fromRenderer(
+                    function ($indentation, $propertyName) use($comment, $propertyValue, $label) {
+                        return $indentation . '# ' . $label . "\n" .
+                            $comment->toYamlComment($indentation, $propertyName);
+                    }
+                );
+            }
+
             if ($dataSourceIdentifier = $configuration["ui"]["inspector"]["editorOptions"]["dataSourceIdentifier"] ?? null) {
-                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker(Comment::fromRenderer(
+                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker($augmentCommentWithLabel(Comment::fromRenderer(
                     function ($indentation, $propertyName) use ($dataSourceIdentifier, $propertyValue) {
                         return $indentation . '# ' . $propertyName . ' -> Datasource "' . $dataSourceIdentifier . '" with value ' . $this->valueToDebugString($propertyValue);
                     }
-                ));
+                )));
                 continue;
             }
 
             if (($configuration["type"] ?? null) === "reference") {
                 $nodeTypesInReference = $configuration["ui"]["inspector"]["editorOptions"]["nodeTypes"] ?? ["Neos.Neos:Document"];
-                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker(Comment::fromRenderer(
+                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker($augmentCommentWithLabel(Comment::fromRenderer(
                     function ($indentation, $propertyName) use ($nodeTypesInReference, $propertyValue) {
                         return $indentation . '# ' . $propertyName . ' -> Reference of NodeTypes (' . join(", ", $nodeTypesInReference) . ') with value ' . $this->valueToDebugString($propertyValue);
                     }
-                ));
+                )));
                 continue;
             }
 
             if (($configuration["ui"]["inspector"]["editor"] ?? null) === 'Neos.Neos/Inspector/Editors/SelectBoxEditor') {
                 $selectBoxValues = array_keys($configuration["ui"]["inspector"]["editorOptions"]["values"] ?? []);
-                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker(Comment::fromRenderer(
+                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker($augmentCommentWithLabel(Comment::fromRenderer(
                     function ($indentation, $propertyName) use ($selectBoxValues, $propertyValue) {
                         return $indentation . '# ' . $propertyName . ' -> SelectBox of ' . mb_strimwidth(json_encode($selectBoxValues), 0, 60, " ...]") . ' with value ' . $this->valueToDebugString($propertyValue);
                     }
-                ));
+                )));
                 continue;
             }
 
             if (is_object($propertyValue) || (is_array($propertyValue) && is_object(array_values($propertyValue)[0] ?? null))) {
-                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker(Comment::fromRenderer(
+                $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker($augmentCommentWithLabel(Comment::fromRenderer(
                     function ($indentation, $propertyName) use ($propertyValue) {
                         return $indentation . '# ' . $propertyName . ' -> ' . $this->valueToDebugString($propertyValue);
                     }
-                ));
+                )));
                 continue;
             }
 
-            $filteredProperties[$propertyName] = $propertyValue;
+            $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker($augmentCommentWithLabel(Comment::fromRenderer(
+                function ($indentation, $propertyName) use ($propertyValue) {
+                    return $indentation . $propertyName . ': ' . Yaml::dump($propertyValue);
+                }
+            )));
         }
 
         return $filteredProperties;
@@ -218,7 +241,6 @@ class NodeTemplateDumper
                     } else {
                         $name = 'array';
                     }
-                    $name = $name === null ;
                     $entries[$key] = $item->getIdentifier();
                     continue;
                 }

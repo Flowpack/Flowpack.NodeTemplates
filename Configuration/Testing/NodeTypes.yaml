@@ -11,6 +11,8 @@
   properties:
     text:
       type: string
+      ui:
+        label: "Text"
 
 'Flowpack.NodeTemplates:Content.Columns.Two':
   superTypes:

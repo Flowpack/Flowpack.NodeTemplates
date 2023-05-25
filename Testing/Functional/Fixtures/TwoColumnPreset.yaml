@@ -6,6 +6,7 @@ template:
         content0:
           type: 'Flowpack.NodeTemplates:Content.Text'
           properties:
+            # Text
             text: '<p>foo</p>'
     column1Tethered:
       name: column1
@@ -13,4 +14,5 @@ template:
         content0:
           type: 'Flowpack.NodeTemplates:Content.Text'
           properties:
+            # Text
             text: '<p>bar</p>'
