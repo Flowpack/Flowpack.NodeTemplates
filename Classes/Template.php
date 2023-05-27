@@ -161,7 +161,7 @@ class Template
             if (!$node instanceof NodeInterface) {
                 $type = $this->type;
                 if (preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $type)) {
-                    $type = $this->eelEvaluationService->evaluateEelExpression($this->type, $context);
+                    $type = $this->eelEvaluationService->evaluateEelExpression($type, $context);
                 }
                 $node = $this->nodeOperations->create($parentNode, ['nodeType' => $type, 'nodeName' => $name], 'into');
 
