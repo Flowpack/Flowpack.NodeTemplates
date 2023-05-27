@@ -50,6 +50,11 @@ class Template
     protected $withItems;
 
     /**
+     * @var array
+     */
+    protected $withContext;
+
+    /**
      * @var EelEvaluationService
      * @Flow\Inject
      */
@@ -77,6 +82,7 @@ class Template
      * @param array $options
      * @param string $when
      * @param string $withItems
+     * @param array $withContext
      */
     public function __construct(
         $type = null,
@@ -85,7 +91,8 @@ class Template
         array $childNodes = [],
         array $options = [],
         $when = null,
-        $withItems = null
+        $withItems = null,
+        $withContext = []
     ) {
         $this->type = $type;
         $this->name = $name;
@@ -94,15 +101,24 @@ class Template
         $this->options = $options;
         $this->when = $when;
         $this->withItems = $withItems;
+        $this->withContext = $withContext;
     }
 
     /**
      * Apply this template to the given node while providing context for EEL processing
      *
+     * The entry point
+     *
      * @param NodeInterface $node
      * @param array $context
      */
     public function apply(NodeInterface $node, array $context)
+    {
+        $context = $this->mergeContextAndWithContext($context);
+        $this->applyTemplateOnNode($node, $context);
+    }
+
+    private function applyTemplateOnNode(NodeInterface $node, array $context)
     {
         $context['node'] = $node;
 
@@ -122,12 +138,16 @@ class Template
     }
 
     /**
+     * @deprecated will be made internal and private
+     * @internal
      * @param NodeInterface $parentNode
      * @param array $context
      */
     public function createOrFetchAndApply(NodeInterface $parentNode, array $context)
     {
         $context['parentNode'] = $parentNode;
+
+        $context = $this->mergeContextAndWithContext($context);
 
         if (!$this->isApplicable($context)) {
             return;
@@ -174,7 +194,7 @@ class Template
                 }
             }
             if ($node instanceof NodeInterface) {
-                $this->apply($node, $context);
+                $this->applyTemplateOnNode($node, $context);
             }
         }
     }
@@ -215,6 +235,46 @@ class Template
                 $node->setProperty($propertyName, $propertyValue);
             }
         }
+    }
+
+    /**
+     * Merge `withContext` onto the current $context, evaluating EEL if necessary
+     *
+     * The option `withContext` takes an array of items whose value can be any yaml/php type
+     * and might also contain eel expressions
+     *
+     * ```yaml
+     * withContext:
+     *   someText: '<p>foo</p>'
+     *   processedData: "${String.trim(data.bla)}"
+     *   booleanType: true
+     *   arrayType: ["value"]
+     * ```
+     *
+     * scopes and order of evaluation:
+     *
+     * - inside `withContext` the "upper" context may be accessed in eel expressions,
+     * but sibling context values are not available
+     *
+     * - `withContext` is evaluated before `when` and `withItems` so you can access computed values,
+     * that means the context `item` from `withItems` will not be available yet
+     *
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private function mergeContextAndWithContext(array $context): array
+    {
+        if ($this->withContext === []) {
+            return $context;
+        }
+        $withContext = [];
+        foreach ($this->withContext as $key => $value) {
+            if (is_string($value) && preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $value)) {
+                $value = $this->eelEvaluationService->evaluateEelExpression($value, $context);
+            }
+            $withContext[$key] = $value;
+        }
+        return array_merge($context, $withContext);
     }
 
     /**
