@@ -28,9 +28,8 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
      *
      * @param NodeInterface $node The newly created node
      * @param array $data incoming data from the creationDialog
-     * @return void
      */
-    public function handle(NodeInterface $node, array $data)
+    public function handle(NodeInterface $node, array $data): void
     {
         if ($node->getNodeType()->hasConfiguration('options.template')) {
             $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');
@@ -56,6 +55,5 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
             'triggeringNode' => $node,
         ];
         $template->apply($node, $context);
-        return;
     }
 }
