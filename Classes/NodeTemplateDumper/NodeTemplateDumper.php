@@ -33,13 +33,16 @@ class NodeTemplateDumper
         $comments = Comments::empty();
 
         $nodeType = $startingNode->getNodeType();
-        if ($nodeType->isOfType('Neos.Neos:Document')) {
-            $template = $this->nodeTemplateFromDocumentNodes([$startingNode], $comments);
-        } elseif ($nodeType->isOfType('Neos.Neos:Content') || $nodeType->isOfType('Neos.Neos:ContentCollection')) {
-            $template = $this->nodeTemplateFromContentNodes([$startingNode], $comments);
-        } else {
+
+        if (
+            !$nodeType->isOfType('Neos.Neos:Document')
+            && !$nodeType->isOfType('Neos.Neos:Content')
+            && !$nodeType->isOfType('Neos.Neos:ContentCollection')
+        ) {
             throw new \InvalidArgumentException("Node {$startingNode->getIdentifier()} must be one of Neos.Neos:Document,Neos.Neos:Content,Neos.Neos:ContentCollection.");
         }
+
+        $template = $this->nodeTemplateFromNodes([$startingNode], $comments);
 
         foreach ($template as $firstEntry) {
             break;
@@ -61,20 +64,22 @@ class NodeTemplateDumper
     }
 
     /** @param array<Node|NodeInterface> $nodes */
-    private function nodeTemplateFromDocumentNodes(array $nodes, Comments $comments): array
+    private function nodeTemplateFromNodes(array $nodes, Comments $comments): array
     {
-        $template = [];
+        $documentNodeTemplates = [];
+        $contentNodeTemplates = [];
         foreach ($nodes as $index => $node) {
             assert($node instanceof Node);
+            $nodeType = $node->getNodeType();
+            $isDocumentNode = $nodeType->isOfType("Neos.Neos:Document");
 
             $templatePart = array_filter([
                 "properties" => $this->nonDefaultConfiguredNodeProperties($node, $comments),
-                "childNodes" => array_merge(
-                    $this->nodeTemplateFromContentNodes(
-                        $node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection"),
-                        $comments
-                    ),
-                    $this->nodeTemplateFromDocumentNodes($node->getChildNodes("Neos.Neos:Document"), $comments),
+                "childNodes" => $this->nodeTemplateFromNodes(
+                    $isDocumentNode
+                        ? $node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection,Neos.Neos:Document")
+                        : $node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection"),
+                    $comments
                 )
             ]);
 
@@ -82,35 +87,18 @@ class NodeTemplateDumper
                 continue;
             }
 
-            if ($node->isTethered()) {
-                $readableId = $node->getName() . 'Tethered';
-                $template[$readableId] = array_merge([
-                    "name" => $node->getName()
+            if ($isDocumentNode) {
+                if ($node->isTethered()) {
+                    $readableId = $node->getName() . 'Tethered';
+                    $documentNodeTemplates[$readableId] = array_merge([
+                        "name" => $node->getName()
+                    ], $templatePart);
+                    continue;
+                }
+
+                $documentNodeTemplates["page$index"] = array_merge([
+                    "type" => $node->getNodeType()->getName()
                 ], $templatePart);
-                continue;
-            }
-
-            $template["page$index"] = array_merge([
-                "type" => $node->getNodeType()->getName()
-            ], $templatePart);
-        }
-
-        return $template;
-    }
-
-    /** @param array<Node|NodeInterface> $nodes */
-    private function nodeTemplateFromContentNodes(array $nodes, Comments $comments): array
-    {
-        $template = [];
-        foreach ($nodes as $index => $node) {
-            assert($node instanceof Node);
-
-            $templatePart = array_filter([
-                "properties" => $this->nonDefaultConfiguredNodeProperties($node, $comments),
-                "childNodes" => $this->nodeTemplateFromContentNodes($node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection"), $comments)
-            ]);
-
-            if ($templatePart === []) {
                 continue;
             }
 
@@ -120,18 +108,18 @@ class NodeTemplateDumper
                     "footer" => "footerContentCollection"
                 ][$node->getName()] ?? $node->getName() . 'Tethered';
 
-                $template[$readableId] = array_merge([
+                $contentNodeTemplates[$readableId] = array_merge([
                     "name" => $node->getName()
                 ], $templatePart);
                 continue;
             }
 
-            $template["content$index"] = array_merge([
+            $contentNodeTemplates["content$index"] = array_merge([
                 "type" => $node->getNodeType()->getName()
             ], $templatePart);
         }
 
-        return $template;
+        return array_merge($contentNodeTemplates, $documentNodeTemplates);
     }
 
     private function nonDefaultConfiguredNodeProperties(Node $node, Comments $comments): array
