@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Flowpack\NodeTemplates\NodeTemplateDumper;
 
 use Neos\ContentRepository\Domain\Model\ArrayPropertyCollection;
-use Neos\ContentRepository\Domain\Model\Node;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Projection\Content\TraversableNodeInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\I18n\EelHelper\TranslationHelper;
 use Symfony\Component\Yaml\Yaml;
@@ -25,10 +23,10 @@ class NodeTemplateDumper
      * Dump the node tree structure into a NodeTemplate Yaml structure.
      * References to Nodes and non-primitive property values are commented out in the Yaml.
      *
-     * @param Node|NodeInterface|TraversableNodeInterface $startingNode specified root node of the node tree to dump
+     * @param NodeInterface $startingNode specified root node of the node tree to dump
      * @return string yaml representation of the node template
      */
-    public function createNodeTemplateYamlDumpFromSubtree(Node $startingNode): string
+    public function createNodeTemplateYamlDumpFromSubtree(NodeInterface $startingNode): string
     {
         $comments = Comments::empty();
 
@@ -63,13 +61,13 @@ class NodeTemplateDumper
         return $yamlWithComments;
     }
 
-    /** @param array<Node|NodeInterface> $nodes */
+    /** @param array<NodeInterface> $nodes */
     private function nodeTemplateFromNodes(array $nodes, Comments $comments): array
     {
         $documentNodeTemplates = [];
         $contentNodeTemplates = [];
         foreach ($nodes as $index => $node) {
-            assert($node instanceof Node);
+            assert($node instanceof NodeInterface);
             $nodeType = $node->getNodeType();
             $isDocumentNode = $nodeType->isOfType("Neos.Neos:Document");
 
@@ -89,8 +87,7 @@ class NodeTemplateDumper
 
             if ($isDocumentNode) {
                 if ($node->isTethered()) {
-                    $readableId = $node->getName() . 'Tethered';
-                    $documentNodeTemplates[$readableId] = array_merge([
+                    $documentNodeTemplates[$node->getLabel() ?: $node->getName()] = array_merge([
                         "name" => $node->getName()
                     ], $templatePart);
                     continue;
@@ -103,12 +100,7 @@ class NodeTemplateDumper
             }
 
             if ($node->isTethered()) {
-                $readableId = [
-                    "main" => "mainContentCollection",
-                    "footer" => "footerContentCollection"
-                ][$node->getName()] ?? $node->getName() . 'Tethered';
-
-                $contentNodeTemplates[$readableId] = array_merge([
+                $contentNodeTemplates[$node->getLabel() ?: $node->getName()] = array_merge([
                     "name" => $node->getName()
                 ], $templatePart);
                 continue;
@@ -122,7 +114,7 @@ class NodeTemplateDumper
         return array_merge($contentNodeTemplates, $documentNodeTemplates);
     }
 
-    private function nonDefaultConfiguredNodeProperties(Node $node, Comments $comments): array
+    private function nonDefaultConfiguredNodeProperties(NodeInterface $node, Comments $comments): array
     {
         $nodeType = $node->getNodeType();
         $nodeProperties = $node->getProperties();
@@ -216,14 +208,14 @@ class NodeTemplateDumper
 
     private function valueToDebugString($value): string
     {
-        if ($value instanceof Node) {
+        if ($value instanceof NodeInterface) {
             return 'Node(' . $value->getIdentifier() . ')';
         }
         if (is_iterable($value)) {
             $name = null;
             $entries = [];
             foreach ($value as $key => $item) {
-                if ($item instanceof Node) {
+                if ($item instanceof NodeInterface) {
                     if ($name === null || $name === 'Nodes') {
                         $name = 'Nodes';
                     } else {
