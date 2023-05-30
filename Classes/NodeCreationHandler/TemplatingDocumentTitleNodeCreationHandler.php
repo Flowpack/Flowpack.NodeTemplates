@@ -25,12 +25,10 @@ class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerI
     protected $nodeUriPathSegmentGenerator;
 
     /**
-     * @param NodeInterface $node
-     * @param array $data
      * @throws \Neos\Eel\Exception
      * @throws \Neos\Neos\Exception
      */
-    public function handle(NodeInterface $node, array $data)
+    public function handle(NodeInterface $node, array $data): void
     {
         $title = null;
         $uriPathSegment = null;
@@ -53,7 +51,7 @@ class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerI
                 $title = $this->eelEvaluationService->evaluateEelExpression($titleTemplate, $context);
             }
         }
-        
+
         $uriPathSegmentTemplate = $node->getNodeType()->getOptions()['template']['properties']['uriPathSegment'] ?? '';
         if ($uriPathSegmentTemplate === '') {
             $uriPathSegment = $data['uriPathSegment'] ?? null;

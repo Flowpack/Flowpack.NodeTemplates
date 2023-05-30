@@ -50,6 +50,11 @@ class Template
     protected $withItems;
 
     /**
+     * @var array
+     */
+    protected $withContext;
+
+    /**
      * @var EelEvaluationService
      * @Flow\Inject
      */
@@ -77,6 +82,7 @@ class Template
      * @param array $options
      * @param string $when
      * @param string $withItems
+     * @param array $withContext
      */
     public function __construct(
         $type = null,
@@ -85,7 +91,8 @@ class Template
         array $childNodes = [],
         array $options = [],
         $when = null,
-        $withItems = null
+        $withItems = null,
+        $withContext = []
     ) {
         $this->type = $type;
         $this->name = $name;
@@ -94,15 +101,21 @@ class Template
         $this->options = $options;
         $this->when = $when;
         $this->withItems = $withItems;
+        $this->withContext = $withContext;
     }
 
     /**
      * Apply this template to the given node while providing context for EEL processing
      *
-     * @param NodeInterface $node
-     * @param array $context
+     * The entry point
      */
-    public function apply(NodeInterface $node, array $context)
+    public function apply(NodeInterface $node, array $context): void
+    {
+        $context = $this->mergeContextAndWithContext($context);
+        $this->applyTemplateOnNode($node, $context);
+    }
+
+    private function applyTemplateOnNode(NodeInterface $node, array $context): void
     {
         $context['node'] = $node;
 
@@ -122,12 +135,14 @@ class Template
     }
 
     /**
-     * @param NodeInterface $parentNode
-     * @param array $context
+     * @deprecated will be made internal and private
+     * @internal
      */
-    public function createOrFetchAndApply(NodeInterface $parentNode, array $context)
+    public function createOrFetchAndApply(NodeInterface $parentNode, array $context): void
     {
         $context['parentNode'] = $parentNode;
+
+        $context = $this->mergeContextAndWithContext($context);
 
         if (!$this->isApplicable($context)) {
             return;
@@ -159,8 +174,11 @@ class Template
                 $node = $flowQuery->find($name)->get(0);
             }
             if (!$node instanceof NodeInterface) {
-                $node = $this->nodeOperations->create($parentNode, ['nodeType' => $this->type, 'nodeName' => $name],
-                    'into');
+                $type = $this->type;
+                if (preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $type)) {
+                    $type = $this->eelEvaluationService->evaluateEelExpression($type, $context);
+                }
+                $node = $this->nodeOperations->create($parentNode, ['nodeType' => $type, 'nodeName' => $name], 'into');
 
                 // All document node types get a uri path segment; if it is not explicitly set in the properties,
                 // it should be built based on the title property
@@ -171,16 +189,12 @@ class Template
                 }
             }
             if ($node instanceof NodeInterface) {
-                $this->apply($node, $context);
+                $this->applyTemplateOnNode($node, $context);
             }
         }
     }
 
-    /**
-     * @param array $context
-     * @return bool
-     */
-    public function isApplicable(array $context)
+    public function isApplicable(array $context): bool
     {
         $isApplicable = true;
         if ($this->when !== null) {
@@ -194,11 +208,8 @@ class Template
 
     /**
      * TODO: Handle EEL parsing for nested properties
-     *
-     * @param NodeInterface $node
-     * @param array $context
      */
-    protected function setProperties(NodeInterface $node, array $context)
+    protected function setProperties(NodeInterface $node, array $context): void
     {
         foreach ($this->properties as $propertyName => $propertyValue) {
             //evaluate Eel only on string properties
@@ -215,16 +226,52 @@ class Template
     }
 
     /**
+     * Merge `withContext` onto the current $context, evaluating EEL if necessary
+     *
+     * The option `withContext` takes an array of items whose value can be any yaml/php type
+     * and might also contain eel expressions
+     *
+     * ```yaml
+     * withContext:
+     *   someText: '<p>foo</p>'
+     *   processedData: "${String.trim(data.bla)}"
+     *   booleanType: true
+     *   arrayType: ["value"]
+     * ```
+     *
+     * scopes and order of evaluation:
+     *
+     * - inside `withContext` the "upper" context may be accessed in eel expressions,
+     * but sibling context values are not available
+     *
+     * - `withContext` is evaluated before `when` and `withItems` so you can access computed values,
+     * that means the context `item` from `withItems` will not be available yet
+     *
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private function mergeContextAndWithContext(array $context): array
+    {
+        if ($this->withContext === []) {
+            return $context;
+        }
+        $withContext = [];
+        foreach ($this->withContext as $key => $value) {
+            if (is_string($value) && preg_match(\Neos\Eel\Package::EelExpressionRecognizer, $value)) {
+                $value = $this->eelEvaluationService->evaluateEelExpression($value, $context);
+            }
+            $withContext[$key] = $value;
+        }
+        return array_merge($context, $withContext);
+    }
+
+    /**
      * Signals that a node template has been applied to the given node.
      *
-     * @param NodeInterface $node
-     * @param array $context
-     * @param array $options
-     * @return void
      * @Flow\Signal
      * @api
      */
-    public function emitNodeTemplateApplied(NodeInterface $node, array $context, array $options)
+    public function emitNodeTemplateApplied(NodeInterface $node, array $context, array $options): void
     {
     }
 }
