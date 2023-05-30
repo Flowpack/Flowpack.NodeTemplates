@@ -48,9 +48,9 @@ class NodeTemplateDumper
         assert(isset($firstEntry));
 
         $templateRoot = [
-            "template" => array_filter([
-                "properties" => $firstEntry["properties"] ?? null,
-                "childNodes" => $firstEntry["childNodes"] ?? null,
+            'template' => array_filter([
+                'properties' => $firstEntry['properties'] ?? null,
+                'childNodes' => $firstEntry['childNodes'] ?? null,
             ])
         ];
 
@@ -69,14 +69,14 @@ class NodeTemplateDumper
         foreach ($nodes as $index => $node) {
             assert($node instanceof NodeInterface);
             $nodeType = $node->getNodeType();
-            $isDocumentNode = $nodeType->isOfType("Neos.Neos:Document");
+            $isDocumentNode = $nodeType->isOfType('Neos.Neos:Document');
 
             $templatePart = array_filter([
-                "properties" => $this->nonDefaultConfiguredNodeProperties($node, $comments),
-                "childNodes" => $this->nodeTemplateFromNodes(
+                'properties' => $this->nonDefaultConfiguredNodeProperties($node, $comments),
+                'childNodes' => $this->nodeTemplateFromNodes(
                     $isDocumentNode
-                        ? $node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection,Neos.Neos:Document")
-                        : $node->getChildNodes("Neos.Neos:Content,Neos.Neos:ContentCollection"),
+                        ? $node->getChildNodes('Neos.Neos:Content,Neos.Neos:ContentCollection,Neos.Neos:Document')
+                        : $node->getChildNodes('Neos.Neos:Content,Neos.Neos:ContentCollection'),
                     $comments
                 )
             ]);
@@ -88,26 +88,26 @@ class NodeTemplateDumper
             if ($isDocumentNode) {
                 if ($node->isTethered()) {
                     $documentNodeTemplates[$node->getLabel() ?: $node->getName()] = array_merge([
-                        "name" => $node->getName()
+                        'name' => $node->getName()
                     ], $templatePart);
                     continue;
                 }
 
                 $documentNodeTemplates["page$index"] = array_merge([
-                    "type" => $node->getNodeType()->getName()
+                    'type' => $node->getNodeType()->getName()
                 ], $templatePart);
                 continue;
             }
 
             if ($node->isTethered()) {
                 $contentNodeTemplates[$node->getLabel() ?: $node->getName()] = array_merge([
-                    "name" => $node->getName()
+                    'name' => $node->getName()
                 ], $templatePart);
                 continue;
             }
 
             $contentNodeTemplates["content$index"] = array_merge([
-                "type" => $node->getNodeType()->getName()
+                'type' => $node->getNodeType()->getName()
             ], $templatePart);
         }
 
@@ -131,8 +131,8 @@ class NodeTemplateDumper
             }
 
             if (
-                array_key_exists("defaultValue", $configuration)
-                && $configuration["defaultValue"] === $nodeProperties[$propertyName]
+                array_key_exists('defaultValue', $configuration)
+                && $configuration['defaultValue'] === $nodeProperties[$propertyName]
             ) {
                 // node property is the same as default
                 continue;
@@ -142,11 +142,11 @@ class NodeTemplateDumper
             if ($propertyValue === null || $propertyValue === []) {
                 continue;
             }
-            if (is_string($propertyValue) && trim($propertyValue) === "") {
+            if (is_string($propertyValue) && trim($propertyValue) === '') {
                 continue;
             }
 
-            $label = $configuration["ui"]["label"] ?? null;
+            $label = $configuration['ui']['label'] ?? null;
             $augmentCommentWithLabel = fn (Comment $comment) => $comment;
             if ($label) {
                 $label = $this->translationHelper->translate($label);
@@ -158,7 +158,7 @@ class NodeTemplateDumper
                 );
             }
 
-            if ($dataSourceIdentifier = $configuration["ui"]["inspector"]["editorOptions"]["dataSourceIdentifier"] ?? null) {
+            if ($dataSourceIdentifier = $configuration['ui']['inspector']['editorOptions']['dataSourceIdentifier'] ?? null) {
                 $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker($augmentCommentWithLabel(Comment::fromRenderer(
                     function ($indentation, $propertyName) use ($dataSourceIdentifier, $propertyValue) {
                         return $indentation . '# ' . $propertyName . ' -> Datasource "' . $dataSourceIdentifier . '" with value ' . $this->valueToDebugString($propertyValue);
@@ -167,21 +167,23 @@ class NodeTemplateDumper
                 continue;
             }
 
-            if (($configuration["type"] ?? null) === "reference") {
-                $nodeTypesInReference = $configuration["ui"]["inspector"]["editorOptions"]["nodeTypes"] ?? ["Neos.Neos:Document"];
+            if (($configuration['type'] ?? null) === 'reference') {
+                $nodeTypesInReference = $configuration['ui']['inspector']['editorOptions']['nodeTypes'] ?? ['Neos.Neos:Document'];
                 $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker($augmentCommentWithLabel(Comment::fromRenderer(
                     function ($indentation, $propertyName) use ($nodeTypesInReference, $propertyValue) {
-                        return $indentation . '# ' . $propertyName . ' -> Reference of NodeTypes (' . join(", ", $nodeTypesInReference) . ') with value ' . $this->valueToDebugString($propertyValue);
+                        return $indentation . '# ' . $propertyName . ' -> Reference of NodeTypes (' . join(', ', $nodeTypesInReference) . ') with value ' . $this->valueToDebugString($propertyValue);
                     }
                 )));
                 continue;
             }
 
-            if (($configuration["ui"]["inspector"]["editor"] ?? null) === 'Neos.Neos/Inspector/Editors/SelectBoxEditor') {
-                $selectBoxValues = array_keys($configuration["ui"]["inspector"]["editorOptions"]["values"] ?? []);
+            if (($configuration['ui']['inspector']['editor'] ?? null) === 'Neos.Neos/Inspector/Editors/SelectBoxEditor') {
+                $selectBoxValues = array_keys($configuration['ui']['inspector']['editorOptions']['values'] ?? []);
                 $filteredProperties[$propertyName] = $comments->addCommentAndGetMarker($augmentCommentWithLabel(Comment::fromRenderer(
                     function ($indentation, $propertyName) use ($selectBoxValues, $propertyValue) {
-                        return $indentation . '# ' . $propertyName . ' -> SelectBox of ' . mb_strimwidth(json_encode($selectBoxValues), 0, 60, " ...]") . ' with value ' . $this->valueToDebugString($propertyValue);
+                        return $indentation . '# ' . $propertyName . ' -> SelectBox of '
+                            . mb_strimwidth(json_encode($selectBoxValues), 0, 60, ' ...]')
+                            . ' with value ' . $this->valueToDebugString($propertyValue);
                     }
                 )));
                 continue;

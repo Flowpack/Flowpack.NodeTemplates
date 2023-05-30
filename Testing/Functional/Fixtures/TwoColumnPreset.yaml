@@ -1,6 +1,6 @@
 template:
   childNodes:
-    column0Tethered:
+    'Content Collection (column0)':
       name: column0
       childNodes:
         content0:
@@ -8,7 +8,7 @@ template:
           properties:
             # Text
             text: '<p>foo</p>'
-    column1Tethered:
+    'Content Collection (column1)':
       name: column1
       childNodes:
         content0:
