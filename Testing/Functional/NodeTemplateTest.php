@@ -6,7 +6,9 @@ namespace Flowpack\NodeTemplates\Tests\Functional;
 
 use Flowpack\NodeTemplates\NodeTemplateDumper\NodeTemplateDumper;
 use Neos\ContentRepository\Domain\Model\Node;
+use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\Workspace;
+use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
 use Neos\ContentRepository\Domain\Repository\WorkspaceRepository;
 use Neos\ContentRepository\Domain\Service\ContextFactoryInterface;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
@@ -61,14 +63,12 @@ class NodeTemplateTest extends FunctionalTestCase
         );
     }
 
-    /** @test */
-    public function testNodeCreationMatchesSnapshot(): void
+    /**
+     * @param Node|NodeInterface $targetNode
+     * @param array<string, mixed> $nodeCreationDialogValues
+     */
+    private function createNodeInto(Node $targetNode, NodeTypeName $nodeTypeName, array $nodeCreationDialogValues): void
     {
-        $nodeCreationDialogProperties = [
-        ];
-
-        $targetNode = $this->homePageNode->getNode('main');
-
         $targetNodeContextPath = $targetNode->getContextPath();
 
         $changeCollectionSerialized = [[
@@ -79,63 +79,67 @@ class NodeTemplateTest extends FunctionalTestCase
                 'parentDomAddress' => [
                     'contextPath' => $targetNodeContextPath,
                 ],
-                'nodeType' => $toBeCreatedNodeTypeName = 'Flowpack.NodeTemplates:Content.Columns.Two',
-                'data' => $nodeCreationDialogProperties,
+                'nodeType' => $nodeTypeName->getValue(),
+                'data' => $nodeCreationDialogValues,
                 'baseNodeType' => '',
             ],
         ]];
 
         $changeCollection = (new ChangeCollectionConverter())->convertFrom($changeCollectionSerialized, null);
-        self::assertInstanceOf(ChangeCollection::class, $changeCollection);
+        assert($changeCollection instanceof ChangeCollection);
         $changeCollection->apply();
+    }
 
-        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName)[0];
+
+    /** @test */
+    public function testNodeCreationMatchesSnapshot1(): void
+    {
+        $this->createNodeInto(
+            $targetNode = $this->homePageNode->getNode('main'),
+            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Columns.Two'),
+            []
+        );
+
+        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
-
-        // file_put_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml', $dumpedYamlTemplate);
 
         self::assertStringEqualsFile(__DIR__ . '/Fixtures/TwoColumnPreset.yaml', $dumpedYamlTemplate);
     }
 
     /** @test */
-    public function testDynamicNodeCreationMatchesSnapshot(): void
+    public function testNodeCreationMatchesSnapshot2(): void
     {
-        $nodeCreationDialogProperties = [
-            'text' => '<p>bar</p>'
-        ];
+        $this->createNodeInto(
+            $targetNode = $this->homePageNode->getNode('main'),
+            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Columns.Two.CreationDialogAndWithItems'),
+            [
+                'text' => '<p>bar</p>'
+            ]
+        );
 
-        $targetNode = $this->homePageNode->getNode('main');
-
-        $targetNodeContextPath = $targetNode->getContextPath();
-
-        $changeCollectionSerialized = [[
-            'type' => 'Neos.Neos.Ui:CreateInto',
-            'subject' => $targetNodeContextPath,
-            'payload' => [
-                'parentContextPath' => $targetNodeContextPath,
-                'parentDomAddress' => [
-                    'contextPath' => $targetNodeContextPath,
-                ],
-                'nodeType' => $toBeCreatedNodeTypeName = 'Flowpack.NodeTemplates:Content.Columns.Two.Dynamic',
-                'data' => $nodeCreationDialogProperties,
-                'baseNodeType' => '',
-            ],
-        ]];
-
-        $changeCollection = (new ChangeCollectionConverter())->convertFrom($changeCollectionSerialized, null);
-        self::assertInstanceOf(ChangeCollection::class, $changeCollection);
-        $changeCollection->apply();
-
-        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName)[0];
+        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
-
-        // file_put_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml', $dumpedYamlTemplate);
 
         self::assertStringEqualsFile(__DIR__ . '/Fixtures/TwoColumnPreset.yaml', $dumpedYamlTemplate);
     }
 
+    /** @test */
+    public function testNodeCreationMatchesSnapshot3(): void
+    {
+        $this->createNodeInto(
+            $targetNode = $this->homePageNode->getNode('main'),
+            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Columns.Two.WithContext'),
+            []
+        );
+
+        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
+
+        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
+
+        self::assertStringEqualsFile(__DIR__ . '/Fixtures/TwoColumnPreset.yaml', $dumpedYamlTemplate);
+    }
 
     public function tearDown(): void
     {
