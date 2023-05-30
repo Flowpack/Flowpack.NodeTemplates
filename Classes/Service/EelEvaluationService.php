@@ -32,12 +32,10 @@ class EelEvaluationService
     /**
      * Evaluate an Eel expression.
      *
-     * @param string $expression The Eel expression to evaluate
-     * @param array $contextVariables
      * @return mixed The result of the evaluated Eel expression
      * @throws \Neos\Eel\Exception
      */
-    public function evaluateEelExpression($expression, $contextVariables)
+    public function evaluateEelExpression(string $expression, array $contextVariables)
     {
         if ($this->defaultContextVariables === null) {
             $this->defaultContextVariables = EelUtility::getDefaultContextVariables($this->defaultContext);

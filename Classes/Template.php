@@ -108,17 +108,14 @@ class Template
      * Apply this template to the given node while providing context for EEL processing
      *
      * The entry point
-     *
-     * @param NodeInterface $node
-     * @param array $context
      */
-    public function apply(NodeInterface $node, array $context)
+    public function apply(NodeInterface $node, array $context): void
     {
         $context = $this->mergeContextAndWithContext($context);
         $this->applyTemplateOnNode($node, $context);
     }
 
-    private function applyTemplateOnNode(NodeInterface $node, array $context)
+    private function applyTemplateOnNode(NodeInterface $node, array $context): void
     {
         $context['node'] = $node;
 
@@ -140,10 +137,8 @@ class Template
     /**
      * @deprecated will be made internal and private
      * @internal
-     * @param NodeInterface $parentNode
-     * @param array $context
      */
-    public function createOrFetchAndApply(NodeInterface $parentNode, array $context)
+    public function createOrFetchAndApply(NodeInterface $parentNode, array $context): void
     {
         $context['parentNode'] = $parentNode;
 
@@ -199,11 +194,7 @@ class Template
         }
     }
 
-    /**
-     * @param array $context
-     * @return bool
-     */
-    public function isApplicable(array $context)
+    public function isApplicable(array $context): bool
     {
         $isApplicable = true;
         if ($this->when !== null) {
@@ -217,11 +208,8 @@ class Template
 
     /**
      * TODO: Handle EEL parsing for nested properties
-     *
-     * @param NodeInterface $node
-     * @param array $context
      */
-    protected function setProperties(NodeInterface $node, array $context)
+    protected function setProperties(NodeInterface $node, array $context): void
     {
         foreach ($this->properties as $propertyName => $propertyValue) {
             //evaluate Eel only on string properties
@@ -280,14 +268,10 @@ class Template
     /**
      * Signals that a node template has been applied to the given node.
      *
-     * @param NodeInterface $node
-     * @param array $context
-     * @param array $options
-     * @return void
      * @Flow\Signal
      * @api
      */
-    public function emitNodeTemplateApplied(NodeInterface $node, array $context, array $options)
+    public function emitNodeTemplateApplied(NodeInterface $node, array $context, array $options): void
     {
     }
 }
