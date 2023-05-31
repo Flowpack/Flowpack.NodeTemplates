@@ -44,9 +44,9 @@ class EelEvaluationService
         try {
             return EelUtility::evaluateEelExpression($expression, $this->eelEvaluator, $contextVariables);
         } catch (ParserException $parserException) {
-            throw new \RuntimeException('EEL Expression in NodeType template could not be parsed.', 1684788574212, $parserException);
+            throw new EelException('EEL Expression in NodeType template could not be parsed.', 1684788574212, $parserException);
         } catch (\Exception $exception) {
-            throw new \RuntimeException(sprintf('EEL Expression "%s" in NodeType template caused an error.', $expression), 1684761760723, $exception);
+            throw new EelException(sprintf('EEL Expression "%s" in NodeType template caused an error.', $expression), 1684761760723, $exception);
         }
     }
 }
