@@ -137,6 +137,35 @@ There are several variables available in the EEL context that allow for accessin
 | item           | The current item inside a withItems loop                                                  | Inside withItems loop   |
 | key            | The current key inside a withItems loop                                                   | Inside withItems loop   |
 
+### Additional context
+
+You can add more context variables to a template via the ``withContext`` setting. ``withContext``
+takes an arbitrary array of items whose value might also contain EEL expressions:
+
+```
+template:
+  withContext:
+    someText: '<p>foo</p>'
+    processedData: "${String.trim(data.bla)}"
+    booleanType: true
+    arrayType: ["value"]
+  childNodes:
+    column0Tethered:
+      name: column0
+      childNodes:
+        content0:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          when: "${booleanType}"
+          withItems: "${arrayType}"
+          properties:
+            text: ${someText + processedData + item}
+```
+
+Inside ``withContext`` the parent context may be accessed in EEL expressions, but sibling context
+values are not available. As ``withContext`` is evaluated before ``when`` and ``withItems``, you can
+access context variables from ``withContext`` in ``withItems`` at the same level -- but not the other
+way around.
+
 ## Node creation depth
 
 The node creation depth can be configured via Settings.yaml with `nodeCreationDepth`, defaults to `10`. 
