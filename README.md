@@ -140,7 +140,7 @@ There are several variables available in the EEL context that allow for accessin
 ### Additional context
 
 You can add more context variables to a template via the ``withContext`` setting. ``withContext``
-takes an arbitrary array of items whose value might also contain EEL expressions:
+takes an arbitrary array of items whose values might also contain EEL expressions:
 
 ```
 template:
@@ -163,7 +163,7 @@ template:
 
 Inside ``withContext`` the parent context may be accessed in EEL expressions, but sibling context
 values are not available. As ``withContext`` is evaluated before ``when`` and ``withItems``, you can
-access context variables from ``withContext`` in ``withItems`` at the same level -- but not the other
+access context variables from ``withContext`` in ``withItems`` at the same level – but not the other
 way around.
 
 ## Node creation depth
