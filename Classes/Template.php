@@ -8,6 +8,8 @@ use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Utility as NodeUtility;
 use Neos\Flow\Persistence\Doctrine\PersistenceManager;
 use Neos\Neos\Service\NodeOperations;
+use Neos\Neos\Ui\Domain\Model\Feedback\Messages\Error;
+use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
 use Neos\Utility\ObjectAccess;
 
 class Template
@@ -73,6 +75,12 @@ class Template
     protected $persistenceManager;
 
     /**
+     * @var FeedbackCollection
+     * @Flow\Inject
+     */
+    protected $feedbackCollection;
+
+    /**
      * Template constructor
      *
      * @param string $type
@@ -129,6 +137,16 @@ class Template
         /** @var Template $childNodeTemplate */
         foreach ($this->childNodes as $childNodeTemplate) {
             $childNodeTemplate->createOrFetchAndApply($node, $context);
+        }
+
+        $messages = [];
+        $this->checkIfPropertiesOfNodeAreValid($node, $messages);
+        foreach ($messages as $message) {
+            $info = new Error();
+            $info->setMessage('[NodeTemplate] ' . $message);
+            $this->feedbackCollection->add(
+                $info
+            );
         }
 
         $this->emitNodeTemplateApplied($node, $context, $this->options);
@@ -263,6 +281,56 @@ class Template
             $withContext[$key] = $value;
         }
         return array_merge($context, $withContext);
+    }
+
+    /**
+     * A few checks are run against the properties of the node
+     *
+     * 1. It is checked, that a node only has properties set, that were declared in the NodeType
+     *
+     * 2. In case the property is a select-box, it is checked, that the current value is a valid option of the select-box
+     *
+     * 3. It is made sure is that a property value is never null for the reason:
+     *  In case that due to a condition in the nodeTemplate `null` is assigned to a node property, it will override the defaultValue.
+     *  This is a problem, as setting `null` might not be possible via the Neos UI and the Fusion rendering is most likely not going to handle this edge case.
+     *  So we assume this must have been a mistake. A cleaner, but also more difficult way would be to actually assert that the type matches
+     *
+     * @param array<int, string> $messages by reference in case one of the above constraints is not met.
+     */
+    private function checkIfPropertiesOfNodeAreValid(NodeInterface $node, array &$messages = []): void
+    {
+        $nodeType = $node->getNodeType();
+        $defaultValues = $nodeType->getDefaultValuesForProperties();
+        foreach ($node->getProperties() as $propertyName => $propertyValue) {
+            if (!isset($nodeType->getProperties()[$propertyName])) {
+                $value = json_encode($propertyValue);
+                $messages[] = "Property '$propertyName' is not declared in NodeType {$nodeType->getName()} but was set to: " . $value;
+                continue;
+            }
+            if (array_key_exists($propertyName, $defaultValues) && $propertyValue === null) {
+                $defaultValue = json_encode($defaultValues[$propertyName]);
+                $messages[] = "Property '$propertyName' of node {$nodeType->getName()} is not supposed to be null. The default value would be: $defaultValue.";
+                continue;
+            }
+            if ($propertyValue === null) {
+                // in case the nodeIdentifier of a reference property cannot be resolved, null will be written to the property, and we guard against this
+                // also we want to enforce the actual type of the property which is likely not null
+                $messages[] = "Property '$propertyName' of node {$nodeType->getName()} was set to null. Type is {$nodeType->getPropertyType($propertyName)}";
+                continue;
+            }
+            $propertyConfiguration = $nodeType->getProperties()[$propertyName];
+            $editor = $propertyConfiguration["ui"]["inspector"]["editor"] ?? null;
+            $type = $propertyConfiguration["type"] ?? null;
+            $selectBoxValues = $propertyConfiguration["ui"]["inspector"]["editorOptions"]["values"] ?? null;
+            if ($editor === 'Neos.Neos/Inspector/Editors/SelectBoxEditor' && $selectBoxValues && in_array($type, ["string", "array"], true)) {
+                $selectedValue = $type === "string" ? [$propertyValue] : $propertyValue;
+                $difference = array_diff($selectedValue, array_keys($selectBoxValues));
+                if (\count($difference) !== 0) {
+                    $messages[] = "Property '$propertyName' of node {$nodeType->getName()} has illegal select-box value(s): (" . join(", ", $difference) . ')';
+                    continue;
+                }
+            }
+        }
     }
 
     /**
