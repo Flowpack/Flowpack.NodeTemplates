@@ -71,7 +71,7 @@
               type: 'Flowpack.NodeTemplates:Content.Text'
               when: "${false}"
               properties:
-                text: "im never created"
+                text: "i'm never created"
 
 'Flowpack.NodeTemplates:Content.Columns.Two.WithContext':
   superTypes:

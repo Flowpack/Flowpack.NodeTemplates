@@ -20,11 +20,11 @@ class NodeTemplateDumper
     protected $translationHelper;
 
     /**
-     * Dump the node tree structure into a NodeTemplate Yaml structure.
-     * References to Nodes and non-primitive property values are commented out in the Yaml.
+     * Dump the node tree structure into a NodeTemplate YAML structure.
+     * References to Nodes and non-primitive property values are commented out in the YAML.
      *
      * @param NodeInterface $startingNode specified root node of the node tree to dump
-     * @return string yaml representation of the node template
+     * @return string YAML representation of the node template
      */
     public function createNodeTemplateYamlDumpFromSubtree(NodeInterface $startingNode): string
     {

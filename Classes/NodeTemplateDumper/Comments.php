@@ -50,7 +50,7 @@ class Comments
             ] = $matches;
             $comment = $this->comments[$identifier] ?? null;
             if (!$comment instanceof Comment) {
-                throw new \Exception('Error while trying to render comment ' . $matches[0] . ' commentId doesnt exist.', 1684309524383);
+                throw new \Exception('Error while trying to render comment ' . $matches[0] . '. Reason: comment id doesnt exist.', 1684309524383);
             }
             return $comment->toYamlComment($indentation, $property);
         }, $yamlDump);

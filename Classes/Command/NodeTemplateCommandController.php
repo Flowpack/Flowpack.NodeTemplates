@@ -24,14 +24,14 @@ class NodeTemplateCommandController extends CommandController
     protected $nodeTemplateDumper;
 
     /**
-     * Dump the node tree structure into a NodeTemplate Yaml structure.
-     * References to Nodes and non-primitive property values are commented out in the Yaml.
+     * Dump the node tree structure into a NodeTemplate YAML structure.
+     * References to Nodes and non-primitive property values are commented out in the YAML.
      *
      * @param string $startingNodeId specified root node of the node tree
      * @param string $workspaceName
      * @return void
      */
-    public function fromSubtreeCommand(string $startingNodeId, string $workspaceName = 'live'): void
+    public function createFromNodeSubtree(string $startingNodeId, string $workspaceName = 'live'): void
     {
         $subgraph = $this->contentContextFactory->create([
             'workspaceName' => $workspaceName
