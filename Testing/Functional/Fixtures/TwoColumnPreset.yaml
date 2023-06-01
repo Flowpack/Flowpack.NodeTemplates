@@ -1,18 +1,20 @@
-template:
-  childNodes:
-    'Content Collection (column0)':
-      name: column0
+'{nodeTypeName}':
+  options:
+    template:
       childNodes:
-        content0:
-          type: 'Flowpack.NodeTemplates:Content.Text'
-          properties:
-            # Text
-            text: '<p>foo</p>'
-    'Content Collection (column1)':
-      name: column1
-      childNodes:
-        content0:
-          type: 'Flowpack.NodeTemplates:Content.Text'
-          properties:
-            # Text
-            text: '<p>bar</p>'
+        'Content Collection (column0)':
+          name: column0
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                # Text
+                text: '<p>foo</p>'
+        'Content Collection (column1)':
+          name: column1
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                # Text
+                text: '<p>bar</p>'

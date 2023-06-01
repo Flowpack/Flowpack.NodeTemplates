@@ -104,7 +104,11 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
 
-        self::assertStringEqualsFile(__DIR__ . '/Fixtures/TwoColumnPreset.yaml', $dumpedYamlTemplate);
+        $snapshot = file_get_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml');
+        self::assertSame(
+            str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
+            $dumpedYamlTemplate
+        );
     }
 
     /** @test */
@@ -122,7 +126,11 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
 
-        self::assertStringEqualsFile(__DIR__ . '/Fixtures/TwoColumnPreset.yaml', $dumpedYamlTemplate);
+        $snapshot = file_get_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml');
+        self::assertSame(
+            str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
+            $dumpedYamlTemplate
+        );
     }
 
     /** @test */
@@ -138,7 +146,11 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
 
-        self::assertStringEqualsFile(__DIR__ . '/Fixtures/TwoColumnPreset.yaml', $dumpedYamlTemplate);
+        $snapshot = file_get_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml');
+        self::assertSame(
+            str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
+            $dumpedYamlTemplate
+        );
     }
 
     public function tearDown(): void

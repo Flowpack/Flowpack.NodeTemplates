@@ -47,18 +47,20 @@ class NodeTemplateDumper
         }
         assert(isset($firstEntry));
 
-        $templateRoot = [
-            'template' => array_filter([
-                'properties' => $firstEntry['properties'] ?? null,
-                'childNodes' => $firstEntry['childNodes'] ?? null,
-            ])
+        $templateInNodeTypeOptions = [
+            $nodeType->getName() => [
+                'options' => [
+                    'template' => array_filter([
+                        'properties' => $firstEntry['properties'] ?? null,
+                        'childNodes' => $firstEntry['childNodes'] ?? null,
+                    ])
+                ]
+            ]
         ];
 
-        $yaml = Yaml::dump($templateRoot, 99, 2, Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE | Yaml::DUMP_NULL_AS_TILDE);
+        $yamlWithSerializedComments = Yaml::dump($templateInNodeTypeOptions, 99, 2, Yaml::DUMP_EMPTY_ARRAY_AS_SEQUENCE | Yaml::DUMP_NULL_AS_TILDE);
 
-        $yamlWithComments = $comments->renderCommentsInYamlDump($yaml);
-
-        return $yamlWithComments;
+        return $comments->renderCommentsInYamlDump($yamlWithSerializedComments);
     }
 
     /** @param array<NodeInterface> $nodes */
