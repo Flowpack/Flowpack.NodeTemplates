@@ -83,6 +83,9 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
      */
     private function handleExceptions(NodeInterface $node, \Exception $exception): void
     {
+        if (PHP_SAPI === 'cli') {
+            throw $exception;
+        }
         $nodeTemplateError = new Error();
         $nodeTemplateError->setMessage(sprintf('Template for "%s" only partially applied. Please check the newly created nodes.', $node->getNodeType()->getLabel()));
 
