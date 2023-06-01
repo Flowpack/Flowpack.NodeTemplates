@@ -1,0 +1,112 @@
+'Flowpack.NodeTemplates:Document.Page':
+  superTypes:
+    'Neos.Neos:Document': true
+  childNodes:
+    main:
+      type: 'Neos.Neos:ContentCollection'
+
+'Flowpack.NodeTemplates:Content.Text':
+  superTypes:
+    'Neos.Neos:Content': true
+  properties:
+    text:
+      type: string
+      ui:
+        label: "Text"
+
+'Flowpack.NodeTemplates:Content.Columns.Two':
+  superTypes:
+    'Neos.Neos:Content': true
+  childNodes:
+    column0:
+      type: 'Neos.Neos:ContentCollection'
+    column1:
+      type: 'Neos.Neos:ContentCollection'
+  options:
+    template:
+      childNodes:
+        column0Tethered:
+          name: column0
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                text: '<p>foo</p>'
+        column1Tethered:
+          name: column1
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                text: '<p>bar</p>'
+
+'Flowpack.NodeTemplates:Content.Columns.Two.CreationDialogAndWithItems':
+  superTypes:
+    'Neos.Neos:Content': true
+  ui:
+    creationDialog:
+      elements:
+        text:
+          type: string
+          ui:
+            editor: Neos.Neos/Inspector/Editors/TextFieldEditor
+  childNodes:
+    column0:
+      type: 'Neos.Neos:ContentCollection'
+    column1:
+      type: 'Neos.Neos:ContentCollection'
+  options:
+    template:
+      childNodes:
+        tetheredColumns:
+          withItems: ["column0", "column1"]
+          name: "${item}"
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              when: "${true}"
+              properties:
+                text: "${item == 'column0' ? '<p>foo</p>' : data.text}"
+            contentNever:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              when: "${false}"
+              properties:
+                text: "i'm never created"
+
+'Flowpack.NodeTemplates:Content.Columns.Two.WithContext':
+  superTypes:
+    'Neos.Neos:Content': true
+  childNodes:
+    column0:
+      type: 'Neos.Neos:ContentCollection'
+    column1:
+      type: 'Neos.Neos:ContentCollection'
+  options:
+    template:
+      withContext:
+        tagName: 'p'
+        booleanType: true
+        arrayType: ["foo"]
+      childNodes:
+        column0Tethered:
+          name: column0
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              when: "${booleanType}"
+              withItems: "${arrayType}"
+              properties:
+                text: ${'<' + tagName + '>' + item + '</' + tagName + '>'}
+        column1Tethered:
+          name: column1
+          childNodes:
+            content0:
+              withContext:
+                otherBooleanType: true
+                oneItem: "${[false]}"
+                upperContext: "${'</' + tagName + '>'}"
+              when: "${otherBooleanType}"
+              withItems: "${oneItem}"
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                text: "${'<p>bar' + upperContext}"
