@@ -18,7 +18,7 @@ under the path "options.template".
 
 1. `composer require flowpack/nodetemplates`
 2. Add templates to your nodetypes configuration in NodeTypes.yaml, as described in the examples below
-3. Use the new React UI
+3. Or use the command to dump the template based on your workspace
 
 ## Hello world
 
@@ -145,7 +145,19 @@ The node creation depth can be configured via Settings.yaml with `nodeCreationDe
 Flowpack:
   NodeTemplates:
     nodeCreationDepth: 10
-``` 
+```
+
+## Create template from node subtree
+
+When creating a more complex node template (to create multiple pages and content elements) it can be helpful to take the current node subtree from your workspace as reference.
+For this case you can use the command:
+
+```sh
+flow nodeTemplate:createFromNodeSubtree <nodeIdentifier>
+```
+
+It will give you the output similar to the example above.
+References to Nodes and non-primitive property values are commented out in the YAML.
 
 ## More examples
 
