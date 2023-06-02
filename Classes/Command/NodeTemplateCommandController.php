@@ -31,7 +31,7 @@ class NodeTemplateCommandController extends CommandController
      * @param string $workspaceName
      * @return void
      */
-    public function createFromNodeSubtree(string $startingNodeId, string $workspaceName = 'live'): void
+    public function createFromNodeSubtreeCommand(string $startingNodeId, string $workspaceName = 'live'): void
     {
         $subgraph = $this->contentContextFactory->create([
             'workspaceName' => $workspaceName
