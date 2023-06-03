@@ -39,6 +39,18 @@ class Templates implements \IteratorAggregate, \JsonSerializable
         return new self(...$this->items, ...$other->items);
     }
 
+    public function toRootTemplate(): RootTemplate
+    {
+        assert(count($this->items) <= 1);
+        foreach ($this->items as $first) {
+            return new RootTemplate(
+                $first->getProperties(),
+                $first->getChildNodes()
+            );
+        }
+        return new RootTemplate([], new Templates());
+    }
+
     public function jsonSerialize()
     {
         return $this->items;

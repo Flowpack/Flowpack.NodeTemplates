@@ -36,7 +36,7 @@
       "severity": "ERROR"
     },
     {
-      "message": "Expression \"${item == 1 ? cannotCallThis() : 'bar'}\" in \"name\" | NotAllowedException(Method \"cannotCallThis\" is not callable in untrusted context, 1369043080)",
+      "message": "Expression \"${item == 1 ? cannotCallThis() : null}\" in \"name\" | NotAllowedException(Method \"cannotCallThis\" is not callable in untrusted context, 1369043080)",
       "severity": "ERROR"
     },
     {
