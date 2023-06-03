@@ -12,4 +12,3 @@ Flowpack:
       Type: 'Neos\Eel\Helper\TypeHelper'
       I18n: 'Neos\Flow\I18n\EelHelper\TranslationHelper'
       q: 'Neos\Eel\FlowQuery\FlowQuery::q'
-    nodeCreationDepth: 10

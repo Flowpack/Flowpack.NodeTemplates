@@ -30,6 +30,9 @@ class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerI
      */
     public function handle(NodeInterface $node, array $data): void
     {
+        // TODO;
+        return;
+
         $title = null;
         $uriPathSegment = null;
 

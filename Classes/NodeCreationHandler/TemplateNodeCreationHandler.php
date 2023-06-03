@@ -2,12 +2,13 @@
 
 namespace Flowpack\NodeTemplates\NodeCreationHandler;
 
-use Flowpack\NodeTemplates\Service\EelException;
-use Flowpack\NodeTemplates\Template;
+use Flowpack\NodeTemplates\Domain\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\EelException;
+use Flowpack\NodeTemplates\Domain\TemplateFactory;
+use Flowpack\NodeTemplates\Infrastructure\ContentRepositoryTemplateHandler;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Exception\NodeConstraintException;
 use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Property\PropertyMapper;
 use Neos\Neos\Ui\Domain\Model\Feedback\Messages\Error;
 use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
 use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
@@ -15,16 +16,16 @@ use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
 class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 {
     /**
-     * @var PropertyMapper
+     * @var TemplateFactory
      * @Flow\Inject
      */
-    protected $propertyMapper;
+    protected $templateFactory;
 
     /**
-     * @var integer
-     * @Flow\InjectConfiguration(path="nodeCreationDepth")
+     * @var ContentRepositoryTemplateHandler
+     * @Flow\Inject
      */
-    protected $nodeCreationDepth;
+    protected $templateContentRepositoryApplier;
 
     /**
      * @var FeedbackCollection
@@ -46,29 +47,14 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
             return;
         }
 
-        $propertyMappingConfiguration = $this->propertyMapper->buildPropertyMappingConfiguration();
-
-        $subPropertyMappingConfiguration = $propertyMappingConfiguration;
-        for ($i = 0; $i < $this->nodeCreationDepth; $i++) {
-            $subPropertyMappingConfiguration = $subPropertyMappingConfiguration
-                ->forProperty('childNodes.*')
-                ->allowAllProperties();
-        }
-
-        /** @var Template $template */
-        $template = $this->propertyMapper->convert(
-            $templateConfiguration,
-            Template::class,
-            $propertyMappingConfiguration
-        );
-
         $context = [
             'data' => $data,
             'triggeringNode' => $node,
         ];
 
         try {
-            $template->apply($node, $context);
+            $template = $this->templateFactory->createFromTemplateConfiguration($templateConfiguration, $context, CaughtExceptions::create());
+            $this->templateContentRepositoryApplier->apply($template, $node);
         } catch (\Exception $exception) {
             $this->handleExceptions($node, $exception);
         }
