@@ -2,10 +2,13 @@
 
 namespace Flowpack\NodeTemplates\Infrastructure;
 
+use Flowpack\NodeTemplates\Domain\CaughtException;
+use Flowpack\NodeTemplates\Domain\CaughtExceptions;
 use Flowpack\NodeTemplates\Domain\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template;
 use Flowpack\NodeTemplates\Domain\Templates;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Exception\NodeConstraintException;
 use Neos\Flow\Annotations as Flow;
 use Neos\Neos\Service\NodeOperations;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
@@ -26,38 +29,47 @@ class ContentRepositoryTemplateHandler
 
     /**
      * Applies the root template and its descending configured child node templates on the given node.
+     * @throws \InvalidArgumentException
      */
-    public function apply(RootTemplate $template, NodeInterface $node): void
+    public function apply(RootTemplate $template, NodeInterface $node, CaughtExceptions $caughtExceptions): void
     {
         $this->assertPropertiesAreValid($template->getProperties());
         foreach ($template->getProperties() as $key => $value) {
             $node->setProperty($key, $value);
         }
         $this->ensureNodeHasUriPathSegment($node, $template);
-        $this->applyTemplateRecursively($template->getChildNodes(), $node);
+        $this->applyTemplateRecursively($template->getChildNodes(), $node, $caughtExceptions);
     }
 
-    private function applyTemplateRecursively(Templates $templates, NodeInterface $parentNode): void
+    private function applyTemplateRecursively(Templates $templates, NodeInterface $parentNode, CaughtExceptions $caughtExceptions): void
     {
         foreach ($templates as $template) {
             if ($template->getName() && $parentNode->getNodeType()->hasAutoCreatedChildNode($template->getName())) {
                 $node = $parentNode->getNode($template->getName()->__toString());
+                assert($template->getType() === null);
             } else {
-                $node = $this->nodeOperations->create(
-                    $parentNode,
-                    [
-                        'nodeType' => $template->getType()->getValue(),
-                        'nodeName' => $template->getName() ? $template->getName()->__toString() : null
-                    ],
-                    'into'
-                );
+                assert($template->getType() !== null);
+                try {
+                    $node = $this->nodeOperations->create(
+                        $parentNode,
+                        [
+                            'nodeType' => $template->getType()->getValue(),
+                            'nodeName' => $template->getName() ? $template->getName()->__toString() : null
+                        ],
+                        'into'
+                    );
+                } catch (NodeConstraintException $nodeConstraintException) {
+                    $caughtExceptions->add(
+                        CaughtException::fromException($nodeConstraintException)
+                    );
+                }
             }
             $this->assertPropertiesAreValid($template->getProperties());
             foreach ($template->getProperties() as $key => $value) {
                 $node->setProperty($key, $value);
             }
             $this->ensureNodeHasUriPathSegment($node, $template);
-            $this->applyTemplateRecursively($template->getChildNodes(), $node);
+            $this->applyTemplateRecursively($template->getChildNodes(), $node, $caughtExceptions);
         }
     }
 
@@ -99,7 +111,7 @@ class ContentRepositoryTemplateHandler
             '_workspace'
         ];
         foreach ($properties as $propertyName => $propertyValue) {
-            if (str_starts_with($propertyName, '_')) {
+            if ($propertyName[0] === '_') {
                 $lowerPropertyName = strtolower($propertyName);
                 foreach ($legacyInternalProperties as $legacyInternalProperty) {
                     if ($lowerPropertyName === strtolower($legacyInternalProperty)) {

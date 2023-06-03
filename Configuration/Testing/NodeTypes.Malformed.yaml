@@ -1,0 +1,27 @@
+'Flowpack.NodeTemplates:Content.WithEvaluationExceptions':
+  superTypes:
+    'Neos.Neos:ContentCollection': true
+  properties:
+    foo:
+      type: string
+    working:
+      type: string
+    bar:
+      type: string
+  options:
+    template:
+      properties:
+        foo: "${cannotCallThis()}"
+        working: "working"
+        bar: "${'left open"
+      childNodes:
+        foo:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          when: "${parse äüäö error}"
+        working:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          properties:
+            text: bar
+        illegalNode:
+          type: 'Neos.Neos:Document'
+          name: 'illegal'

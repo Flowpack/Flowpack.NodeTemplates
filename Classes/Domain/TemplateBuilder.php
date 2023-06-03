@@ -5,17 +5,29 @@ namespace Flowpack\NodeTemplates\Domain;
 use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
 use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
 use Neos\Flow\Annotations as Flow;
+use Neos\Utility\Arrays;
 
 /** @Flow\Proxy(false) */
 class TemplateBuilder
 {
+    /**
+     * @psalm-readonly
+     */
     private array $configuration;
 
     private array $evaluationContext;
 
+    /**
+     * @psalm-readonly
+     */
     private \Closure $configurationValueProcessor;
 
+    /**
+     * @psalm-readonly
+     */
     private CaughtExceptions $caughtExceptions;
+
+    private bool $ignoreLastResultBecauseOfException = false;
 
     /**
      * @param array $configuration
@@ -46,7 +58,7 @@ class TemplateBuilder
     ): RootTemplate {
         $builder = new self($configuration, $evaluationContext, $configurationValueProcessor, $caughtExceptions);
         $builder->validateRootLevelTemplateConfigurationKeys();
-        $templates = self::createTemplatesFromBuilder($builder);
+        $templates = $builder->toTemplates();
         /** @var Template[] $templateList */
         $templateList = iterator_to_array($templates, false);
         assert(\count($templateList) === 1);
@@ -56,37 +68,39 @@ class TemplateBuilder
         );
     }
 
-    private static function createTemplatesFromBuilder(self $builder): Templates
+    private function toTemplates(): Templates
     {
-        $builder = $builder->mergeContextAndWithContextConfiguration();
+        $this->mergeContextAndWithContextConfiguration();
 
-        if (!$builder->processConfiguration('when', true)) {
+        if (!$this->processConfiguration('when', true)) {
             return Templates::empty();
         }
 
-        if (!$builder->hasConfiguration('withItems')) {
-            return new Templates($builder->toTemplate());
+        if (!isset($this->configuration['withItems'])) {
+            return new Templates($this->toTemplate());
         }
 
-        $items = $builder->processConfiguration('withItems', []);
+        $items = $this->processConfiguration('withItems', []);
         if (!is_iterable($items)) {
-            throw new \RuntimeException(sprintf('With items is not iterable. Configuration %s evaluated to type %s', json_encode($builder->configuration['withItems']), gettype($items)));
+            $this->exceptionCaught(
+                CaughtException::fromException(
+                    new \RuntimeException(sprintf('Type %s is not iterable.', gettype($items)), 1685802354186)
+                )->withCause(sprintf('Configuration %s malformed.', json_encode($this->configuration['withItems'])))
+            );
+        }
+
+        if ($this->ignoreLastResultBecauseOfException) {
+            return Templates::empty();
         }
 
         $templates = Templates::empty();
         foreach ($items as $itemKey => $itemValue) {
-            $evaluationContextWithItem = $builder->evaluationContext;
-            $evaluationContextWithItem['item'] = $itemValue;
-            $evaluationContextWithItem['key'] = $itemKey;
-
-            $itemBuilder = new self(
-                $builder->configuration,
-                $evaluationContextWithItem,
-                $builder->configurationValueProcessor,
-                $builder->caughtExceptions
-            );
-
-            $templates = $templates->withAdded($itemBuilder->toTemplate());
+            $this->evaluationContext['item'] = $itemValue;
+            $this->evaluationContext['key'] = $itemKey;
+            $itemTemplate = $this->toTemplate();
+            if (!$this->ignoreLastResultBecauseOfException) {
+                $templates = $templates->withAdded($itemTemplate);
+            }
         }
         return $templates;
     }
@@ -105,13 +119,21 @@ class TemplateBuilder
 
     private function processProperties(): array
     {
+        $previous = $this->ignoreLastResultBecauseOfException;
+        $this->ignoreLastResultBecauseOfException = false;
         $processedProperties = [];
         foreach ($this->configuration['properties'] ?? [] as $propertyName => $value) {
             if (!is_scalar($value)) {
                 throw new \InvalidArgumentException(sprintf('Template configuration properties can only hold int|float|string|bool. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730);
             }
-            $processedProperties[$propertyName] = ($this->configurationValueProcessor)($value, $this->evaluationContext);
+            $processedValue = $this->processConfiguration(['properties', $propertyName], null);
+            if (!$this->ignoreLastResultBecauseOfException) {
+                $processedProperties[$propertyName] = $processedValue;
+            }
+            $this->ignoreLastResultBecauseOfException = false;
         }
+        // we can still create the template if there has been a error when evaluating the properties.
+        $this->ignoreLastResultBecauseOfException = $previous;
         return $processedProperties;
     }
 
@@ -129,23 +151,37 @@ class TemplateBuilder
                 $this->caughtExceptions
             );
             $builder->validateNestedLevelTemplateConfigurationKeys();
-            $templates = $templates->merge(self::createTemplatesFromBuilder($builder));
+            $templates = $templates->merge($builder->toTemplates());
         }
         return $templates;
     }
 
-    /** @return mixed */
-    private function processConfiguration(string $configurationKey, $fallback)
+    /**
+     * @param string|list<string> $configurationPath
+     * @param mixed $fallback
+     * @return mixed
+     */
+    private function processConfiguration($configurationPath, $fallback)
     {
-        if (!$this->hasConfiguration($configurationKey)) {
+        if (($value = Arrays::getValueByPath($this->configuration, $configurationPath)) === null) {
             return $fallback;
         }
-        return ($this->configurationValueProcessor)($this->configuration[$configurationKey], $this->evaluationContext);
+        try {
+            return ($this->configurationValueProcessor)($value, $this->evaluationContext);
+        } catch (\Exception $exception) {
+            $this->exceptionCaught(
+                CaughtException::fromException($exception)->withCause(
+                    sprintf('Expression "%s" in "%s"', $value, is_array($configurationPath) ? join('.', $configurationPath) : $configurationPath)
+                )
+            );
+            return $fallback;
+        }
     }
 
-    private function  hasConfiguration(string $configurationKey): bool
+    private function exceptionCaught(CaughtException $caughtException): void
     {
-        return array_key_exists($configurationKey, $this->configuration);
+        $this->ignoreLastResultBecauseOfException = true;
+        $this->caughtExceptions->add($caughtException);
     }
 
     /**
@@ -171,21 +207,16 @@ class TemplateBuilder
      * that means the context `item` from `withItems` will not be available yet
      *
      */
-    private function mergeContextAndWithContextConfiguration(): self
+    private function mergeContextAndWithContextConfiguration()
     {
         if (($this->configuration['withContext'] ?? []) === []) {
             return $this;
         }
         $withContext = [];
         foreach ($this->configuration['withContext'] as $key => $value) {
-            $withContext[$key] = ($this->configurationValueProcessor)($value, $this->evaluationContext);
+            $withContext[$key] = $this->processConfiguration(['withContext', $key], null);
         }
-        return new self(
-            $this->configuration,
-            array_merge($this->evaluationContext, $withContext),
-            $this->configurationValueProcessor,
-            $this->caughtExceptions
-        );
+        $this->evaluationContext = array_merge($this->evaluationContext, $withContext);
     }
 
     private function validateNestedLevelTemplateConfigurationKeys(): void

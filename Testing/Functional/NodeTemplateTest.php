@@ -12,11 +12,16 @@ use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
 use Neos\ContentRepository\Domain\Repository\WorkspaceRepository;
 use Neos\ContentRepository\Domain\Service\ContextFactoryInterface;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
+use Neos\Flow\Mvc\Controller\ControllerContext;
 use Neos\Flow\Tests\FunctionalTestCase;
 use Neos\Neos\Domain\Model\Site;
 use Neos\Neos\Domain\Repository\SiteRepository;
 use Neos\Neos\Ui\Domain\Model\ChangeCollection;
+use Neos\Neos\Ui\Domain\Model\Feedback\AbstractMessageFeedback;
+use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
+use Neos\Neos\Ui\Domain\Model\FeedbackInterface;
 use Neos\Neos\Ui\TypeConverter\ChangeCollectionConverter;
+use Neos\Utility\ObjectAccess;
 
 class NodeTemplateTest extends FunctionalTestCase
 {
@@ -80,6 +85,7 @@ class NodeTemplateTest extends FunctionalTestCase
                     'contextPath' => $targetNodeContextPath,
                 ],
                 'nodeType' => $nodeTypeName->getValue(),
+                'name' => 'new-node',
                 'data' => $nodeCreationDialogValues,
                 'baseNodeType' => '',
             ],
@@ -104,6 +110,7 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
 
+        $this->assertMessagesOfFeedbackCollectionMatch([]);
         $snapshot = file_get_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml');
         self::assertSame(
             str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
@@ -126,6 +133,7 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
 
+        $this->assertMessagesOfFeedbackCollectionMatch([]);
         $snapshot = file_get_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml');
         self::assertSame(
             str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
@@ -146,6 +154,7 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
 
+        $this->assertMessagesOfFeedbackCollectionMatch([]);
         $snapshot = file_get_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml');
         self::assertSame(
             str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
@@ -168,7 +177,32 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
 
+        $this->assertMessagesOfFeedbackCollectionMatch([]);
         $snapshot = file_get_contents(__DIR__ . '/Fixtures/DifferentPropertyTypes.yaml');
+        self::assertSame(
+            $snapshot,
+            $dumpedYamlTemplate
+        );
+    }
+
+    /** @test */
+    public function exceptionsAreCaughtAndPartialTemplateIsBuild(): void
+    {
+        $this->createNodeInto(
+            $targetNode = $this->homePageNode->getNode('main'),
+            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithEvaluationExceptions'),
+            []
+        );
+
+        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
+
+        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
+
+        $this->assertMessagesOfFeedbackCollectionMatch(
+            json_decode(file_get_contents(__DIR__ . '/Fixtures/WithEvaluationExceptions.messages.json'), true)
+        );
+
+        $snapshot = file_get_contents(__DIR__ . '/Fixtures/WithEvaluationExceptions.yaml');
         self::assertSame(
             $snapshot,
             $dumpedYamlTemplate
@@ -188,6 +222,7 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
 
+        $this->assertMessagesOfFeedbackCollectionMatch([]);
         $snapshot = file_get_contents(__DIR__ . '/Fixtures/PagePreset.yaml');
         self::assertSame(
             str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
@@ -210,6 +245,7 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
 
+        $this->assertMessagesOfFeedbackCollectionMatch([]);
         $snapshot = file_get_contents(__DIR__ . '/Fixtures/PagePreset.yaml');
         self::assertSame(
             str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
@@ -217,9 +253,29 @@ class NodeTemplateTest extends FunctionalTestCase
         );
     }
 
+    private function assertMessagesOfFeedbackCollectionMatch(array $expectedMessages): void
+    {
+        /** @var FeedbackInterface[] $allFeedbacks */
+        $allFeedbacks = ObjectAccess::getProperty($this->objectManager->get(FeedbackCollection::class), 'feedbacks', true);
+
+        /** @var AbstractMessageFeedback[] $allFeedbacks */
+        $messages = [];
+        foreach ($allFeedbacks as $feedback) {
+            if ($feedback instanceof AbstractMessageFeedback) {
+                $messages[] = $feedback->serializePayload($this->createStub(ControllerContext::class));
+            }
+        }
+
+        self::assertSame(
+            $expectedMessages,
+            $messages
+        );
+    }
+
     public function tearDown(): void
     {
         parent::tearDown();
         $this->inject($this->contextFactory, 'contextInstances', []);
+        $this->objectManager->get(FeedbackCollection::class)->reset();
     }
 }

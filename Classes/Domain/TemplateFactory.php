@@ -52,7 +52,7 @@ class TemplateFactory
      *
      * @param $contextVariables array<string, mixed> additional context for eel expressions
      * @return mixed The result of the evaluated Eel expression
-     * @throws EelException
+     * @throws ParserException|\Exception
      */
     private function evaluateEelExpression(string $expression, array $contextVariables)
     {
@@ -60,12 +60,6 @@ class TemplateFactory
             $this->defaultContextVariables = EelUtility::getDefaultContextVariables($this->defaultContextConfiguration);
         }
         $contextVariables = array_merge($this->defaultContextVariables, $contextVariables);
-        try {
-            return EelUtility::evaluateEelExpression($expression, $this->eelEvaluator, $contextVariables);
-        } catch (ParserException $parserException) {
-            throw new EelException('EEL Expression in NodeType template could not be parsed.', 1684788574212, $parserException);
-        } catch (\Exception $exception) {
-            throw new EelException(sprintf('EEL Expression "%s" in NodeType template caused an error.', $expression), 1684761760723, $exception);
-        }
+        return EelUtility::evaluateEelExpression($expression, $this->eelEvaluator, $contextVariables);
     }
 }
