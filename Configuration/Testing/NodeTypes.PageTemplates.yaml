@@ -1,0 +1,109 @@
+
+'Flowpack.NodeTemplates:Document.Page.Static':
+  superTypes:
+    'Neos.Neos:Document': true
+  childNodes:
+    main:
+      type: 'Neos.Neos:ContentCollection'
+  options:
+    template:
+      properties:
+        title: Page1
+        uriPathSegment: page1
+      childNodes:
+        'Content Collection (main)':
+          name: main
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                text: textOnPage1
+        page1:
+          type: 'Flowpack.NodeTemplates:Document.Page'
+          properties:
+            title: Page2
+            uriPathSegment: page2
+          childNodes:
+            'Content Collection (main)':
+              name: main
+              childNodes:
+                content0:
+                  type: 'Flowpack.NodeTemplates:Content.Text'
+                  properties:
+                    text: textOnPage2
+            page1:
+              type: 'Flowpack.NodeTemplates:Document.Page'
+              properties:
+                title: Page3
+                uriPathSegment: page3
+              childNodes:
+                'Content Collection (main)':
+                  name: main
+                  childNodes:
+                    content0:
+                      type: 'Flowpack.NodeTemplates:Content.Text'
+                      properties:
+                        text: textOnPage3
+        page2:
+          type: 'Flowpack.NodeTemplates:Document.Page'
+          properties:
+            title: Page4
+            uriPathSegment: page4
+          childNodes:
+            'Content Collection (main)':
+              name: main
+              childNodes:
+                content0:
+                  type: 'Flowpack.NodeTemplates:Content.Text'
+                  properties:
+                    text: textOnPage4
+
+
+'Flowpack.NodeTemplates:Document.Page.Dynamic':
+  superTypes:
+    'Neos.Neos:Document': true
+  childNodes:
+    main:
+      type: 'Neos.Neos:ContentCollection'
+  options:
+    template:
+      # title and uri path segment should be set via creation dialog data
+      childNodes:
+        'Content Collection (main)':
+          name: main
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                # Text
+                text: textOnPage1
+        subPages:
+          withItems:
+            - Page2
+            - Page4
+          type: 'Flowpack.NodeTemplates:Document.Page'
+          properties:
+            title: "${item}"
+            # URL path segment will be set based on title
+          childNodes:
+            'Content Collection (main)':
+              name: main
+              childNodes:
+                content0:
+                  type: 'Flowpack.NodeTemplates:Content.Text'
+                  properties:
+                    text: "${item == 'Page2' ? 'textOnPage2' : 'textOnPage4'}"
+            page1:
+              when: "${item == 'Page2'}"
+              type: 'Flowpack.NodeTemplates:Document.Page'
+              properties:
+                title: Page3
+                uriPathSegment: page3
+              childNodes:
+                'Content Collection (main)':
+                  name: main
+                  childNodes:
+                    content0:
+                      type: 'Flowpack.NodeTemplates:Content.Text'
+                      properties:
+                        text: textOnPage3

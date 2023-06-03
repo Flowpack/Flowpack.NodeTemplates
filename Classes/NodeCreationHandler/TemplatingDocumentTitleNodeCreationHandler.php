@@ -3,26 +3,18 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\NodeCreationHandler;
 
-use Neos\Eel\Package;
-use Neos\Flow\Annotations as Flow;
-use Flowpack\NodeTemplates\Service\EelEvaluationService;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\Flow\Annotations as Flow;
+use Neos\Neos\Ui\NodeCreationHandler\DocumentTitleNodeCreationHandler;
 use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
-use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
 class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerInterface
 {
     /**
-     * @var EelEvaluationService
      * @Flow\Inject
+     * @var DocumentTitleNodeCreationHandler
      */
-    protected $eelEvaluationService;
-
-    /**
-     * @Flow\Inject
-     * @var NodeUriPathSegmentGenerator
-     */
-    protected $nodeUriPathSegmentGenerator;
+    protected $augmentedDocumentTitleNodeCreationHandler;
 
     /**
      * @throws \Neos\Eel\Exception
@@ -30,50 +22,15 @@ class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerI
      */
     public function handle(NodeInterface $node, array $data): void
     {
-        // TODO;
-        return;
-
-        $title = null;
-        $uriPathSegment = null;
-
-        if (!$node->getNodeType()->isOfType('Neos.Neos:Document')) {
+        $template = $node->getNodeType()->getOptions()['template'] ?? null;
+        if (
+            !$template
+            || !isset($template['properties']['uriPathSegment'])
+        ) {
+            $this->augmentedDocumentTitleNodeCreationHandler->handle($node, $data);
             return;
         }
 
-        $titleTemplate = $node->getNodeType()->getOptions()['template']['properties']['title'] ?? '';
-
-        if ($titleTemplate === '') {
-            $title = $data['title'] ?? null;
-        } else {
-            if (preg_match(Package::EelExpressionRecognizer, $titleTemplate)) {
-                $context = [
-                    'data' => $data,
-                    'triggeringNode' => $node,
-                ];
-
-                $title = $this->eelEvaluationService->evaluateEelExpression($titleTemplate, $context);
-            }
-        }
-
-        $uriPathSegmentTemplate = $node->getNodeType()->getOptions()['template']['properties']['uriPathSegment'] ?? '';
-        if ($uriPathSegmentTemplate === '') {
-            $uriPathSegment = $data['uriPathSegment'] ?? null;
-        } else {
-            if (preg_match(Package::EelExpressionRecognizer, $uriPathSegmentTemplate)) {
-                $context = [
-                    'data' => $data,
-                    'triggeringNode' => $node,
-                ];
-
-                $uriPathSegment = $this->eelEvaluationService->evaluateEelExpression($uriPathSegmentTemplate, $context);
-            }
-        }
-
-        if (!isset($uriPathSegment) || $uriPathSegment === '') {
-            $uriPathSegment = $title;
-        }
-
-        $node->setProperty('title', (string) $title);
-        $node->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($node, $uriPathSegment));
+        // do nothing, as we handle this already when applying the template
     }
 }

@@ -41,19 +41,19 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
      */
     public function handle(NodeInterface $node, array $data): void
     {
-        if ($node->getNodeType()->hasConfiguration('options.template')) {
-            $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');
-        } else {
+        if (!$node->getNodeType()->hasConfiguration('options.template')) {
             return;
         }
 
-        $context = [
+        $evaluationContext = [
             'data' => $data,
             'triggeringNode' => $node,
         ];
 
+        $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');
+
         try {
-            $template = $this->templateFactory->createFromTemplateConfiguration($templateConfiguration, $context, CaughtExceptions::create());
+            $template = $this->templateFactory->createFromTemplateConfiguration($templateConfiguration, $evaluationContext, CaughtExceptions::create());
             $this->templateContentRepositoryApplier->apply($template, $node);
         } catch (\Exception $exception) {
             $this->handleExceptions($node, $exception);

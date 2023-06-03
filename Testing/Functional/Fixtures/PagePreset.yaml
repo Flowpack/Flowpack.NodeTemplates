@@ -1,0 +1,65 @@
+'{nodeTypeName}':
+  options:
+    template:
+      properties:
+        # Title
+        title: Page1
+        # URL path segment
+        uriPathSegment: page1
+      childNodes:
+        'Content Collection (main)':
+          name: main
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                # Text
+                text: textOnPage1
+        page1:
+          type: 'Flowpack.NodeTemplates:Document.Page'
+          properties:
+            # Title
+            title: Page2
+            # URL path segment
+            uriPathSegment: page2
+          childNodes:
+            'Content Collection (main)':
+              name: main
+              childNodes:
+                content0:
+                  type: 'Flowpack.NodeTemplates:Content.Text'
+                  properties:
+                    # Text
+                    text: textOnPage2
+            page1:
+              type: 'Flowpack.NodeTemplates:Document.Page'
+              properties:
+                # Title
+                title: Page3
+                # URL path segment
+                uriPathSegment: page3
+              childNodes:
+                'Content Collection (main)':
+                  name: main
+                  childNodes:
+                    content0:
+                      type: 'Flowpack.NodeTemplates:Content.Text'
+                      properties:
+                        # Text
+                        text: textOnPage3
+        page2:
+          type: 'Flowpack.NodeTemplates:Document.Page'
+          properties:
+            # Title
+            title: Page4
+            # URL path segment
+            uriPathSegment: page4
+          childNodes:
+            'Content Collection (main)':
+              name: main
+              childNodes:
+                content0:
+                  type: 'Flowpack.NodeTemplates:Content.Text'
+                  properties:
+                    # Text
+                    text: textOnPage4

@@ -153,6 +153,48 @@ class NodeTemplateTest extends FunctionalTestCase
         );
     }
 
+    /** @test */
+    public function testPageNodeCreationMatchesSnapshot1(): void
+    {
+        $this->createNodeInto(
+            $targetNode = $this->homePageNode,
+            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page.Static'),
+            []
+        );
+
+        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
+
+        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
+
+        $snapshot = file_get_contents(__DIR__ . '/Fixtures/PagePreset.yaml');
+        self::assertSame(
+            str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
+            $dumpedYamlTemplate
+        );
+    }
+
+    /** @test */
+    public function testPageNodeCreationMatchesSnapshot2(): void
+    {
+        $this->createNodeInto(
+            $targetNode = $this->homePageNode,
+            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page.Dynamic'),
+            [
+                'title' => 'Page1'
+            ]
+        );
+
+        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
+
+        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
+
+        $snapshot = file_get_contents(__DIR__ . '/Fixtures/PagePreset.yaml');
+        self::assertSame(
+            str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
+            $dumpedYamlTemplate
+        );
+    }
+
     public function tearDown(): void
     {
         parent::tearDown();
