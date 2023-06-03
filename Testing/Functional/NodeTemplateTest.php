@@ -154,6 +154,28 @@ class NodeTemplateTest extends FunctionalTestCase
     }
 
     /** @test */
+    public function testNodeCreationWithDifferentPropertyTypes(): void
+    {
+        $this->createNodeInto(
+            $targetNode = $this->homePageNode->getNode('main'),
+            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.DifferentPropertyTypes'),
+            [
+                'someNode' => $this->homePageNode->createNode('some-node', null, '7f7bac1c-9400-4db5-bbaa-2b8251d127c5')
+            ]
+        );
+
+        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
+
+        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
+
+        $snapshot = file_get_contents(__DIR__ . '/Fixtures/DifferentPropertyTypes.yaml');
+        self::assertSame(
+            $snapshot,
+            $dumpedYamlTemplate
+        );
+    }
+
+    /** @test */
     public function testPageNodeCreationMatchesSnapshot1(): void
     {
         $this->createNodeInto(
