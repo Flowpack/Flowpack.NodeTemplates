@@ -45,6 +45,10 @@
         inspector:
           editorOptions:
             nodeTypes: ['Flowpack.NodeTemplates:Content.DifferentPropertyTypes']
+    nullValue: # Will be ignored from dumper but we nevertheless test, that we can set the value to "null"
+      type: string
+      ui:
+        label: "Null value"
   options:
     template:
       properties:
@@ -52,6 +56,7 @@
         isEnchanted: false
         selectBox: karma
         reference: "${data.someNode}"
+        nullValue: null
 
 'Flowpack.NodeTemplates:Content.Columns.Two':
   superTypes:

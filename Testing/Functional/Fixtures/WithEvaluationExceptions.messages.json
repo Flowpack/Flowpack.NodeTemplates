@@ -16,6 +16,26 @@
         "severity": "ERROR"
     },
     {
+        "message": "Expression \"${0 / 0}\" in \"withContext.foo\" | DivisionByZeroError(Division by zero, 0)",
+        "severity": "ERROR"
+    },
+    {
+      "message": "Expression \"${Array.map()}\" in \"withItems\" | ArgumentCountError(Too few arguments to function Neos\\Eel\\Helper\\ArrayHelper::map(), 0 passed and exactly 2 expected, 0)",
+      "severity": "ERROR"
+    },
+    {
+      "message": "Expression \"${\" in \"properties.propertyIsExcludedFromTemplate\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
+      "severity": "ERROR"
+    },
+    {
+      "message": "Expression \"${\" in \"type\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
+      "severity": "ERROR"
+    },
+    {
+      "message": "Expression \"${\" in \"name\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
+      "severity": "ERROR"
+    },
+    {
       "message": "NodeConstraintException(Cannot create new node \"illegal\" of Type \"Neos.Neos:Document\" in Node /sites/test-site/homepage/main/new-node@live[Flowpack.NodeTemplates:Content.WithEvaluationExceptions], 1400782413)",
       "severity": "ERROR"
     }

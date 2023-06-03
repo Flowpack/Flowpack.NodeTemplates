@@ -7,17 +7,17 @@ use Neos\Neos\Ui\Domain\Model\Feedback\Messages\Error;
 
 class CaughtException
 {
-    private \Exception $exception;
+    private \Throwable $exception;
 
     private ?string $cause;
 
-    private function __construct(\Exception $exception, ?string $cause)
+    private function __construct(\Throwable $exception, ?string $cause)
     {
         $this->exception = $exception;
         $this->cause = $cause;
     }
 
-    public static function fromException(\Exception $exception): self
+    public static function fromException(\Throwable $exception): self
     {
         return new self($exception, null);
     }
@@ -27,7 +27,7 @@ class CaughtException
         return new self($this->exception, $cause);
     }
 
-    public function getException(): \Exception
+    public function getException(): \Throwable
     {
         return $this->exception;
     }

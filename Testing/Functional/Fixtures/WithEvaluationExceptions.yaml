@@ -4,8 +4,13 @@
       properties:
         working: working
       childNodes:
-        content1:
+        content0:
           type: 'Flowpack.NodeTemplates:Content.Text'
           properties:
             # Text
             text: bar
+        content1:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          properties:
+            # Text
+            text: '123'

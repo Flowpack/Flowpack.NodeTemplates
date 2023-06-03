@@ -4,11 +4,7 @@
   ui:
     label: "WithEvaluationExceptions"
   properties:
-    foo:
-      type: string
     working:
-      type: string
-    bar:
       type: string
   options:
     template:
@@ -17,13 +13,31 @@
         working: "working"
         bar: "${'left open"
       childNodes:
-        foo:
+        whenAbort:
           type: 'Flowpack.NodeTemplates:Content.Text'
           when: "${parse äüäö error}"
         working:
           type: 'Flowpack.NodeTemplates:Content.Text'
           properties:
             text: bar
-        illegalNode:
+        illegalNodeAbort:
           type: 'Neos.Neos:Document'
           name: 'illegal'
+          properties:
+            text: huhu
+        withContextAbort:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          withContext:
+            foo: "${0 / 0}"
+        withItemsAbort:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          withItems: "${Array.map()}"
+        propertiesPartiallyWorking:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          properties:
+            propertyIsExcludedFromTemplate: "${"
+            text: "123"
+        typeAbort:
+          type: "${"
+        nameAbort:
+          name: "${"

@@ -1,0 +1,31 @@
+{
+    "properties": {
+        "working": "working"
+    },
+    "childNodes": [
+        {
+            "type": "Flowpack.NodeTemplates:Content.Text",
+            "name": null,
+            "properties": {
+                "text": "bar"
+            },
+            "childNodes": []
+        },
+        {
+            "type": "Neos.Neos:Document",
+            "name": "illegal",
+            "properties": {
+                "text": "huhu"
+            },
+            "childNodes": []
+        },
+        {
+            "type": "Flowpack.NodeTemplates:Content.Text",
+            "name": null,
+            "properties": {
+                "text": "123"
+            },
+            "childNodes": []
+        }
+    ]
+}

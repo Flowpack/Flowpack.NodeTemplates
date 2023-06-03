@@ -62,6 +62,7 @@ class ContentRepositoryTemplateHandler
                     $caughtExceptions->add(
                         CaughtException::fromException($nodeConstraintException)
                     );
+                    continue; // try the next childNode
                 }
             }
             $this->assertPropertiesAreValid($template->getProperties());

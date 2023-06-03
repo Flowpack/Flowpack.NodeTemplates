@@ -77,7 +77,11 @@ class TemplateBuilder
         }
 
         if (!isset($this->configuration['withItems'])) {
-            return new Templates($this->toTemplate());
+            $templates = new Templates($this->toTemplate());
+            if (!$this->ignoreLastResultBecauseOfException) {
+                return $templates;
+            }
+            return Templates::empty();
         }
 
         $items = $this->processConfiguration('withItems', []);
@@ -123,8 +127,8 @@ class TemplateBuilder
         $this->ignoreLastResultBecauseOfException = false;
         $processedProperties = [];
         foreach ($this->configuration['properties'] ?? [] as $propertyName => $value) {
-            if (!is_scalar($value)) {
-                throw new \InvalidArgumentException(sprintf('Template configuration properties can only hold int|float|string|bool. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730);
+            if (!is_scalar($value) && !is_null($value)) {
+                throw new \InvalidArgumentException(sprintf('Template configuration properties can only hold int|float|string|bool|null. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730);
             }
             $processedValue = $this->processConfiguration(['properties', $propertyName], null);
             if (!$this->ignoreLastResultBecauseOfException) {
@@ -168,7 +172,7 @@ class TemplateBuilder
         }
         try {
             return ($this->configurationValueProcessor)($value, $this->evaluationContext);
-        } catch (\Exception $exception) {
+        } catch (\Throwable $exception) {
             $this->exceptionCaught(
                 CaughtException::fromException($exception)->withCause(
                     sprintf('Expression "%s" in "%s"', $value, is_array($configurationPath) ? join('.', $configurationPath) : $configurationPath)
