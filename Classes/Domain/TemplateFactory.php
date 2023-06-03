@@ -2,11 +2,9 @@
 
 namespace Flowpack\NodeTemplates\Domain;
 
+use Flowpack\NodeTemplates\Infrastructure\EelEvaluationService;
 use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
 use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
-use Neos\Eel\CompilingEvaluator;
-use Neos\Eel\ParserException;
-use Neos\Eel\Utility as EelUtility;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -15,18 +13,17 @@ use Neos\Flow\Annotations as Flow;
 class TemplateFactory
 {
     /**
-     * @Flow\Inject(lazy=false)
-     * @var CompilingEvaluator
+     * @Flow\Inject
+     * @var EelEvaluationService
      */
-    protected $eelEvaluator;
+    protected $eelEvaluationService;
 
     /**
-     * @Flow\InjectConfiguration(path="defaultEelContext")
+     * @psalm-param array<string, mixed> $configuration
+     * @psalm-param array<string, mixed> $evaluationContext
+     * @param CaughtExceptions $caughtEvaluationExceptions
+     * @return RootTemplate
      */
-    protected array $defaultContextConfiguration;
-
-    protected ?array $defaultContextVariables = null;
-
     public function createFromTemplateConfiguration(array $configuration, array $evaluationContext, CaughtExceptions $caughtEvaluationExceptions): RootTemplate
     {
         $builder = TemplateBuilder::createForRoot(
@@ -113,7 +110,12 @@ class TemplateFactory
         );
     }
 
-    /** @return mixed */
+    /**
+     * @psalm-param mixed $rawConfigurationValue
+     * @psalm-param array<string, mixed> $evaluationContext
+     * @psalm-return mixed
+     * @throws \Neos\Eel\ParserException|\Exception
+     */
     private function preprocessConfigurationValue($rawConfigurationValue, array $evaluationContext)
     {
         if (!is_string($rawConfigurationValue)) {
@@ -122,22 +124,6 @@ class TemplateFactory
         if (strpos($rawConfigurationValue, '${') !== 0) {
             return $rawConfigurationValue;
         }
-        return $this->evaluateEelExpression($rawConfigurationValue, $evaluationContext);
-    }
-
-    /**
-     * Evaluate an Eel expression.
-     *
-     * @param $contextVariables array<string, mixed> additional context for eel expressions
-     * @return mixed The result of the evaluated Eel expression
-     * @throws ParserException|\Exception
-     */
-    private function evaluateEelExpression(string $expression, array $contextVariables)
-    {
-        if ($this->defaultContextVariables === null) {
-            $this->defaultContextVariables = EelUtility::getDefaultContextVariables($this->defaultContextConfiguration);
-        }
-        $contextVariables = array_merge($this->defaultContextVariables, $contextVariables);
-        return EelUtility::evaluateEelExpression($expression, $this->eelEvaluator, $contextVariables);
+        return $this->eelEvaluationService->evaluateEelExpression($rawConfigurationValue, $evaluationContext);
     }
 }

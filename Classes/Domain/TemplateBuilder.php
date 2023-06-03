@@ -7,6 +7,7 @@ use Neos\Utility\Arrays;
 
 /**
  * @internal implementation detail of {@see TemplateFactory}
+ * @psalm-immutable
  * @Flow\Proxy(false)
  */
 class TemplateBuilder
@@ -23,6 +24,7 @@ class TemplateBuilder
 
     /**
      * @psalm-readonly
+     * @psalm-var \Closure(mixed $value, array<string, mixed> $evaluationContext): mixed
      */
     private \Closure $configurationValueProcessor;
 
@@ -31,11 +33,16 @@ class TemplateBuilder
      */
     private CaughtExceptions $caughtExceptions;
 
+    /**
+     * @psalm-param array<string, mixed> $configuration
+     * @psalm-param array<string, mixed> $evaluationContext
+     * @psalm-param \Closure(mixed $value, array<string, mixed> $evaluationContext): mixed $configurationValueProcessor
+     */
     private function __construct(
         array $configuration,
         array $evaluationContext,
         \Closure $configurationValueProcessor,
-        CaughtExceptions $caughtExceptions,
+        CaughtExceptions $caughtExceptions
     ) {
         $this->configuration = $configuration;
         $this->evaluationContext = $evaluationContext;
@@ -44,11 +51,16 @@ class TemplateBuilder
         $this->validateNestedLevelTemplateConfigurationKeys();
     }
 
+    /**
+     * @psalm-param array<string, mixed> $configuration
+     * @psalm-param array<string, mixed> $evaluationContext
+     * @psalm-param \Closure(mixed $value, array<string, mixed> $evaluationContext): mixed $configurationValueProcessor
+     */
     public static function createForRoot(
         array $configuration,
         array $evaluationContext,
         \Closure $configurationValueProcessor,
-        CaughtExceptions $caughtExceptions,
+        CaughtExceptions $caughtExceptions
     ): self {
         $builder = new self(
             $configuration,
@@ -65,6 +77,9 @@ class TemplateBuilder
         return $this->caughtExceptions;
     }
 
+    /**
+     * @psalm-param array<string, mixed> $configuration
+     */
     public function withConfiguration(array $configuration): self
     {
         return new self(
@@ -75,6 +90,9 @@ class TemplateBuilder
         );
     }
 
+    /**
+     * @psalm-param array<string, mixed> $evaluationContext
+     */
     public function withMergedEvaluationContext(array $evaluationContext): self
     {
         return new self(
@@ -86,7 +104,7 @@ class TemplateBuilder
     }
 
     /**
-     * @param string|list<string> $configurationPath
+     * @psalm-param string|list<string> $configurationPath
      * @param mixed $fallback
      * @return mixed
      * @throws StopBuildingTemplatePartException
@@ -108,6 +126,9 @@ class TemplateBuilder
         }
     }
 
+    /**
+     * @psalm-param string|list<string> $configurationPath
+     */
     public function getRawConfiguration($configurationPath)
     {
         return Arrays::getValueByPath($this->configuration, $configurationPath);

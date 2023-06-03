@@ -16,7 +16,7 @@
         "severity": "ERROR"
     },
     {
-        "message": "Expression \"${0 / 0}\" in \"withContext.foo\" | DivisionByZeroError(Division by zero, 0)",
+        "message": "Expression \"${0 + []}\" in \"withContext.foo\" | Error(Unsupported operand types, 0)",
         "severity": "ERROR"
     },
     {

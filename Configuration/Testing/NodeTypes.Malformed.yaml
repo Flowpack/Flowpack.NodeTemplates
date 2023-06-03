@@ -28,7 +28,7 @@
         withContextAbort:
           type: 'Flowpack.NodeTemplates:Content.Text'
           withContext:
-            foo: "${0 / 0}"
+            foo: "${0 + []}"
         withItemsAbort:
           type: 'Flowpack.NodeTemplates:Content.Text'
           withItems: "${Array.map()}"
