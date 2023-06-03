@@ -36,6 +36,10 @@
       "severity": "ERROR"
     },
     {
+      "message": "Expression \"${item == 1 ? cannotCallThis() : 'bar'}\" in \"name\" | NotAllowedException(Method \"cannotCallThis\" is not callable in untrusted context, 1369043080)",
+      "severity": "ERROR"
+    },
+    {
       "message": "NodeConstraintException(Cannot create new node \"illegal\" of Type \"Neos.Neos:Document\" in Node /sites/test-site/homepage/main/new-node@live[Flowpack.NodeTemplates:Content.WithEvaluationExceptions], 1400782413)",
       "severity": "ERROR"
     }

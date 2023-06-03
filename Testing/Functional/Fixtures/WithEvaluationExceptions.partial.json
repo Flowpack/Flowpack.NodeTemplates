@@ -26,6 +26,14 @@
                 "text": "123"
             },
             "childNodes": []
+        },
+        {
+            "type": "Flowpack.NodeTemplates:Content.Text",
+            "name": null,
+            "properties": {
+              "text": "foo"
+            },
+            "childNodes": []
         }
     ]
 }

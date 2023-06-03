@@ -41,3 +41,9 @@
           type: "${"
         nameAbort:
           name: "${"
+        withItemsPartiallyWorking:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          withItems: [1, 2]
+          name: "${item == 1 ? cannotCallThis() : null}"
+          properties:
+            text: "foo"
