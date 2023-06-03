@@ -1,0 +1,11 @@
+'Flowpack.NodeTemplates:Content.WithEvaluationExceptions':
+  options:
+    template:
+      properties:
+        working: working
+      childNodes:
+        content1:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          properties:
+            # Text
+            text: bar

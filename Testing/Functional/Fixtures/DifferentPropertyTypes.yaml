@@ -1,0 +1,12 @@
+'Flowpack.NodeTemplates:Content.DifferentPropertyTypes':
+  options:
+    template:
+      properties:
+        # Text
+        text: abc
+        # Boolean
+        isEnchanted: false
+        # Select Box
+        # selectBox -> SelectBox of ["karma","longLive"] with value "karma"
+        # Reference
+        # reference -> Reference of NodeTypes (Flowpack.NodeTemplates:Content.DifferentPropertyTypes) with value Node(7f7bac1c-9400-4db5-bbaa-2b8251d127c5)

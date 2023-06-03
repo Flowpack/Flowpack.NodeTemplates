@@ -1,6 +1,8 @@
 'Flowpack.NodeTemplates:Content.WithEvaluationExceptions':
   superTypes:
     'Neos.Neos:ContentCollection': true
+  ui:
+    label: "WithEvaluationExceptions"
   properties:
     foo:
       type: string

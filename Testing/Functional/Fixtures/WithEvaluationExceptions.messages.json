@@ -1,0 +1,22 @@
+[
+    {
+        "message": "Template for \"WithEvaluationExceptions\" only partially applied. Please check the newly created nodes.",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${cannotCallThis()}\" in \"properties.foo\" | NotAllowedException(Method \"cannotCallThis\" is not callable in untrusted context, 1369043080)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${'left open\" in \"properties.bar\" | EelException(The EEL expression \"${'left open\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${parse \u00e4\u00fc\u00e4\u00f6 error}\" in \"when\" | ParserException(Expression \"parse \u00e4\u00fc\u00e4\u00f6 error\" could not be parsed. Error starting at character 5: \" \u00e4\u00fc\u00e4\u00f6 error\"., 1327682383)",
+        "severity": "ERROR"
+    },
+    {
+      "message": "NodeConstraintException(Cannot create new node \"illegal\" of Type \"Neos.Neos:Document\" in Node /sites/test-site/homepage/main/new-node@live[Flowpack.NodeTemplates:Content.WithEvaluationExceptions], 1400782413)",
+      "severity": "ERROR"
+    }
+]
