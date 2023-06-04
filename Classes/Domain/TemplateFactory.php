@@ -57,7 +57,7 @@ class TemplateFactory
                 $builder->getCaughtExceptions()->add(
                     CaughtException::fromException(
                         new \RuntimeException(sprintf('Type %s is not iterable.', gettype($items)), 1685802354186)
-                    )->withCause(sprintf('Configuration "%s" in "%s"', json_encode($builder->getRawConfiguration('withItems')), join('.', array_merge($builder->getFullPathToConfiguration(), ['withItems']))))
+                    )->withOrigin(sprintf('Configuration "%s" in "%s"', json_encode($builder->getRawConfiguration('withItems')), join('.', array_merge($builder->getFullPathToConfiguration(), ['withItems']))))
                 );
                 return Templates::empty();
             }

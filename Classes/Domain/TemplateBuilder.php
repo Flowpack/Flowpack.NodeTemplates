@@ -136,7 +136,7 @@ class TemplateBuilder
                 is_array($configurationPath) ? $configurationPath : [$configurationPath]
             );
             $this->caughtExceptions->add(
-                CaughtException::fromException($exception)->withCause(
+                CaughtException::fromException($exception)->withOrigin(
                     sprintf(
                         'Expression "%s" in "%s"',
                         $value,

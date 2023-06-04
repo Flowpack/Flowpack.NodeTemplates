@@ -9,12 +9,12 @@ class CaughtException
 {
     private \Throwable $exception;
 
-    private ?string $cause;
+    private ?string $origin;
 
-    private function __construct(\Throwable $exception, ?string $cause)
+    private function __construct(\Throwable $exception, ?string $origin)
     {
         $this->exception = $exception;
-        $this->cause = $cause;
+        $this->origin = $origin;
     }
 
     public static function fromException(\Throwable $exception): self
@@ -22,9 +22,9 @@ class CaughtException
         return new self($exception, null);
     }
 
-    public function withCause(string $cause): self
+    public function withOrigin(string $origin): self
     {
-        return new self($this->exception, $cause);
+        return new self($this->exception, $origin);
     }
 
     public function getException(): \Throwable
@@ -32,17 +32,17 @@ class CaughtException
         return $this->exception;
     }
 
-    public function getCause(): ?string
+    public function getOrigin(): ?string
     {
-        return $this->cause;
+        return $this->origin;
     }
 
     public function toMessageFeedback(): AbstractMessageFeedback
     {
         $messageLines = [];
 
-        if ($this->cause) {
-            $messageLines[] = $this->cause;
+        if ($this->origin) {
+            $messageLines[] = $this->origin;
         }
 
         $level = 0;
