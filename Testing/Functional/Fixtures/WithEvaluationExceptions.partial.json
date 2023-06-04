@@ -1,6 +1,9 @@
 {
     "properties": {
-        "working": "working"
+        "working": "working",
+        "someValueWithDefault": null,
+        "nonDeclaredProperty": "hi",
+        "selectBox": "red"
     },
     "childNodes": [
         {

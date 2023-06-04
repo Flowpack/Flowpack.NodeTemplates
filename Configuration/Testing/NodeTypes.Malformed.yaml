@@ -6,11 +6,29 @@
   properties:
     working:
       type: string
+    someValueWithDefault:
+      defaultValue: true
+      type: boolean
+    selectBox:
+      type: string
+      ui:
+        label: "Select Box"
+        inspector:
+          editor: Neos.Neos/Inspector/Editors/SelectBoxEditor
+          editorOptions:
+            values:
+              karma:
+                label: "A"
+              longLive:
+                label: "B"
   options:
     template:
       properties:
         foo: "${cannotCallThis()}"
         working: "working"
+        someValueWithDefault: null
+        nonDeclaredProperty: "hi"
+        selectBox: "red"
         bar: "${'left open"
       childNodes:
         whenAbort:

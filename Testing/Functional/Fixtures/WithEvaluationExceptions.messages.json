@@ -44,6 +44,18 @@
       "severity": "ERROR"
     },
     {
+      "message": "Property \"someValueWithDefault\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyNotSetException(Because property is \"null\" and would override the default value \"true\"., 1685869035371)",
+      "severity": "ERROR"
+    },
+    {
+      "message": "Property \"nonDeclaredProperty\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyNotSetException(Because property is not declared in NodeType. Got value \"\"hi\"\"., 1685869035209)",
+      "severity": "ERROR"
+    },
+    {
+      "message": "Property \"selectBox\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyNotSetException(Because property has illegal select-box value(s): (red), 1685869035452)",
+      "severity": "ERROR"
+    },
+    {
       "message": "NodeConstraintException(Cannot create new node \"illegal\" of Type \"Neos.Neos:Document\" in Node /sites/test-site/homepage/main/new-node@live[Flowpack.NodeTemplates:Content.WithEvaluationExceptions], 1400782413)",
       "severity": "ERROR"
     }
