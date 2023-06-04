@@ -32,11 +32,6 @@ class Template implements \JsonSerializable
         $this->childNodes = $childNodes;
     }
 
-    public static function empty(): self
-    {
-        return new self(null, null, [], new Templates());
-    }
-
     public function getType(): ?NodeTypeName
     {
         return $this->type;

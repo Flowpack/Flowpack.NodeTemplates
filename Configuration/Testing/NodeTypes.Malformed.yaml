@@ -47,3 +47,6 @@
           name: "${item == 1 ? cannotCallThis() : null}"
           properties:
             text: "foo"
+        withItemsAbortBecauseNotIterable:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          withItems: null

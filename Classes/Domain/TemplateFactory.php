@@ -39,7 +39,7 @@ class TemplateFactory
     {
         try {
             $withContext = [];
-            foreach ($builder->getRawConfiguration('withContext') ?? [] as $key => $value) {
+            foreach ($builder->getRawConfiguration('withContext') ?? [] as $key => $_) {
                 $withContext[$key] = $builder->processConfiguration(['withContext', $key]);
             }
             $builder = $builder->withMergedEvaluationContext($withContext);
@@ -57,7 +57,7 @@ class TemplateFactory
                 $builder->getCaughtExceptions()->add(
                     CaughtException::fromException(
                         new \RuntimeException(sprintf('Type %s is not iterable.', gettype($items)), 1685802354186)
-                    )->withCause(sprintf('Configuration %s malformed.', json_encode($builder->getRawConfiguration('withItems'))))
+                    )->withCause(sprintf('Configuration "%s" in "%s"', json_encode($builder->getRawConfiguration('withItems')), join('.', array_merge($builder->getFullPathToConfiguration(), ['withItems']))))
                 );
                 return Templates::empty();
             }
@@ -96,8 +96,8 @@ class TemplateFactory
 
         // process the childNodes
         $childNodeTemplates = Templates::empty();
-        foreach ($builder->getRawConfiguration('childNodes') ?? [] as $childNodeConfiguration) {
-            $childNodeBuilder = $builder->withConfiguration($childNodeConfiguration);
+        foreach ($builder->getRawConfiguration('childNodes') ?? [] as $childNodeConfigurationPath => $_) {
+            $childNodeBuilder = $builder->withConfigurationByConfigurationPath(['childNodes', $childNodeConfigurationPath]);
             $childNodeTemplates = $childNodeTemplates->merge($this->createTemplatesFromBuilder($childNodeBuilder));
         }
 

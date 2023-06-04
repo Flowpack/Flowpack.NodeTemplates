@@ -19,6 +19,11 @@ class TemplateBuilder
     /**
      * @psalm-readonly
      */
+    private array $fullPathToConfiguration;
+
+    /**
+     * @psalm-readonly
+     */
     private array $evaluationContext;
 
     /**
@@ -39,15 +44,17 @@ class TemplateBuilder
      */
     private function __construct(
         array $configuration,
+        array $fullPathToConfiguration,
         array $evaluationContext,
         \Closure $configurationValueProcessor,
         CaughtExceptions $caughtExceptions
     ) {
         $this->configuration = $configuration;
+        $this->fullPathToConfiguration = $fullPathToConfiguration;
         $this->evaluationContext = $evaluationContext;
         $this->configurationValueProcessor = $configurationValueProcessor;
         $this->caughtExceptions = $caughtExceptions;
-        $this->validateNestedLevelTemplateConfigurationKeys();
+        $this->validateTemplateConfigurationKeys();
     }
 
     /**
@@ -61,14 +68,13 @@ class TemplateBuilder
         \Closure $configurationValueProcessor,
         CaughtExceptions $caughtExceptions
     ): self {
-        $builder = new self(
+        return new self(
             $configuration,
+            [],
             $evaluationContext,
             $configurationValueProcessor,
             $caughtExceptions
         );
-        $builder->validateRootLevelTemplateConfigurationKeys();
-        return $builder;
     }
 
     public function getCaughtExceptions(): CaughtExceptions
@@ -76,13 +82,19 @@ class TemplateBuilder
         return $this->caughtExceptions;
     }
 
+    public function getFullPathToConfiguration(): array
+    {
+        return $this->fullPathToConfiguration;
+    }
+
     /**
-     * @psalm-param array<string, mixed> $configuration
+     * @psalm-param string|list<string> $configurationPath
      */
-    public function withConfiguration(array $configuration): self
+    public function withConfigurationByConfigurationPath($configurationPath): self
     {
         return new self(
-            $configuration,
+            $this->getRawConfiguration($configurationPath),
+            array_merge($this->fullPathToConfiguration, $configurationPath),
             $this->evaluationContext,
             $this->configurationValueProcessor,
             $this->caughtExceptions
@@ -99,6 +111,7 @@ class TemplateBuilder
         }
         return new self(
             $this->configuration,
+            $this->fullPathToConfiguration,
             array_merge($this->evaluationContext, $evaluationContext),
             $this->configurationValueProcessor,
             $this->caughtExceptions
@@ -118,12 +131,16 @@ class TemplateBuilder
         try {
             return ($this->configurationValueProcessor)($value, $this->evaluationContext);
         } catch (\Throwable $exception) {
+            $fullConfigurationPath = array_merge(
+                $this->fullPathToConfiguration,
+                is_array($configurationPath) ? $configurationPath : [$configurationPath]
+            );
             $this->caughtExceptions->add(
                 CaughtException::fromException($exception)->withCause(
                     sprintf(
                         'Expression "%s" in "%s"',
                         $value,
-                        is_array($configurationPath) ? join('.', $configurationPath) : $configurationPath
+                        join('.', $fullConfigurationPath)
                     )
                 )
             );
@@ -169,20 +186,17 @@ class TemplateBuilder
         return true;
     }
 
-    private function validateNestedLevelTemplateConfigurationKeys(): void
+    private function validateTemplateConfigurationKeys(): void
     {
+        $isRootTemplate = $this->fullPathToConfiguration === [];
         foreach (array_keys($this->configuration) as $key) {
             if (!in_array($key, ['type', 'name', 'properties', 'childNodes', 'when', 'withItems', 'withContext'], true)) {
                 throw new \InvalidArgumentException(sprintf('Template configuration has illegal key "%s', $key));
             }
-        }
-    }
-
-    private function validateRootLevelTemplateConfigurationKeys(): void
-    {
-        foreach (array_keys($this->configuration) as $key) {
-            if (!in_array($key, ['properties', 'childNodes', 'when', 'withContext'], true)) {
-                throw new \InvalidArgumentException(sprintf('Root template configuration has illegal key "%s', $key));
+            if ($isRootTemplate) {
+                if (!in_array($key, ['properties', 'childNodes', 'when', 'withContext'], true)) {
+                    throw new \InvalidArgumentException(sprintf('Root template configuration doesnt allow option "%s', $key));
+                }
             }
         }
     }

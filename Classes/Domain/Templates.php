@@ -41,14 +41,16 @@ class Templates implements \IteratorAggregate, \JsonSerializable
 
     public function toRootTemplate(): RootTemplate
     {
-        assert(count($this->items) <= 1);
+        if (count($this->items) > 1) {
+            throw new \BadMethodCallException('Templates cannot be transformed to RootTemplate because it holds multiple Templates.', 1685866910655);
+        }
         foreach ($this->items as $first) {
             return new RootTemplate(
                 $first->getProperties(),
                 $first->getChildNodes()
             );
         }
-        return new RootTemplate([], new Templates());
+        return new RootTemplate([], Templates::empty());
     }
 
     public function jsonSerialize()

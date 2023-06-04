@@ -12,31 +12,35 @@
         "severity": "ERROR"
     },
     {
-        "message": "Expression \"${parse \u00e4\u00fc\u00e4\u00f6 error}\" in \"when\" | ParserException(Expression \"parse \u00e4\u00fc\u00e4\u00f6 error\" could not be parsed. Error starting at character 5: \" \u00e4\u00fc\u00e4\u00f6 error\"., 1327682383)",
+        "message": "Expression \"${parse \u00e4\u00fc\u00e4\u00f6 error}\" in \"childNodes.whenAbort.when\" | ParserException(Expression \"parse \u00e4\u00fc\u00e4\u00f6 error\" could not be parsed. Error starting at character 5: \" \u00e4\u00fc\u00e4\u00f6 error\"., 1327682383)",
         "severity": "ERROR"
     },
     {
-        "message": "Expression \"${0 + []}\" in \"withContext.foo\" | Error(Unsupported operand types, 0)",
+        "message": "Expression \"${0 + []}\" in \"childNodes.withContextAbort.withContext.foo\" | Error(Unsupported operand types, 0)",
         "severity": "ERROR"
     },
     {
-      "message": "Expression \"${Array.map()}\" in \"withItems\" | ArgumentCountError(Too few arguments to function Neos\\Eel\\Helper\\ArrayHelper::map(), 0 passed and exactly 2 expected, 0)",
+      "message": "Expression \"${Array.map()}\" in \"childNodes.withItemsAbort.withItems\" | ArgumentCountError(Too few arguments to function Neos\\Eel\\Helper\\ArrayHelper::map(), 0 passed and exactly 2 expected, 0)",
       "severity": "ERROR"
     },
     {
-      "message": "Expression \"${\" in \"properties.propertyIsExcludedFromTemplate\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
+      "message": "Expression \"${\" in \"childNodes.propertiesPartiallyWorking.properties.propertyIsExcludedFromTemplate\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
       "severity": "ERROR"
     },
     {
-      "message": "Expression \"${\" in \"type\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
+      "message": "Expression \"${\" in \"childNodes.typeAbort.type\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
       "severity": "ERROR"
     },
     {
-      "message": "Expression \"${\" in \"name\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
+      "message": "Expression \"${\" in \"childNodes.nameAbort.name\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
       "severity": "ERROR"
     },
     {
-      "message": "Expression \"${item == 1 ? cannotCallThis() : null}\" in \"name\" | NotAllowedException(Method \"cannotCallThis\" is not callable in untrusted context, 1369043080)",
+      "message": "Expression \"${item == 1 ? cannotCallThis() : null}\" in \"childNodes.withItemsPartiallyWorking.name\" | NotAllowedException(Method \"cannotCallThis\" is not callable in untrusted context, 1369043080)",
+      "severity": "ERROR"
+    },
+    {
+      "message": "Configuration \"null\" in \"childNodes.withItemsAbortBecauseNotIterable.withItems\" | RuntimeException(Type NULL is not iterable., 1685802354186)",
       "severity": "ERROR"
     },
     {
