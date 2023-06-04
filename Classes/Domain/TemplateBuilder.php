@@ -3,7 +3,6 @@
 namespace Flowpack\NodeTemplates\Domain;
 
 use Neos\Flow\Annotations as Flow;
-use Neos\Utility\Arrays;
 
 /**
  * @internal implementation detail of {@see TemplateFactory}
@@ -108,21 +107,24 @@ class TemplateBuilder
 
     /**
      * @psalm-param string|list<string> $configurationPath
-     * @param mixed $fallback
      * @return mixed
      * @throws StopBuildingTemplatePartException
      */
-    public function processConfiguration($configurationPath, $fallback)
+    public function processConfiguration($configurationPath)
     {
         if (($value = $this->getRawConfiguration($configurationPath)) === null) {
-            return $fallback;
+            return null;
         }
         try {
             return ($this->configurationValueProcessor)($value, $this->evaluationContext);
         } catch (\Throwable $exception) {
             $this->caughtExceptions->add(
                 CaughtException::fromException($exception)->withCause(
-                    sprintf('Expression "%s" in "%s"', $value, is_array($configurationPath) ? join('.', $configurationPath) : $configurationPath)
+                    sprintf(
+                        'Expression "%s" in "%s"',
+                        $value,
+                        is_array($configurationPath) ? join('.', $configurationPath) : $configurationPath
+                    )
                 )
             );
             throw new StopBuildingTemplatePartException();
@@ -130,11 +132,41 @@ class TemplateBuilder
     }
 
     /**
+     * Minimal implementation of {@see \Neos\Utility\Arrays::getValueByPath()} (but we dont allow $configurationPath to contain dots.)
+     *
      * @psalm-param string|list<string> $configurationPath
      */
     public function getRawConfiguration($configurationPath)
     {
-        return Arrays::getValueByPath($this->configuration, $configurationPath);
+        assert(is_array($configurationPath) || is_string($configurationPath));
+        $path = is_array($configurationPath) ? $configurationPath : [$configurationPath];
+        $array = $this->configuration;
+        foreach ($path as $key) {
+            if (is_array($array) && array_key_exists($key, $array)) {
+                $array = $array[$key];
+            } else {
+                return null;
+            }
+        }
+        return $array;
+    }
+
+    /**
+     * @psalm-param string|list<string> $configurationPath
+     */
+    public function hasConfiguration($configurationPath): bool
+    {
+        assert(is_array($configurationPath) || is_string($configurationPath));
+        $path = is_array($configurationPath) ? $configurationPath : [$configurationPath];
+        $array = $this->configuration;
+        foreach ($path as $key) {
+            if (is_array($array) && array_key_exists($key, $array)) {
+                $array = $array[$key];
+            } else {
+                return false;
+            }
+        }
+        return true;
     }
 
     private function validateNestedLevelTemplateConfigurationKeys(): void

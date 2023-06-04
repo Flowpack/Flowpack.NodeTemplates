@@ -32,12 +32,7 @@ class TemplateFactory
             fn ($value, $evaluationContext) => $this->preprocessConfigurationValue($value, $evaluationContext),
             $caughtEvaluationExceptions
         );
-        try {
-            return $this->createTemplatesFromBuilder($builder)->toRootTemplate();
-        } catch (StopBuildingTemplatePartException $e) {
-            // should actually never be thrown uncaught in toTemplate
-            return new RootTemplate([], new Templates());
-        }
+        return $this->createTemplatesFromBuilder($builder)->toRootTemplate();
     }
 
     private function createTemplatesFromBuilder(TemplateBuilder $builder): Templates
@@ -45,44 +40,44 @@ class TemplateFactory
         try {
             $withContext = [];
             foreach ($builder->getRawConfiguration('withContext') ?? [] as $key => $value) {
-                $withContext[$key] = $builder->processConfiguration(['withContext', $key], null);
+                $withContext[$key] = $builder->processConfiguration(['withContext', $key]);
             }
             $builder = $builder->withMergedEvaluationContext($withContext);
 
-            if (!$builder->processConfiguration('when', true)) {
+            if ($builder->hasConfiguration('when') && !$builder->processConfiguration('when')) {
                 return Templates::empty();
             }
 
-            if (!$builder->getRawConfiguration('withItems')) {
+            if (!$builder->hasConfiguration('withItems')) {
                 return new Templates($this->createTemplateFromBuilder($builder));
             }
-            $items = $builder->processConfiguration('withItems', []);
+            $items = $builder->processConfiguration('withItems');
+
+            if (!is_iterable($items)) {
+                $builder->getCaughtExceptions()->add(
+                    CaughtException::fromException(
+                        new \RuntimeException(sprintf('Type %s is not iterable.', gettype($items)), 1685802354186)
+                    )->withCause(sprintf('Configuration %s malformed.', json_encode($builder->getRawConfiguration('withItems'))))
+                );
+                return Templates::empty();
+            }
+
+            $templates = Templates::empty();
+            foreach ($items as $itemKey => $itemValue) {
+                $itemBuilder = $builder->withMergedEvaluationContext([
+                    'item' => $itemValue,
+                    'key' => $itemKey
+                ]);
+
+                try {
+                    $templates = $templates->withAdded($this->createTemplateFromBuilder($itemBuilder));
+                } catch (StopBuildingTemplatePartException $e) {
+                }
+            }
+            return $templates;
         } catch (StopBuildingTemplatePartException $e) {
             return Templates::empty();
         }
-
-        if (!is_iterable($items)) {
-            $builder->getCaughtExceptions()->add(
-                CaughtException::fromException(
-                    new \RuntimeException(sprintf('Type %s is not iterable.', gettype($items)), 1685802354186)
-                )->withCause(sprintf('Configuration %s malformed.', json_encode($builder->getRawConfiguration('withItems'))))
-            );
-            return Templates::empty();
-        }
-
-        $templates = Templates::empty();
-        foreach ($items as $itemKey => $itemValue) {
-            $itemBuilder = $builder->withMergedEvaluationContext([
-               'item' => $itemValue,
-               'key' => $itemKey
-            ]);
-
-            try {
-                $templates = $templates->withAdded($this->createTemplateFromBuilder($itemBuilder));
-            } catch (StopBuildingTemplatePartException $e) {
-            }
-        }
-        return $templates;
     }
 
     private function createTemplateFromBuilder(TemplateBuilder $builder): Template
@@ -94,7 +89,7 @@ class TemplateFactory
                 throw new \InvalidArgumentException(sprintf('Template configuration properties can only hold int|float|string|bool|null. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730);
             }
             try {
-                $processedProperties[$propertyName] = $builder->processConfiguration(['properties', $propertyName], null);
+                $processedProperties[$propertyName] = $builder->processConfiguration(['properties', $propertyName]);
             } catch (StopBuildingTemplatePartException $e) {
             }
         }
@@ -106,8 +101,8 @@ class TemplateFactory
             $childNodeTemplates = $childNodeTemplates->merge($this->createTemplatesFromBuilder($childNodeBuilder));
         }
 
-        $type = $builder->processConfiguration('type', null);
-        $name = $builder->processConfiguration('name', null);
+        $type = $builder->processConfiguration('type');
+        $name = $builder->processConfiguration('name');
         return new Template(
             $type ? NodeTypeName::fromString($type) : null,
             $name ? NodeName::fromString($name) : null,
