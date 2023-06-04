@@ -95,6 +95,9 @@ class TemplateBuilder
      */
     public function withMergedEvaluationContext(array $evaluationContext): self
     {
+        if ($evaluationContext === []) {
+            return $this;
+        }
         return new self(
             $this->configuration,
             array_merge($this->evaluationContext, $evaluationContext),
@@ -132,42 +135,6 @@ class TemplateBuilder
     public function getRawConfiguration($configurationPath)
     {
         return Arrays::getValueByPath($this->configuration, $configurationPath);
-    }
-
-    /**
-     * Merge `withContext` onto the current $evaluationContext, evaluating EEL if necessary and return a new Builder
-     *
-     * The option `withContext` takes an array of items whose value can be any yaml/php type
-     * and might also contain eel expressions
-     *
-     * ```yaml
-     * withContext:
-     *   someText: '<p>foo</p>'
-     *   processedData: "${String.trim(data.bla)}"
-     *   booleanType: true
-     *   arrayType: ["value"]
-     * ```
-     *
-     * scopes and order of evaluation:
-     *
-     * - inside `withContext` the "upper" context may be accessed in eel expressions,
-     * but sibling context values are not available
-     *
-     * - `withContext` is evaluated before `when` and `withItems` so you can access computed values,
-     * that means the context `item` from `withItems` will not be available yet
-     *
-     * @throws StopBuildingTemplatePartException
-     */
-    public function withMergedWithContext(): self
-    {
-        if (($this->configuration['withContext'] ?? []) === []) {
-            return $this;
-        }
-        $withContext = [];
-        foreach ($this->configuration['withContext'] as $key => $value) {
-            $withContext[$key] = $this->processConfiguration(['withContext', $key], null);
-        }
-        return $this->withMergedEvaluationContext($withContext);
     }
 
     private function validateNestedLevelTemplateConfigurationKeys(): void

@@ -43,10 +43,16 @@ class TemplateFactory
     private function createTemplatesFromBuilder(TemplateBuilder $builder): Templates
     {
         try {
-            $builder = $builder->withMergedWithContext();
+            $withContext = [];
+            foreach ($builder->getRawConfiguration('withContext') ?? [] as $key => $value) {
+                $withContext[$key] = $builder->processConfiguration(['withContext', $key], null);
+            }
+            $builder = $builder->withMergedEvaluationContext($withContext);
+
             if (!$builder->processConfiguration('when', true)) {
                 return Templates::empty();
             }
+
             if (!$builder->getRawConfiguration('withItems')) {
                 return new Templates($this->createTemplateFromBuilder($builder));
             }
