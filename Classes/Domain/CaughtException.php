@@ -37,7 +37,7 @@ class CaughtException
         return $this->origin;
     }
 
-    public function toMessageFeedback(): AbstractMessageFeedback
+    public function toMessage(): string
     {
         $messageLines = [];
 
@@ -63,8 +63,6 @@ class CaughtException
             $messageLines[] = sprintf('%s(%s, %s)', $shortExceptionName, $exception->getMessage(), $exception->getCode());
         } while ($exception = $exception->getPrevious());
 
-        $error = new Error();
-        $error->setMessage(join(' | ', $messageLines));
-        return $error;
+        return join(' | ', $messageLines);
     }
 }
