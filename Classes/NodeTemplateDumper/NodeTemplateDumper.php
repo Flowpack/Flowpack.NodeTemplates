@@ -42,17 +42,21 @@ class NodeTemplateDumper
 
         $template = $this->nodeTemplateFromNodes([$startingNode], $comments);
 
+        $firstEntry = null;
         foreach ($template as $firstEntry) {
             break;
         }
-        assert(isset($firstEntry));
+
+        $properties = $firstEntry['properties'] ?? null;
+        $childNodes = $firstEntry['childNodes'] ?? null;
+
 
         $templateInNodeTypeOptions = [
             $nodeType->getName() => [
                 'options' => [
                     'template' => array_filter([
-                        'properties' => $firstEntry['properties'] ?? null,
-                        'childNodes' => $firstEntry['childNodes'] ?? null,
+                        'properties' => $properties,
+                        'childNodes' => $childNodes
                     ])
                 ]
             ]
