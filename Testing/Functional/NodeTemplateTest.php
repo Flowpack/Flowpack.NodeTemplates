@@ -9,6 +9,7 @@ use Neos\ContentRepository\Domain\Model\Node;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\Workspace;
 use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
+use Neos\ContentRepository\Domain\Repository\ContentDimensionRepository;
 use Neos\ContentRepository\Domain\Repository\WorkspaceRepository;
 use Neos\ContentRepository\Domain\Service\ContextFactoryInterface;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
@@ -46,6 +47,8 @@ class NodeTemplateTest extends FunctionalTestCase
     private function setupContentRepository(): void
     {
         // Create an environment to create nodes.
+        $this->objectManager->get(ContentDimensionRepository::class)->setDimensionsConfiguration([]);
+
         $liveWorkspace = new Workspace('live');
         $workspaceRepository = $this->objectManager->get(WorkspaceRepository::class);
         $workspaceRepository->add($liveWorkspace);
@@ -327,5 +330,6 @@ class NodeTemplateTest extends FunctionalTestCase
         parent::tearDown();
         $this->inject($this->contextFactory, 'contextInstances', []);
         $this->objectManager->get(FeedbackCollection::class)->reset();
+        $this->objectManager->forgetInstance(ContentDimensionRepository::class);
     }
 }
