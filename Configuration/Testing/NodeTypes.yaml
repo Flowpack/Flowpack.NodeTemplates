@@ -14,6 +14,13 @@
       ui:
         label: "Text"
 
+'Flowpack.NodeTemplates:Content.Hidden':
+  superTypes:
+    'Neos.Neos:Content': true
+  options:
+    template:
+      hidden: true
+
 'Flowpack.NodeTemplates:Content.DifferentPropertyTypes':
   superTypes:
     'Neos.Neos:Content': true

@@ -12,6 +12,8 @@ use Neos\Flow\Annotations as Flow;
  */
 class RootTemplate implements \JsonSerializable
 {
+    private ?bool $hidden;
+
     /**
      * @var array<string, mixed>
      */
@@ -20,12 +22,19 @@ class RootTemplate implements \JsonSerializable
     private Templates $childNodes;
 
     /**
+     * @internal
      * @param array<string, mixed> $properties
      */
-    public function __construct(array $properties, Templates $childNodes)
+    public function __construct(?bool $hidden, array $properties, Templates $childNodes)
     {
+        $this->hidden = $hidden;
         $this->properties = $properties;
         $this->childNodes = $childNodes;
+    }
+
+    public function getHidden(): ?bool
+    {
+        return $this->hidden;
     }
 
     /**
@@ -44,6 +53,7 @@ class RootTemplate implements \JsonSerializable
     public function jsonSerialize()
     {
         return [
+            'hidden' => $this->hidden,
             'properties' => $this->properties,
             'childNodes' => $this->childNodes
         ];

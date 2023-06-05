@@ -190,11 +190,11 @@ class TemplateBuilder
     {
         $isRootTemplate = $this->fullPathToConfiguration === [];
         foreach (array_keys($this->configuration) as $key) {
-            if (!in_array($key, ['type', 'name', 'properties', 'childNodes', 'when', 'withItems', 'withContext'], true)) {
-                throw new \InvalidArgumentException(sprintf('Template configuration has illegal key "%s', $key));
+            if (!in_array($key, ['type', 'name', 'hidden', 'properties', 'childNodes', 'when', 'withItems', 'withContext'], true)) {
+                throw new \InvalidArgumentException(sprintf('Template configuration has illegal key "%s"', $key));
             }
             if ($isRootTemplate) {
-                if (!in_array($key, ['properties', 'childNodes', 'when', 'withContext'], true)) {
+                if (!in_array($key, ['hidden', 'properties', 'childNodes', 'when', 'withContext'], true)) {
                     throw new \InvalidArgumentException(sprintf('Root template configuration doesnt allow option "%s', $key));
                 }
             }

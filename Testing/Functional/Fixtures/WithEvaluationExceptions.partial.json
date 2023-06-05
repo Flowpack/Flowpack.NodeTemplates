@@ -11,10 +11,12 @@
           "non-existing-node-id"
         ]
     },
+    "hidden": null,
     "childNodes": [
         {
             "type": "Flowpack.NodeTemplates:Content.Text",
             "name": null,
+            "hidden": null,
             "properties": {
                 "text": "bar"
             },
@@ -23,6 +25,7 @@
         {
             "type": "Neos.Neos:Document",
             "name": "illegal",
+            "hidden": null,
             "properties": {
                 "text": "huhu"
             },
@@ -31,6 +34,7 @@
         {
             "type": "Flowpack.NodeTemplates:Content.Text",
             "name": null,
+            "hidden": null,
             "properties": {
                 "text": "123"
             },
@@ -39,6 +43,7 @@
         {
             "type": "Flowpack.NodeTemplates:Content.Text",
             "name": null,
+            "hidden": null,
             "properties": {
               "text": "foo"
             },

@@ -45,6 +45,11 @@ class ContentRepositoryTemplateHandler
         foreach ($propertiesAndReferences->requireValidReferences($nodeType, $node->getContext(), $caughtExceptions) as $key => $value) {
             $node->setProperty($key, $value);
         }
+
+        if ($template->getHidden() === true) {
+            $node->setHidden(true);
+        }
+
         $this->ensureNodeHasUriPathSegment($node, $template);
         $this->applyTemplateRecursively($template->getChildNodes(), $node, $caughtExceptions);
     }
@@ -84,6 +89,10 @@ class ContentRepositoryTemplateHandler
             // set references
             foreach ($propertiesAndReferences->requireValidReferences($nodeType, $node->getContext(), $caughtExceptions) as $key => $value) {
                 $node->setProperty($key, $value);
+            }
+
+            if ($template->getHidden() === true) {
+                $node->setHidden(true);
             }
             $this->ensureNodeHasUriPathSegment($node, $template);
             $this->applyTemplateRecursively($template->getChildNodes(), $node, $caughtExceptions);

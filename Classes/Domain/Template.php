@@ -14,6 +14,8 @@ class Template implements \JsonSerializable
 
     private ?NodeName $name;
 
+    private ?bool $hidden;
+
     /**
      * @var array<string, mixed>
      */
@@ -22,12 +24,14 @@ class Template implements \JsonSerializable
     private Templates $childNodes;
 
     /**
+     * @internal
      * @param array<string, mixed> $properties
      */
-    public function __construct(?NodeTypeName $type, ?NodeName $name, array $properties, Templates $childNodes)
+    public function __construct(?NodeTypeName $type, ?NodeName $name, ?bool $hidden, array $properties, Templates $childNodes)
     {
         $this->type = $type;
         $this->name = $name;
+        $this->hidden = $hidden;
         $this->properties = $properties;
         $this->childNodes = $childNodes;
     }
@@ -40,6 +44,11 @@ class Template implements \JsonSerializable
     public function getName(): ?NodeName
     {
         return $this->name;
+    }
+
+    public function getHidden(): ?bool
+    {
+        return $this->hidden;
     }
 
     /**
@@ -60,6 +69,7 @@ class Template implements \JsonSerializable
         return [
             'type' => $this->type,
             'name' => $this->name,
+            'hidden' => $this->hidden,
             'properties' => $this->properties,
             'childNodes' => $this->childNodes
         ];

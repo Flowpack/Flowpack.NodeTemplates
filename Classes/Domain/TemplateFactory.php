@@ -106,6 +106,7 @@ class TemplateFactory
         return new Template(
             $type ? NodeTypeName::fromString($type) : null,
             $name ? NodeName::fromString($name) : null,
+            $builder->hasConfiguration('hidden') ? (bool)$builder->processConfiguration('hidden') : null,
             $processedProperties,
             $childNodeTemplates
         );

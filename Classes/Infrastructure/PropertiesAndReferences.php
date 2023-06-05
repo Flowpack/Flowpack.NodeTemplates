@@ -142,6 +142,9 @@ class PropertiesAndReferences
         }
         if ($propertyName[0] === '_') {
             $lowerPropertyName = strtolower($propertyName);
+            if ($lowerPropertyName === '_hidden') {
+                throw new \InvalidArgumentException('Using "_hidden" as property declaration was removed. Please use "hidden" on the first level instead.');
+            }
             foreach ($legacyInternalProperties as $legacyInternalProperty) {
                 if ($lowerPropertyName === strtolower($legacyInternalProperty)) {
                     throw new \InvalidArgumentException(sprintf('Internal legacy property "%s" not implement.', $propertyName));
