@@ -2,6 +2,6 @@
 
 namespace Flowpack\NodeTemplates\Infrastructure;
 
-class PropertyNotSetException extends \RuntimeException
+class PropertyIgnoredException extends \RuntimeException
 {
 }

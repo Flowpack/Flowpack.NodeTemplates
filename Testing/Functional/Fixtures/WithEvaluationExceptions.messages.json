@@ -16,7 +16,7 @@
         "severity": "ERROR"
     },
     {
-        "message": "Expression \"${0 + []}\" in \"childNodes.withContextAbort.withContext.foo\" | Error(Unsupported operand types, 0)",
+        "message": "Expression \"${}\" in \"childNodes.withContextAbort.withContext.foo\" | ParserException(Expression \"\" could not be parsed., 1344513194)",
         "severity": "ERROR"
     },
     {
@@ -44,15 +44,31 @@
       "severity": "ERROR"
     },
     {
-      "message": "Property \"someValueWithDefault\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyNotSetException(Because property is \"null\" and would override the default value \"true\"., 1685869035371)",
+      "message": "Property \"boolValue\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because value \"123\" is not assignable to property type boolean., 1685958105644)",
       "severity": "ERROR"
     },
     {
-      "message": "Property \"nonDeclaredProperty\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyNotSetException(Because property is not declared in NodeType. Got value \"\"hi\"\"., 1685869035209)",
+      "message": "Property \"stringValue\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because value \"false\" is not assignable to property type string., 1685958105644)",
       "severity": "ERROR"
     },
     {
-      "message": "Property \"selectBox\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyNotSetException(Because property has illegal select-box value(s): (red), 1685869035452)",
+      "message": "Property \"someValueWithDefault\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because property is \"null\" and would override the default value \"true\"., 1685869035371)",
+      "severity": "ERROR"
+    },
+    {
+      "message": "Property \"nonDeclaredProperty\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because property is not declared in NodeType. Got value \"\"hi\"\"., 1685869035209)",
+      "severity": "ERROR"
+    },
+    {
+      "message": "Property \"selectBox\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because property has illegal select-box value(s): (red), 1685869035452)",
+      "severity": "ERROR"
+    },
+    {
+      "message": "Reference \"reference\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | RuntimeException(Reference could not be set, because node reference(s) \"non-existing-node-id\" cannot be resolved., 1685958176560)",
+      "severity": "ERROR"
+    },
+    {
+      "message": "Reference \"references\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | RuntimeException(Reference could not be set, because node reference(s) [\"non-existing-node-id\"] cannot be resolved., 1685958176560)",
       "severity": "ERROR"
     },
     {

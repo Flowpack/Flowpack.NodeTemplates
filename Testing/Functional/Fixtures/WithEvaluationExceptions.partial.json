@@ -3,7 +3,13 @@
         "working": "working",
         "someValueWithDefault": null,
         "nonDeclaredProperty": "hi",
-        "selectBox": "red"
+        "selectBox": "red",
+        "boolValue": 123,
+        "stringValue": false,
+        "reference": "non-existing-node-id",
+        "references": [
+          "non-existing-node-id"
+        ]
     },
     "childNodes": [
         {

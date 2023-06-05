@@ -4,6 +4,14 @@
   ui:
     label: "WithEvaluationExceptions"
   properties:
+    boolValue:
+      type: boolean
+    stringValue:
+      type: string
+    reference:
+      type: reference
+    references:
+      type: references
     working:
       type: string
     someValueWithDefault:
@@ -25,6 +33,10 @@
     template:
       properties:
         foo: "${cannotCallThis()}"
+        boolValue: 123
+        stringValue: false
+        reference: "non-existing-node-id"
+        references: "${['non-existing-node-id']}"
         working: "working"
         someValueWithDefault: null
         nonDeclaredProperty: "hi"
@@ -46,7 +58,7 @@
         withContextAbort:
           type: 'Flowpack.NodeTemplates:Content.Text'
           withContext:
-            foo: "${0 + []}"
+            foo: "${}"
         withItemsAbort:
           type: 'Flowpack.NodeTemplates:Content.Text'
           withItems: "${Array.map()}"
