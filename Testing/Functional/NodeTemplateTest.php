@@ -205,7 +205,7 @@ class NodeTemplateTest extends FunctionalTestCase
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
 
         $this->assertMessagesOfFeedbackCollectionMatch(
-            json_decode(file_get_contents(__DIR__ . '/Fixtures/WithEvaluationExceptions.messages.json'), true)
+            json_decode(file_get_contents(__DIR__ . '/Fixtures/WithEvaluationExceptions.messages.json'), true, 512, JSON_THROW_ON_ERROR)
         );
 
         $snapshot = file_get_contents(__DIR__ . '/Fixtures/WithEvaluationExceptions.yaml');

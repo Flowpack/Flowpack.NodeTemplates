@@ -58,11 +58,10 @@ class PropertiesAndReferences
             $this->assertValidPropertyName($propertyName);
             try {
                 if (!isset($nodeType->getProperties()[$propertyName])) {
-                    $value = json_encode($propertyValue);
                     throw new PropertyIgnoredException(
                         sprintf(
-                            'Because property is not declared in NodeType. Got value "%s".',
-                            $value
+                            'Because property is not declared in NodeType. Got value `%s`.',
+                            json_encode($propertyValue)
                         ),
                         1685869035209
                     );
@@ -70,7 +69,7 @@ class PropertiesAndReferences
                 if (array_key_exists($propertyName, $defaultValues) && $propertyValue === null) {
                     throw new PropertyIgnoredException(
                         sprintf(
-                            'Because property is "null" and would override the default value "%s".',
+                            'Because property is `null` and would override the default value `%s`.',
                             json_encode($defaultValues[$propertyName])
                         ),
                         1685869035371
@@ -80,7 +79,7 @@ class PropertiesAndReferences
                 if (!$propertyType->isMatchedBy($propertyValue)) {
                     throw new PropertyIgnoredException(
                         sprintf(
-                            'Because value "%s" is not assignable to property type %s.',
+                            'Because value `%s` is not assignable to property type "%s".',
                             json_encode($propertyValue),
                             $propertyType->getValue()
                         ),

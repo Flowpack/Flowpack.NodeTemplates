@@ -44,19 +44,19 @@
       "severity": "ERROR"
     },
     {
-      "message": "Property \"boolValue\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because value \"123\" is not assignable to property type boolean., 1685958105644)",
+      "message": "Property \"boolValue\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because value `123` is not assignable to property type \"boolean\"., 1685958105644)",
       "severity": "ERROR"
     },
     {
-      "message": "Property \"stringValue\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because value \"false\" is not assignable to property type string., 1685958105644)",
+      "message": "Property \"stringValue\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because value `false` is not assignable to property type \"string\"., 1685958105644)",
       "severity": "ERROR"
     },
     {
-      "message": "Property \"someValueWithDefault\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because property is \"null\" and would override the default value \"true\"., 1685869035371)",
+      "message": "Property \"someValueWithDefault\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because property is `null` and would override the default value `true`., 1685869035371)",
       "severity": "ERROR"
     },
     {
-      "message": "Property \"nonDeclaredProperty\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because property is not declared in NodeType. Got value \"\"hi\"\"., 1685869035209)",
+      "message": "Property \"nonDeclaredProperty\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because property is not declared in NodeType. Got value `\"hi\"`., 1685869035209)",
       "severity": "ERROR"
     },
     {
