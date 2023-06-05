@@ -41,6 +41,9 @@
                 label: "A"
               longLive:
                 label: "B"
+  childNodes:
+    type-cant-mutate:
+      type: 'Flowpack.NodeTemplates:Content.Text'
   options:
     template:
       properties:
@@ -92,3 +95,10 @@
         withItemsAbortBecauseNotIterable:
           type: 'Flowpack.NodeTemplates:Content.Text'
           withItems: null
+        typeIsNull:
+          type: null
+        typeIsInvalidNodeType:
+          type: "Flowpack.NodeTemplates:InvalidNodeType"
+        typeCantMutate:
+          name: "type-cant-mutate"
+          type: "Flowpack.NodeTemplates:Content.WithEvaluationExceptions"

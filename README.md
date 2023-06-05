@@ -180,12 +180,14 @@ values are not available. As ``withContext`` is evaluated before ``when`` and ``
 access context variables from ``withContext`` in ``withItems`` at the same level – but not the other
 way around.
 
-## Exception handling behaviour
+## Exception handling, resuming with the next possible operation.
 
-In the first step the configuration is evaluated, all Runtime Exceptions (for example caused in an EEL Expression) are caught and it is being trying tried to ignored any malformed parts of the template configuration.
-So in cause of an exception you can decide to still apply the partially evaluated template `APPLY_PARTIAL_TEMPLATE` or abort the process `DONT_APPLY_PARTIAL_TEMPLATE`.
+In the first step the configuration is evaluated, all Runtime Exceptions (for example caused in an EEL Expression) are caught, and any malformed parts of the template are ignored (with their errors being logged).
+This might lead to a partially evaluated template with some properties or childNodes missing.
 
-The setting is configurable via Settings.yaml with `Flowpack.NodeTemplates.exceptionHandlingBehaviour` it defaults to `APPLY_PARTIAL_TEMPLATE`. 
+You can decide via the exception handling behaviour, if you want to apply this partially evaluated template `APPLY_PARTIAL_TEMPLATE` or abort the process `DONT_APPLY_PARTIAL_TEMPLATE` which will only lead to creating the node as if there was no template.
+
+The setting is configurable via Settings.yaml with `Flowpack.NodeTemplates.exceptionHandlingBehaviour` it defaults to `APPLY_PARTIAL_TEMPLATE`.
 
 ```yaml
 Flowpack:
@@ -193,6 +195,9 @@ Flowpack:
     # one of "APPLY_PARTIAL_TEMPLATE", "DONT_APPLY_PARTIAL_TEMPLATE"
     exceptionHandlingBehaviour: "APPLY_PARTIAL_TEMPLATE"
 ```
+
+In case exceptions are thrown while applying the template like because a node constraint was not met or the `type` field was not set the creation of the childNode is aborted, but we continue with applying the other left over parts of the template.
+It behaves similar with properties: In case a property value doesn't match its declared type the exception is logged, but we will try to continue with the next property.
 
 ## Create template from node subtree
 

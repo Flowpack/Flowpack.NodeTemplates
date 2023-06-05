@@ -1,17 +1,17 @@
 {
+    "hidden": null,
     "properties": {
-        "working": "working",
-        "someValueWithDefault": null,
-        "nonDeclaredProperty": "hi",
-        "selectBox": "red",
         "boolValue": 123,
         "stringValue": false,
         "reference": "non-existing-node-id",
         "references": [
-          "non-existing-node-id"
-        ]
+            "non-existing-node-id"
+        ],
+        "working": "working",
+        "someValueWithDefault": null,
+        "nonDeclaredProperty": "hi",
+        "selectBox": "red"
     },
-    "hidden": null,
     "childNodes": [
         {
             "type": "Flowpack.NodeTemplates:Content.Text",
@@ -45,8 +45,29 @@
             "name": null,
             "hidden": null,
             "properties": {
-              "text": "foo"
+                "text": "foo"
             },
+            "childNodes": []
+        },
+        {
+            "type": null,
+            "name": null,
+            "hidden": null,
+            "properties": [],
+            "childNodes": []
+        },
+        {
+            "type": "Flowpack.NodeTemplates:InvalidNodeType",
+            "name": null,
+            "hidden": null,
+            "properties": [],
+            "childNodes": []
+        },
+        {
+            "type": "Flowpack.NodeTemplates:Content.WithEvaluationExceptions",
+            "name": "type-cant-mutate",
+            "hidden": null,
+            "properties": [],
             "childNodes": []
         }
     ]

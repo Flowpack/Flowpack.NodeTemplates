@@ -9,6 +9,8 @@ use Neos\Flow\Tests\FunctionalTestCase;
 
 class TemplateFactoryTest extends FunctionalTestCase
 {
+    use SnapshotTrait;
+
     /** @test */
     public function exceptionsAreCaughtAndPartialTemplateIsBuild(): void
     {
@@ -20,7 +22,6 @@ class TemplateFactoryTest extends FunctionalTestCase
             CaughtExceptions::create()
         );
 
-        $actual = json_encode($template, JSON_PRETTY_PRINT);
-        self::assertJsonStringEqualsJsonFile(__DIR__ . '/Fixtures/WithEvaluationExceptions.partial.json', $actual);
+        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/WithEvaluationExceptions.partial.json', json_encode($template, JSON_PRETTY_PRINT));
     }
 }
