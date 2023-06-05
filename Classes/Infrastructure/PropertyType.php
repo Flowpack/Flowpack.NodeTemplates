@@ -27,10 +27,22 @@ final class PropertyType
 
     private string $value;
 
+    private ?self $arrayOfType;
+
     private function __construct(
         string $value
     ) {
         $this->value = $value;
+        if ($this->isArrayOf()) {
+            $arrayOfType = self::tryFromString($this->getArrayOf());
+            if (!$arrayOfType && !$arrayOfType->isArray()) {
+                throw new \DomainException(sprintf(
+                    'Array declaration "%s" has invalid subType. Expected either class string or int',
+                    $this->value
+                ));
+            }
+            $this->arrayOfType = $arrayOfType;
+        }
     }
 
     public static function fromPropertyOfNodeType(
@@ -47,6 +59,26 @@ final class PropertyType
                 ),
                 1685964835205
             );
+        }
+        $type = self::tryFromString($declaration);
+        if (!$type) {
+            throw new \DomainException(
+                sprintf(
+                    'Given property "%s" is declared as undefined type "%s" in node type "%s"',
+                    $propertyName,
+                    $declaration,
+                    $nodeType->getName()
+                ),
+                1685952798732
+            );
+        }
+        return $type;
+    }
+
+    public static function tryFromString(string $declaration): ?self
+    {
+        if ($declaration === 'reference' || $declaration === 'references') {
+            return null;
         }
         if ($declaration === 'bool' || $declaration === 'boolean') {
             return self::bool();
@@ -83,17 +115,8 @@ final class PropertyType
             && !interface_exists($className)
             && !preg_match(self::PATTERN_ARRAY_OF, $declaration)
         ) {
-            throw new \DomainException(
-                sprintf(
-                    'Given property "%s" is declared as undefined type "%s" in node type "%s"',
-                    $propertyName,
-                    $declaration,
-                    $nodeType->getName()
-                ),
-                1685952798732
-            );
+            return null;
         }
-
         return new self($declaration);
     }
 
@@ -162,12 +185,12 @@ final class PropertyType
         return $this->value;
     }
 
-    public function getArrayOfClassName(): string
+    private function getArrayOf(): string
     {
-        return \mb_substr($this->value, 6, \mb_strlen($this->value) - 7);
+        return \mb_substr($this->value, 6, -1);
     }
 
-    public function isMatchedBy(mixed $propertyValue): bool
+    public function isMatchedBy($propertyValue): bool
     {
         if (is_null($propertyValue)) {
             return true;
@@ -191,15 +214,15 @@ final class PropertyType
             return $propertyValue instanceof \DateTimeInterface;
         }
         if ($this->isArrayOf()) {
-            if (is_array($propertyValue)) {
-                $className = $this->getArrayOfClassName();
-                foreach ($propertyValue as $object) {
-                    if (!$object instanceof $className) {
-                        return false;
-                    }
-                }
-                return true;
+            if (!is_array($propertyValue)) {
+                return false;
             }
+            foreach ($propertyValue as $value) {
+                if (!$this->arrayOfType->isMatchedBy($value)) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         $className = $this->value[0] != '\\'
