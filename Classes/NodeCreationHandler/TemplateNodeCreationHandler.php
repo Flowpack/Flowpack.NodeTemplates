@@ -3,6 +3,7 @@
 namespace Flowpack\NodeTemplates\NodeCreationHandler;
 
 use Flowpack\NodeTemplates\Domain\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ExceptionHandlingBehaviour;
 use Flowpack\NodeTemplates\Domain\TemplateFactory;
 use Flowpack\NodeTemplates\Domain\TemplatePartiallyAppliedException;
 use Flowpack\NodeTemplates\Infrastructure\ContentRepositoryTemplateHandler;
@@ -48,6 +49,11 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
     protected $throwableStorage;
 
     /**
+     * @Flow\InjectConfiguration(package="Flowpack.NodeTemplates", path="exceptionHandlingBehaviour")
+     */
+    public ?string $exceptionHandlingBehaviourConfiguration;
+
+    /**
      * Create child nodes and change properties upon node creation
      *
      * @param NodeInterface $node The newly created node
@@ -66,18 +72,22 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 
         $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');
 
+        $exceptionHandlingBehaviour = ExceptionHandlingBehaviour::fromConfiguration($this->exceptionHandlingBehaviourConfiguration);
+
         $caughtExceptions = CaughtExceptions::create();
         try {
             $template = $this->templateFactory->createFromTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
-            $this->contentRepositoryTemplateHandler->apply($template, $node, $caughtExceptions);
+            if (!$caughtExceptions->hasExceptions() || $exceptionHandlingBehaviour->shouldApplyPartialTemplate()) {
+                $this->contentRepositoryTemplateHandler->apply($template, $node, $caughtExceptions);
+            }
         } finally {
             $this->handleCaughtExceptionsForNode($caughtExceptions, $node);
         }
     }
 
-    public function handleCaughtExceptionsForNode(CaughtExceptions $caughtExceptions, NodeInterface $node): void
+    private function handleCaughtExceptionsForNode(CaughtExceptions $caughtExceptions, NodeInterface $node): void
     {
-        if ($caughtExceptions->hasExceptions()) {
+        if (!$caughtExceptions->hasExceptions()) {
             return;
         }
 

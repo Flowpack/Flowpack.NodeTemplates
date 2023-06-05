@@ -12,7 +12,9 @@ use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
 use Neos\ContentRepository\Domain\Repository\WorkspaceRepository;
 use Neos\ContentRepository\Domain\Service\ContextFactoryInterface;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
+use Neos\Flow\Configuration\ConfigurationManager;
 use Neos\Flow\Mvc\Controller\ControllerContext;
+use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Tests\FunctionalTestCase;
 use Neos\Neos\Domain\Model\Site;
 use Neos\Neos\Domain\Repository\SiteRepository;
@@ -21,6 +23,7 @@ use Neos\Neos\Ui\Domain\Model\Feedback\AbstractMessageFeedback;
 use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
 use Neos\Neos\Ui\Domain\Model\FeedbackInterface;
 use Neos\Neos\Ui\TypeConverter\ChangeCollectionConverter;
+use Neos\Utility\Arrays;
 use Neos\Utility\ObjectAccess;
 
 class NodeTemplateTest extends FunctionalTestCase
@@ -210,6 +213,28 @@ class NodeTemplateTest extends FunctionalTestCase
     }
 
     /** @test */
+    public function exceptionsAreCaughtAndPartialTemplateNotBuild(): void
+    {
+        $this->withMockedConfigurationSettings([
+            'Flowpack' => [
+                'NodeTemplates' => [
+                    'exceptionHandlingBehaviour' => 'DONT_APPLY_PARTIAL_TEMPLATE'
+                ]
+            ]
+        ], function () {
+            $this->createNodeInto(
+                $targetNode = $this->homePageNode->getNode('main'),
+                $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithEvaluationExceptions'),
+                []
+            );
+
+            $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
+
+            self::assertEmpty($createdNode->getChildNodes());
+        });
+    }
+
+    /** @test */
     public function testPageNodeCreationMatchesSnapshot1(): void
     {
         $this->createNodeInto(
@@ -270,6 +295,31 @@ class NodeTemplateTest extends FunctionalTestCase
             $expectedMessages,
             $messages
         );
+    }
+
+    /**
+     * Mock the settings of the configuration manager and cleanup afterwards
+     *
+     * WARNING: If you activate Singletons during this transaction they will later still have a reference to the mocked object manger, so you might need to call
+     * {@see ObjectManagerInterface::forgetInstance()}. An alternative would be also to hack the protected $this->settings of the manager.
+     *
+     * @param array $additionalSettings settings that are merged onto the the current testing configuration
+     * @param callable $fn test code that is executed in the modified context
+     */
+    private function withMockedConfigurationSettings(array $additionalSettings, callable $fn): void
+    {
+        $configurationManager = $this->objectManager->get(ConfigurationManager::class);
+        $configurationManagerMock = $this->getMockBuilder(ConfigurationManager::class)->disableOriginalConstructor()->getMock();
+        $mockedSettings = Arrays::arrayMergeRecursiveOverrule($configurationManager->getConfiguration('Settings'), $additionalSettings);
+        $configurationManagerMock->expects(self::any())->method('getConfiguration')->willReturnCallback(function (string $configurationType, string $configurationPath = null) use($configurationManager, $mockedSettings) {
+            if ($configurationType !== 'Settings') {
+                return $configurationManager->getConfiguration($configurationType, $configurationPath);
+            }
+            return $configurationPath ? Arrays::getValueByPath($mockedSettings, $configurationPath) : $mockedSettings;
+        });
+        $this->objectManager->setInstance(ConfigurationManager::class, $configurationManagerMock);
+        $fn();
+        $this->objectManager->setInstance(ConfigurationManager::class, $configurationManager);
     }
 
     public function tearDown(): void

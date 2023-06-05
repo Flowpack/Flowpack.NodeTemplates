@@ -21,7 +21,7 @@ class CaughtExceptions implements \IteratorAggregate
 
     public function hasExceptions(): bool
     {
-        return $this->exceptions === [];
+        return $this->exceptions !== [];
     }
 
     public function add(CaughtException $exception): void
