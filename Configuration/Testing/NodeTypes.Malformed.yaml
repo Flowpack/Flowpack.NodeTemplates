@@ -1,3 +1,15 @@
+'Flowpack.NodeTemplates:Content.WithOneEvaluationException':
+  superTypes:
+    'Neos.Neos:ContentCollection': true
+  ui:
+    label: "WithOneEvaluationException"
+  options:
+    template:
+      childNodes:
+        abort:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          when: "${'left open"
+
 'Flowpack.NodeTemplates:Content.WithEvaluationExceptions':
   superTypes:
     'Neos.Neos:ContentCollection': true

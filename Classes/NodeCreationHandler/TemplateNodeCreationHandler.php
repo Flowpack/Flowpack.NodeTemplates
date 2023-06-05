@@ -81,17 +81,19 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
                 $this->contentRepositoryTemplateHandler->apply($template, $node, $caughtExceptions);
             }
         } finally {
-            $this->handleCaughtExceptionsForNode($caughtExceptions, $node);
+            $this->handleCaughtExceptionsForNode($caughtExceptions, $node, $exceptionHandlingBehaviour);
         }
     }
 
-    private function handleCaughtExceptionsForNode(CaughtExceptions $caughtExceptions, NodeInterface $node): void
+    private function handleCaughtExceptionsForNode(CaughtExceptions $caughtExceptions, NodeInterface $node, ExceptionHandlingBehaviour $exceptionHandlingBehaviour): void
     {
         if (!$caughtExceptions->hasExceptions()) {
             return;
         }
 
-        $initialMessageInCaseOfException = sprintf('Template for "%s" only partially applied. Please check the newly created nodes beneath %s.', $node->getNodeType()->getLabel(), (string)$node);
+        $initialMessageInCaseOfException = $exceptionHandlingBehaviour->shouldApplyPartialTemplate()
+            ? sprintf('Template for "%s" only partially applied. Please check the newly created nodes beneath %s.', $node->getNodeType()->getLabel(), (string)$node)
+            : sprintf('Template for "%s" was not applied. Only %s was created.', $node->getNodeType()->getLabel(), (string)$node);
 
         $lastException = null;
         $messages = [];

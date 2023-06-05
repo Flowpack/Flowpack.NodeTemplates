@@ -227,9 +227,20 @@ class NodeTemplateTest extends FunctionalTestCase
         ], function () {
             $this->createNodeInto(
                 $targetNode = $this->homePageNode->getNode('main'),
-                $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithEvaluationExceptions'),
+                $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithOneEvaluationException'),
                 []
             );
+
+            $this->assertMessagesOfFeedbackCollectionMatch([
+                [
+                    'message' => 'Template for "WithOneEvaluationException" was not applied. Only Node /sites/test-site/homepage/main/new-node@live[Flowpack.NodeTemplates:Content.WithOneEvaluationException] was created.',
+                    'severity' => 'ERROR'
+                ],
+                [
+                    'message' => 'Expression "${\'left open" in "childNodes.abort.when" | EelException(The EEL expression "${\'left open" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)',
+                    'severity' => 'ERROR'
+                ]
+            ]);
 
             $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
