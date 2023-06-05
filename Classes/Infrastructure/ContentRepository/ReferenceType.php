@@ -7,9 +7,12 @@ namespace Flowpack\NodeTemplates\Infrastructure\ContentRepository;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\ContentRepository\Domain\Service\Context;
+use Neos\Flow\Annotations as Flow;
 
 /**
  * The reference type value object as declared in a NodeType
+ *
+ * @Flow\Proxy(false)
  */
 final class ReferenceType
 {

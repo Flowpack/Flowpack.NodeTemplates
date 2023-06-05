@@ -30,7 +30,7 @@ class CaughtExceptions implements \IteratorAggregate
     }
 
     /**
-     * @return CaughtException[]
+     * @return \Traversable<int, CaughtException>|CaughtException[]
      */
     public function getIterator()
     {

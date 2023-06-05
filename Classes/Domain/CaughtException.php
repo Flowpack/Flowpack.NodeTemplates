@@ -2,9 +2,12 @@
 
 namespace Flowpack\NodeTemplates\Domain;
 
-use Neos\Neos\Ui\Domain\Model\Feedback\AbstractMessageFeedback;
-use Neos\Neos\Ui\Domain\Model\Feedback\Messages\Error;
 
+use Neos\Flow\Annotations as Flow;
+
+/**
+ * @Flow\Proxy(false)
+ */
 class CaughtException
 {
     private \Throwable $exception;

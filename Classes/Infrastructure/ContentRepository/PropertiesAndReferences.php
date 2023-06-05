@@ -6,7 +6,11 @@ use Flowpack\NodeTemplates\Domain\CaughtException;
 use Flowpack\NodeTemplates\Domain\CaughtExceptions;
 use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\ContentRepository\Domain\Service\Context;
+use Neos\Flow\Annotations as Flow;
 
+/**
+ * @Flow\Proxy(false)
+ */
 class PropertiesAndReferences
 {
     private array $properties;

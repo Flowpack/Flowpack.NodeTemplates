@@ -14,15 +14,21 @@ use Neos\Flow\Annotations as Flow;
  */
 class Comment
 {
+    /**
+     * @psalm-var \Closure(string $indentation, string $propertyName): string $renderFunction
+     */
     private \Closure $renderFunction;
 
+    /**
+     * @psalm-param \Closure(string $indentation, string $propertyName): string $renderFunction
+     */
     private function __construct(\Closure $renderFunction)
     {
         $this->renderFunction = $renderFunction;
     }
 
     /**
-     * @psalm-param callable(string $indentation, string $propertyName): string $renderFunction
+     * @psalm-param \Closure(string $indentation, string $propertyName): string $renderFunction
      */
     public static function fromRenderer($renderFunction): self
     {

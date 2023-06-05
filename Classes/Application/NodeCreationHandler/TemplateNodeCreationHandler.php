@@ -95,12 +95,17 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
             ? sprintf('Template for "%s" only partially applied. Please check the newly created nodes beneath %s.', $node->getNodeType()->getLabel(), (string)$node)
             : sprintf('Template for "%s" was not applied. Only %s was created.', $node->getNodeType()->getLabel(), (string)$node);
 
-        $lastException = null;
+        $firstException = null;
         $messages = [];
         foreach ($caughtExceptions as $index => $caughtException) {
             $messages[sprintf('CaughtException (%s)', $index)] = $caughtException->toMessage();
-            $lastException = $caughtException->getException();
+            $firstException = $firstException ?? $caughtException->getException();
         }
+
+        // log exception
+        $exception = new TemplatePartiallyAppliedException($initialMessageInCaseOfException, 1685880697387, $firstException);
+        $messageWithReference = $this->throwableStorage->logThrowable($exception, $messages);
+        $this->logger->warning($messageWithReference, LogEnvironment::fromMethodName(__METHOD__));
 
         // neos ui logging
         $nodeTemplateError = new Error();
@@ -117,9 +122,5 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
                 $error
             );
         }
-
-        $exception = new TemplatePartiallyAppliedException($initialMessageInCaseOfException, 1685880697387, $lastException);
-        $messageWithReference = $this->throwableStorage->logThrowable($exception, $messages);
-        $this->logger->warning($messageWithReference, LogEnvironment::fromMethodName(__METHOD__));
     }
 }

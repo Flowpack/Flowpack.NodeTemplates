@@ -6,6 +6,7 @@ namespace Flowpack\NodeTemplates\Infrastructure\ContentRepository;
 
 use GuzzleHttp\Psr7\Uri;
 use Neos\ContentRepository\Domain\Model\NodeType;
+use Neos\Flow\Annotations as Flow;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -13,6 +14,8 @@ use Psr\Http\Message\UriInterface;
  *
  * Implementation copied and adjusted (experimental nullable handling was removed) from {@see \Neos\ContentRepository\Core\Infrastructure\Property\PropertyType}
  * {@link https://github.com/neos/neos-development-collection/blob/31cb00aa0bb513c9e8878807a0de23772f50d992/Neos.ContentRepository.Core/Classes/Infrastructure/Property/PropertyType.php#L30}
+ *
+ * @Flow\Proxy(false)
  */
 final class PropertyType
 {
