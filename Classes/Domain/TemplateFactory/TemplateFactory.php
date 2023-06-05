@@ -1,7 +1,12 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain;
+namespace Flowpack\NodeTemplates\Domain\TemplateFactory;
 
+use Flowpack\NodeTemplates\Domain\CaughtException;
+use Flowpack\NodeTemplates\Domain\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\RootTemplate;
+use Flowpack\NodeTemplates\Domain\Template;
+use Flowpack\NodeTemplates\Domain\Templates;
 use Flowpack\NodeTemplates\Infrastructure\EelEvaluationService;
 use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
 use Neos\ContentRepository\Domain\NodeType\NodeTypeName;

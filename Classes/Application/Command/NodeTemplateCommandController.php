@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Flowpack\NodeTemplates\Command;
+namespace Flowpack\NodeTemplates\Application\Command;
 
-use Flowpack\NodeTemplates\NodeTemplateDumper\NodeTemplateDumper;
+use Flowpack\NodeTemplates\Infrastructure\NodeTemplateDumper\NodeTemplateDumper;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 use Neos\Neos\Domain\Service\ContentContextFactory;

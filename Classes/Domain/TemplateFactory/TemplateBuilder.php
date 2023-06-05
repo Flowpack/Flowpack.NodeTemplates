@@ -1,7 +1,9 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain;
+namespace Flowpack\NodeTemplates\Domain\TemplateFactory;
 
+use Flowpack\NodeTemplates\Domain\CaughtException;
+use Flowpack\NodeTemplates\Domain\CaughtExceptions;
 use Neos\Flow\Annotations as Flow;
 
 /**

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Flowpack\NodeTemplates\NodeTemplateDumper;
+namespace Flowpack\NodeTemplates\Infrastructure\NodeTemplateDumper;
 
 use Neos\ContentRepository\Domain\Model\ArrayPropertyCollection;
 use Neos\ContentRepository\Domain\Model\NodeInterface;

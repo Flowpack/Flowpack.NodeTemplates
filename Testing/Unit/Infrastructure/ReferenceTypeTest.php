@@ -2,7 +2,7 @@
 
 namespace Flowpack\NodeTemplates\Tests\Unit\Infrastructure;
 
-use Flowpack\NodeTemplates\Infrastructure\ReferenceType;
+use Flowpack\NodeTemplates\Infrastructure\ContentRepository\ReferenceType;
 use GuzzleHttp\Psr7\Uri;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;

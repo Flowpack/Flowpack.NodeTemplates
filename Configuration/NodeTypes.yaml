@@ -2,10 +2,10 @@
   options:
     nodeCreationHandlers:
       templateNodeCreationHandler:
-        nodeCreationHandler: 'Flowpack\NodeTemplates\NodeCreationHandler\TemplateNodeCreationHandler'
+        nodeCreationHandler: 'Flowpack\NodeTemplates\Application\NodeCreationHandler\TemplateNodeCreationHandler'
 
 'Neos.Neos:Document':
   options:
     nodeCreationHandlers:
       documentTitle:
-        nodeCreationHandler: 'Flowpack\NodeTemplates\NodeCreationHandler\TemplatingDocumentTitleNodeCreationHandler'
+        nodeCreationHandler: 'Flowpack\NodeTemplates\Application\NodeCreationHandler\TemplatingDocumentTitleNodeCreationHandler'

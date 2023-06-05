@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Flowpack\NodeTemplates\Infrastructure;
+namespace Flowpack\NodeTemplates\Infrastructure\ContentRepository;
 
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;

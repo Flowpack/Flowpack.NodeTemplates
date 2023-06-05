@@ -3,7 +3,7 @@
 namespace Flowpack\NodeTemplates\Tests\Functional;
 
 use Flowpack\NodeTemplates\Domain\CaughtExceptions;
-use Flowpack\NodeTemplates\Domain\TemplateFactory;
+use Flowpack\NodeTemplates\Domain\TemplateFactory\TemplateFactory;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\Flow\Tests\FunctionalTestCase;
 

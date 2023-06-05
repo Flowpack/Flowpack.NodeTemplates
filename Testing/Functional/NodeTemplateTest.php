@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Tests\Functional;
 
-use Flowpack\NodeTemplates\NodeTemplateDumper\NodeTemplateDumper;
+use Flowpack\NodeTemplates\Infrastructure\NodeTemplateDumper\NodeTemplateDumper;
 use Neos\ContentRepository\Domain\Model\Node;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\Workspace;

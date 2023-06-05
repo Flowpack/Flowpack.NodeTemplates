@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Flowpack\NodeTemplates\NodeTemplateDumper;
+namespace Flowpack\NodeTemplates\Infrastructure\NodeTemplateDumper;
 
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Utility\Algorithms;

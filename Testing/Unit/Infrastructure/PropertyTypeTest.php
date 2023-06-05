@@ -11,7 +11,7 @@ namespace Flowpack\NodeTemplates\Tests\Unit\Infrastructure;
  * source code.
  */
 
-use Flowpack\NodeTemplates\Infrastructure\PropertyType;
+use Flowpack\NodeTemplates\Infrastructure\ContentRepository\PropertyType;
 use Flowpack\NodeTemplates\Tests\Unit\Infrastructure\Fixture\PostalAddress;
 use GuzzleHttp\Psr7\Uri;
 use Neos\ContentRepository\Domain\Model\NodeType;

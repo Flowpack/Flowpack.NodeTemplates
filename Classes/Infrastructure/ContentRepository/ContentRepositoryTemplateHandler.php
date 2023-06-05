@@ -1,6 +1,6 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Infrastructure;
+namespace Flowpack\NodeTemplates\Infrastructure\ContentRepository;
 
 use Flowpack\NodeTemplates\Domain\CaughtException;
 use Flowpack\NodeTemplates\Domain\CaughtExceptions;

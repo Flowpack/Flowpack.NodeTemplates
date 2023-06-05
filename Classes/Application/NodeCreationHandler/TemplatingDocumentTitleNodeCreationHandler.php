@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Flowpack\NodeTemplates\NodeCreationHandler;
+namespace Flowpack\NodeTemplates\Application\NodeCreationHandler;
 
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\Flow\Annotations as Flow;

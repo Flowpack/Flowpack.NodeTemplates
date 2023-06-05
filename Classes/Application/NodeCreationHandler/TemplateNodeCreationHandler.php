@@ -1,12 +1,12 @@
 <?php
 
-namespace Flowpack\NodeTemplates\NodeCreationHandler;
+namespace Flowpack\NodeTemplates\Application\NodeCreationHandler;
 
 use Flowpack\NodeTemplates\Domain\CaughtExceptions;
 use Flowpack\NodeTemplates\Domain\ExceptionHandlingBehaviour;
-use Flowpack\NodeTemplates\Domain\TemplateFactory;
+use Flowpack\NodeTemplates\Domain\TemplateFactory\TemplateFactory;
 use Flowpack\NodeTemplates\Domain\TemplatePartiallyAppliedException;
-use Flowpack\NodeTemplates\Infrastructure\ContentRepositoryTemplateHandler;
+use Flowpack\NodeTemplates\Infrastructure\ContentRepository\ContentRepositoryTemplateHandler;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Log\ThrowableStorageInterface;
