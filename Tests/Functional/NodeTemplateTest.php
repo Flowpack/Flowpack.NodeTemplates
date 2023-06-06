@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Tests\Functional;
 
+use Flowpack\NodeTemplates\Domain\RootTemplate;
+use Flowpack\NodeTemplates\Domain\TemplateFactory\TemplateFactory;
 use Flowpack\NodeTemplates\Infrastructure\NodeTemplateDumper\NodeTemplateDumper;
 use Neos\ContentRepository\Domain\Model\Node;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
@@ -35,11 +37,23 @@ class NodeTemplateTest extends FunctionalTestCase
 
     private NodeTemplateDumper $nodeTemplateDumper;
 
+    private RootTemplate $lastCreatedRootTemplate;
+
     public function setUp(): void
     {
         parent::setUp();
         $this->setupContentRepository();
         $this->nodeTemplateDumper = $this->objectManager->get(NodeTemplateDumper::class);
+
+        $templateFactory = $this->objectManager->get(TemplateFactory::class);
+
+        $templateFactoryMock = $this->getMockBuilder(TemplateFactory::class)->disableOriginalConstructor()->getMock();
+        $templateFactoryMock->expects(self::once())->method('createFromTemplateConfiguration')->willReturnCallback(function (...$args) use($templateFactory) {
+            $rootTemplate = $templateFactory->createFromTemplateConfiguration(...$args);
+            $this->lastCreatedRootTemplate = $rootTemplate;
+            return $rootTemplate;
+        });
+        $this->objectManager->setInstance(TemplateFactory::class, $templateFactoryMock);
     }
 
     public function tearDown(): void
@@ -48,6 +62,7 @@ class NodeTemplateTest extends FunctionalTestCase
         $this->inject($this->contextFactory, 'contextInstances', []);
         $this->objectManager->get(FeedbackCollection::class)->reset();
         $this->objectManager->forgetInstance(ContentDimensionRepository::class);
+        $this->objectManager->forgetInstance(TemplateFactory::class);
     }
 
     private function setupContentRepository(): void
@@ -118,6 +133,8 @@ class NodeTemplateTest extends FunctionalTestCase
             []
         );
 
+        $this->assertLastCreatedTemplateMatchesSnapshot('TwoColumnPreset');
+
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
@@ -136,6 +153,8 @@ class NodeTemplateTest extends FunctionalTestCase
             ]
         );
 
+        $this->assertLastCreatedTemplateMatchesSnapshot('TwoColumnPreset');
+
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
@@ -150,6 +169,8 @@ class NodeTemplateTest extends FunctionalTestCase
             $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Columns.Two.WithContext'),
             []
         );
+
+        $this->assertLastCreatedTemplateMatchesSnapshot('TwoColumnPreset');
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
@@ -168,6 +189,8 @@ class NodeTemplateTest extends FunctionalTestCase
             ]
         );
 
+        $this->assertLastCreatedTemplateMatchesSnapshot('DifferentPropertyTypes');
+
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
@@ -182,6 +205,8 @@ class NodeTemplateTest extends FunctionalTestCase
             $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithEvaluationExceptions'),
             []
         );
+
+        $this->assertLastCreatedTemplateMatchesSnapshot('WithEvaluationExceptions');
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
@@ -207,6 +232,8 @@ class NodeTemplateTest extends FunctionalTestCase
                 $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithOneEvaluationException'),
                 []
             );
+
+            $this->assertLastCreatedTemplateMatchesSnapshot('WithOneEvaluationException');
 
             self::assertSame([
                 [
@@ -234,6 +261,8 @@ class NodeTemplateTest extends FunctionalTestCase
             []
         );
 
+        $this->assertLastCreatedTemplateMatchesSnapshot('HiddenNode');
+
         $subgraphWithHiddenContent = $this->contextFactory->create(['workspaceName' => 'live', 'invisibleContentShown' => true]);
 
         $createdNode = $subgraphWithHiddenContent->getNodeByIdentifier($targetNode->getIdentifier())->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
@@ -251,6 +280,8 @@ class NodeTemplateTest extends FunctionalTestCase
             $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page.Static'),
             []
         );
+
+        $this->assertLastCreatedTemplateMatchesSnapshot('PagePreset');
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
@@ -273,6 +304,14 @@ class NodeTemplateTest extends FunctionalTestCase
 
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
         $this->assertNodeDumpAndTemplateDumpMatchSnapshot('PagePreset', $createdNode);
+    }
+
+    private function assertLastCreatedTemplateMatchesSnapshot(string $snapShotName): void
+    {
+        $lastCreatedTemplate = $this->serializeValuesInArray(
+            $this->lastCreatedRootTemplate->jsonSerialize()
+        );
+        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.template.json', json_encode($lastCreatedTemplate, JSON_PRETTY_PRINT));
     }
 
     private function assertNodeDumpAndTemplateDumpMatchSnapshot(string $snapShotName, NodeInterface $node): void

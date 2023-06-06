@@ -1,0 +1,110 @@
+{
+    "hidden": null,
+    "properties": {
+        "title": "Page1",
+        "uriPathSegment": "page1"
+    },
+    "childNodes": [
+        {
+            "type": null,
+            "name": "main",
+            "hidden": null,
+            "properties": [],
+            "childNodes": [
+                {
+                    "type": "Flowpack.NodeTemplates:Content.Text",
+                    "name": null,
+                    "hidden": null,
+                    "properties": {
+                        "text": "textOnPage1"
+                    },
+                    "childNodes": []
+                }
+            ]
+        },
+        {
+            "type": "Flowpack.NodeTemplates:Document.Page",
+            "name": null,
+            "hidden": null,
+            "properties": {
+                "title": "Page2",
+                "uriPathSegment": "page2"
+            },
+            "childNodes": [
+                {
+                    "type": null,
+                    "name": "main",
+                    "hidden": null,
+                    "properties": [],
+                    "childNodes": [
+                        {
+                            "type": "Flowpack.NodeTemplates:Content.Text",
+                            "name": null,
+                            "hidden": null,
+                            "properties": {
+                                "text": "textOnPage2"
+                            },
+                            "childNodes": []
+                        }
+                    ]
+                },
+                {
+                    "type": "Flowpack.NodeTemplates:Document.Page",
+                    "name": null,
+                    "hidden": null,
+                    "properties": {
+                        "title": "Page3",
+                        "uriPathSegment": "page3"
+                    },
+                    "childNodes": [
+                        {
+                            "type": null,
+                            "name": "main",
+                            "hidden": null,
+                            "properties": [],
+                            "childNodes": [
+                                {
+                                    "type": "Flowpack.NodeTemplates:Content.Text",
+                                    "name": null,
+                                    "hidden": null,
+                                    "properties": {
+                                        "text": "textOnPage3"
+                                    },
+                                    "childNodes": []
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "Flowpack.NodeTemplates:Document.Page",
+            "name": null,
+            "hidden": null,
+            "properties": {
+                "title": "Page4",
+                "uriPathSegment": "page4"
+            },
+            "childNodes": [
+                {
+                    "type": null,
+                    "name": "main",
+                    "hidden": null,
+                    "properties": [],
+                    "childNodes": [
+                        {
+                            "type": "Flowpack.NodeTemplates:Content.Text",
+                            "name": null,
+                            "hidden": null,
+                            "properties": {
+                                "text": "textOnPage4"
+                            },
+                            "childNodes": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

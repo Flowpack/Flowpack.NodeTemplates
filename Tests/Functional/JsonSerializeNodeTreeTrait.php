@@ -45,6 +45,11 @@ trait JsonSerializeNodeTreeTrait
                 $value = $this->serializeValuesInArray($value);
             } elseif ($value instanceof NodeInterface) {
                 $value = sprintf('Node(%s, %s)', $value->getIdentifier(), $value->getNodeType()->getName());
+            } elseif ($value instanceof \JsonSerializable) {
+                $value = $value->jsonSerialize();
+                if (is_array($value)) {
+                    $value = $this->serializeValuesInArray($value);
+                }
             } elseif (is_object($value)) {
                 $value = sprintf('object(%s)', get_class($value));
             } else {

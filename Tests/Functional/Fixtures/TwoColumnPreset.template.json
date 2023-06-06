@@ -1,0 +1,40 @@
+{
+    "hidden": null,
+    "properties": [],
+    "childNodes": [
+        {
+            "type": null,
+            "name": "column0",
+            "hidden": null,
+            "properties": [],
+            "childNodes": [
+                {
+                    "type": "Flowpack.NodeTemplates:Content.Text",
+                    "name": null,
+                    "hidden": null,
+                    "properties": {
+                        "text": "<p>foo<\/p>"
+                    },
+                    "childNodes": []
+                }
+            ]
+        },
+        {
+            "type": null,
+            "name": "column1",
+            "hidden": null,
+            "properties": [],
+            "childNodes": [
+                {
+                    "type": "Flowpack.NodeTemplates:Content.Text",
+                    "name": null,
+                    "hidden": null,
+                    "properties": {
+                        "text": "<p>bar<\/p>"
+                    },
+                    "childNodes": []
+                }
+            ]
+        }
+    ]
+}
