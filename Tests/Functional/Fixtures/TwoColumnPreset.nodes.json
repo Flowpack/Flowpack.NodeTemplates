@@ -1,0 +1,28 @@
+{
+    "childNodes": [
+        {
+            "nodeTypeName": "Neos.Neos:ContentCollection",
+            "nodeName": "column0",
+            "childNodes": [
+                {
+                    "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+                    "properties": {
+                        "text": "<p>foo<\/p>"
+                    }
+                }
+            ]
+        },
+        {
+            "nodeTypeName": "Neos.Neos:ContentCollection",
+            "nodeName": "column1",
+            "childNodes": [
+                {
+                    "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+                    "properties": {
+                        "text": "<p>bar<\/p>"
+                    }
+                }
+            ]
+        }
+    ]
+}

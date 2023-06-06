@@ -13,23 +13,19 @@ use Neos\ContentRepository\Domain\Repository\ContentDimensionRepository;
 use Neos\ContentRepository\Domain\Repository\WorkspaceRepository;
 use Neos\ContentRepository\Domain\Service\ContextFactoryInterface;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
-use Neos\Flow\Configuration\ConfigurationManager;
-use Neos\Flow\Mvc\Controller\ControllerContext;
-use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Flow\Tests\FunctionalTestCase;
 use Neos\Neos\Domain\Model\Site;
 use Neos\Neos\Domain\Repository\SiteRepository;
 use Neos\Neos\Ui\Domain\Model\ChangeCollection;
-use Neos\Neos\Ui\Domain\Model\Feedback\AbstractMessageFeedback;
 use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
-use Neos\Neos\Ui\Domain\Model\FeedbackInterface;
 use Neos\Neos\Ui\TypeConverter\ChangeCollectionConverter;
-use Neos\Utility\Arrays;
-use Neos\Utility\ObjectAccess;
 
 class NodeTemplateTest extends FunctionalTestCase
 {
     use SnapshotTrait;
+    use FeedbackCollectionMessagesTrait;
+    use WithConfigurationTrait;
+    use JsonSerializeNodeTreeTrait;
 
     protected static $testablePersistenceEnabled = true;
 
@@ -44,6 +40,14 @@ class NodeTemplateTest extends FunctionalTestCase
         parent::setUp();
         $this->setupContentRepository();
         $this->nodeTemplateDumper = $this->objectManager->get(NodeTemplateDumper::class);
+    }
+
+    public function tearDown(): void
+    {
+        parent::tearDown();
+        $this->inject($this->contextFactory, 'contextInstances', []);
+        $this->objectManager->get(FeedbackCollection::class)->reset();
+        $this->objectManager->forgetInstance(ContentDimensionRepository::class);
     }
 
     private function setupContentRepository(): void
@@ -116,14 +120,9 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
-        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
-
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
-        $snapshot = file_get_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml');
-        self::assertSame(
-            str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
-            $dumpedYamlTemplate
-        );
+
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('TwoColumnPreset', $createdNode);
     }
 
     /** @test */
@@ -139,14 +138,8 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
-        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
-
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
-        $snapshot = file_get_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml');
-        self::assertSame(
-            str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
-            $dumpedYamlTemplate
-        );
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('TwoColumnPreset', $createdNode);
     }
 
     /** @test */
@@ -160,14 +153,8 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
-        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
-
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
-        $snapshot = file_get_contents(__DIR__ . '/Fixtures/TwoColumnPreset.yaml');
-        self::assertSame(
-            str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
-            $dumpedYamlTemplate
-        );
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('TwoColumnPreset', $createdNode);
     }
 
     /** @test */
@@ -183,14 +170,8 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
-        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
-
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
-        $snapshot = file_get_contents(__DIR__ . '/Fixtures/DifferentPropertyTypes.yaml');
-        self::assertSame(
-            $snapshot,
-            $dumpedYamlTemplate
-        );
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('DifferentPropertyTypes', $createdNode);
     }
 
     /** @test */
@@ -204,15 +185,9 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
-        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
-
         $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/WithEvaluationExceptions.messages.json', json_encode($this->getMessagesOfFeedbackCollection(), JSON_PRETTY_PRINT));
 
-        $snapshot = file_get_contents(__DIR__ . '/Fixtures/WithEvaluationExceptions.yaml');
-        self::assertSame(
-            $snapshot,
-            $dumpedYamlTemplate
-        );
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('WithEvaluationExceptions', $createdNode);
     }
 
     /** @test */
@@ -264,6 +239,8 @@ class NodeTemplateTest extends FunctionalTestCase
         $createdNode = $subgraphWithHiddenContent->getNodeByIdentifier($targetNode->getIdentifier())->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         self::assertTrue($createdNode->isHidden(), 'Expected node to be hidden.');
+
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('HiddenNode', $createdNode);
     }
 
     /** @test */
@@ -277,14 +254,8 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
-        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
-
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
-        $snapshot = file_get_contents(__DIR__ . '/Fixtures/PagePreset.yaml');
-        self::assertSame(
-            str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
-            $dumpedYamlTemplate
-        );
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('PagePreset', $createdNode);
     }
 
     /** @test */
@@ -300,61 +271,20 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
-        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($createdNode);
-
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
-        $snapshot = file_get_contents(__DIR__ . '/Fixtures/PagePreset.yaml');
-        self::assertSame(
-            str_replace('{nodeTypeName}', $toBeCreatedNodeTypeName->getValue(), $snapshot),
-            $dumpedYamlTemplate
-        );
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('PagePreset', $createdNode);
     }
 
-    private function getMessagesOfFeedbackCollection(): array
+    private function assertNodeDumpAndTemplateDumpMatchSnapshot(string $snapShotName, NodeInterface $node): void
     {
-        /** @var FeedbackInterface[] $allFeedbacks */
-        $allFeedbacks = ObjectAccess::getProperty($this->objectManager->get(FeedbackCollection::class), 'feedbacks', true);
+        $serializedNodes = $this->jsonSerializeNodeAndDescendents($node);
+        unset($serializedNodes['nodeTypeName']);
+        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.nodes.json', json_encode($serializedNodes, JSON_PRETTY_PRINT));
 
-        /** @var AbstractMessageFeedback[] $allFeedbacks */
-        $messages = [];
-        foreach ($allFeedbacks as $feedback) {
-            if ($feedback instanceof AbstractMessageFeedback) {
-                $messages[] = $feedback->serializePayload($this->createStub(ControllerContext::class));
-            }
-        }
-        return $messages;
-    }
+        $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($node);
 
-    /**
-     * Mock the settings of the configuration manager and cleanup afterwards
-     *
-     * WARNING: If you activate Singletons during this transaction they will later still have a reference to the mocked object manger, so you might need to call
-     * {@see ObjectManagerInterface::forgetInstance()}. An alternative would be also to hack the protected $this->settings of the manager.
-     *
-     * @param array $additionalSettings settings that are merged onto the the current testing configuration
-     * @param callable $fn test code that is executed in the modified context
-     */
-    private function withMockedConfigurationSettings(array $additionalSettings, callable $fn): void
-    {
-        $configurationManager = $this->objectManager->get(ConfigurationManager::class);
-        $configurationManagerMock = $this->getMockBuilder(ConfigurationManager::class)->disableOriginalConstructor()->getMock();
-        $mockedSettings = Arrays::arrayMergeRecursiveOverrule($configurationManager->getConfiguration('Settings'), $additionalSettings);
-        $configurationManagerMock->expects(self::any())->method('getConfiguration')->willReturnCallback(function (string $configurationType, string $configurationPath = null) use($configurationManager, $mockedSettings) {
-            if ($configurationType !== 'Settings') {
-                return $configurationManager->getConfiguration($configurationType, $configurationPath);
-            }
-            return $configurationPath ? Arrays::getValueByPath($mockedSettings, $configurationPath) : $mockedSettings;
-        });
-        $this->objectManager->setInstance(ConfigurationManager::class, $configurationManagerMock);
-        $fn();
-        $this->objectManager->setInstance(ConfigurationManager::class, $configurationManager);
-    }
+        $yamlTemplateWithoutOriginNodeTypeName = '\'{nodeTypeName}\'' . substr($dumpedYamlTemplate, strlen($node->getNodeType()->getName()) + 2);
 
-    public function tearDown(): void
-    {
-        parent::tearDown();
-        $this->inject($this->contextFactory, 'contextInstances', []);
-        $this->objectManager->get(FeedbackCollection::class)->reset();
-        $this->objectManager->forgetInstance(ContentDimensionRepository::class);
+        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.yaml', $yamlTemplateWithoutOriginNodeTypeName);
     }
 }

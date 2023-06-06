@@ -1,4 +1,4 @@
-'Flowpack.NodeTemplates:Content.WithEvaluationExceptions':
+'{nodeTypeName}':
   options:
     template:
       properties:

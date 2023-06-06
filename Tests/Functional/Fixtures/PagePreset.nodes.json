@@ -1,0 +1,83 @@
+{
+    "properties": {
+        "uriPathSegment": "page1",
+        "title": "Page1"
+    },
+    "childNodes": [
+        {
+            "nodeTypeName": "Neos.Neos:ContentCollection",
+            "nodeName": "main",
+            "childNodes": [
+                {
+                    "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+                    "properties": {
+                        "text": "textOnPage1"
+                    }
+                }
+            ]
+        },
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Document.Page",
+            "properties": {
+                "uriPathSegment": "page2",
+                "title": "Page2"
+            },
+            "childNodes": [
+                {
+                    "nodeTypeName": "Neos.Neos:ContentCollection",
+                    "nodeName": "main",
+                    "childNodes": [
+                        {
+                            "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+                            "properties": {
+                                "text": "textOnPage2"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "nodeTypeName": "Flowpack.NodeTemplates:Document.Page",
+                    "properties": {
+                        "uriPathSegment": "page3",
+                        "title": "Page3"
+                    },
+                    "childNodes": [
+                        {
+                            "nodeTypeName": "Neos.Neos:ContentCollection",
+                            "nodeName": "main",
+                            "childNodes": [
+                                {
+                                    "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+                                    "properties": {
+                                        "text": "textOnPage3"
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Document.Page",
+            "properties": {
+                "uriPathSegment": "page4",
+                "title": "Page4"
+            },
+            "childNodes": [
+                {
+                    "nodeTypeName": "Neos.Neos:ContentCollection",
+                    "nodeName": "main",
+                    "childNodes": [
+                        {
+                            "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+                            "properties": {
+                                "text": "textOnPage4"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

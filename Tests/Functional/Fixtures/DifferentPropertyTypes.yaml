@@ -1,4 +1,4 @@
-'Flowpack.NodeTemplates:Content.DifferentPropertyTypes':
+'{nodeTypeName}':
   options:
     template:
       properties:

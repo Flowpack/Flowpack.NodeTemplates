@@ -126,6 +126,7 @@ class PropertiesAndReferences
                     ),
                     1685958176560
                 ))->withOrigin(sprintf('Reference "%s" in NodeType "%s"', $referenceName, $nodeType->getName())));
+                continue;
             }
             $validReferences[$referenceName] = $referenceValue;
         }
