@@ -8,7 +8,9 @@
             "non-existing-node-id"
         ],
         "working": "working",
-        "nonDeclaredProperty": "hi"
+        "someValueWithDefault": null,
+        "nonDeclaredProperty": "hi",
+        "selectBox": "red"
     },
     "childNodes": [
         {

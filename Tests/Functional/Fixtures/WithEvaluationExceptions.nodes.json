@@ -1,5 +1,6 @@
 {
     "properties": {
+        "someValueWithDefault": true,
         "working": "working"
     },
     "childNodes": [

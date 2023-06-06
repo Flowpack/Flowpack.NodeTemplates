@@ -66,6 +66,15 @@ class PropertiesAndReferences
                         1685869035209
                     );
                 }
+                if (array_key_exists($propertyName, $defaultValues) && $propertyValue === null) {
+                    throw new PropertyIgnoredException(
+                        sprintf(
+                            'Because property is `null` and would override the default value `%s`.',
+                            json_encode($defaultValues[$propertyName])
+                        ),
+                        1685869035371
+                    );
+                }
                 $propertyType = PropertyType::fromPropertyOfNodeType($propertyName, $nodeType);
                 if (!$propertyType->isMatchedBy($propertyValue)) {
                     throw new PropertyIgnoredException(
@@ -76,6 +85,23 @@ class PropertiesAndReferences
                         ),
                         1685958105644
                     );
+                }
+                $propertyConfiguration = $nodeType->getProperties()[$propertyName];
+                $editor = $propertyConfiguration['ui']['inspector']['editor'] ?? null;
+                $type = $propertyConfiguration['type'] ?? null;
+                $selectBoxValues = $propertyConfiguration['ui']['inspector']['editorOptions']['values'] ?? null;
+                if ($editor === 'Neos.Neos/Inspector/Editors/SelectBoxEditor' && $selectBoxValues && in_array($type, ['string', 'array'], true)) {
+                    $selectedValue = $type === 'string' ? [$propertyValue] : $propertyValue;
+                    $difference = array_diff($selectedValue, array_keys($selectBoxValues));
+                    if (\count($difference) !== 0) {
+                        throw new PropertyIgnoredException(
+                            sprintf(
+                                'Because property has illegal select-box value(s): (%s)',
+                                join(', ', $difference)
+                            ),
+                            1685869035452
+                        );
+                    }
                 }
                 $validProperties[$propertyName] = $propertyValue;
             } catch (PropertyIgnoredException $propertyNotSetException) {

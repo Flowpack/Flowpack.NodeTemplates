@@ -26,6 +26,21 @@
       type: references
     working:
       type: string
+    someValueWithDefault:
+      defaultValue: true
+      type: boolean
+    selectBox:
+      type: string
+      ui:
+        label: "Select Box"
+        inspector:
+          editor: Neos.Neos/Inspector/Editors/SelectBoxEditor
+          editorOptions:
+            values:
+              karma:
+                label: "A"
+              longLive:
+                label: "B"
   childNodes:
     type-cant-mutate:
       type: 'Flowpack.NodeTemplates:Content.Text'
@@ -38,7 +53,9 @@
         reference: "non-existing-node-id"
         references: "${['non-existing-node-id']}"
         working: "working"
+        someValueWithDefault: null
         nonDeclaredProperty: "hi"
+        selectBox: "red"
         bar: "${'left open"
       childNodes:
         whenAbort:
