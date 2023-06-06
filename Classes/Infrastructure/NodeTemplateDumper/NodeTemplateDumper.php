@@ -80,9 +80,7 @@ class NodeTemplateDumper
             $templatePart = array_filter([
                 'properties' => $this->nonDefaultConfiguredNodeProperties($node, $comments),
                 'childNodes' => $this->nodeTemplateFromNodes(
-                    $isDocumentNode
-                        ? $node->getChildNodes('Neos.Neos:Content,Neos.Neos:ContentCollection,Neos.Neos:Document')
-                        : $node->getChildNodes('Neos.Neos:Content,Neos.Neos:ContentCollection'),
+                    $node->getChildNodes('Neos.Neos:Node'),
                     $comments
                 )
             ]);
