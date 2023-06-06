@@ -56,6 +56,12 @@
       type: string
       ui:
         label: "Null value"
+    unsetValueWithDefault:
+      defaultValue: true
+      type: boolean
+    someValueWithDefault:
+      defaultValue: true
+      type: boolean
   options:
     template:
       properties:
@@ -64,7 +70,7 @@
         selectBox: karma
         reference: "${data.someNode}"
         nullValue: null
-
+        unsetValueWithDefault: null
 'Flowpack.NodeTemplates:Content.Columns.Two':
   superTypes:
     'Neos.Neos:Content': true
