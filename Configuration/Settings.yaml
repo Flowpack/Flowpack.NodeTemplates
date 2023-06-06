@@ -1,5 +1,8 @@
 Flowpack:
   NodeTemplates:
+    exceptionHandlingStrategy:
+      continueWithPartiallyEvaluatedTemplate: true
+
     defaultEelContext:
       String: 'Neos\Eel\Helper\StringHelper'
       Array: 'Neos\Eel\Helper\ArrayHelper'
@@ -12,6 +15,3 @@ Flowpack:
       Type: 'Neos\Eel\Helper\TypeHelper'
       I18n: 'Neos\Flow\I18n\EelHelper\TranslationHelper'
       q: 'Neos\Eel\FlowQuery\FlowQuery::q'
-
-    # one of "APPLY_PARTIAL_TEMPLATE", "DONT_APPLY_PARTIAL_TEMPLATE"
-    exceptionHandlingBehaviour: "APPLY_PARTIAL_TEMPLATE"

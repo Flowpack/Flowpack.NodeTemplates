@@ -185,15 +185,15 @@ way around.
 In the first step the configuration is evaluated, all Runtime Exceptions (for example caused in an EEL Expression) are caught, and any malformed parts of the template are ignored (with their errors being logged).
 This might lead to a partially evaluated template with some properties or childNodes missing.
 
-You can decide via the exception handling behaviour, if you want to apply this partially evaluated template `APPLY_PARTIAL_TEMPLATE` or abort the process `DONT_APPLY_PARTIAL_TEMPLATE` which will only lead to creating the node as if there was no template.
+You can decide via the exception handling strategy `continueWithPartiallyEvaluatedTemplate`, if you want to apply this partially evaluated template `true` or abort the process `false` which will only lead to creating the root node as if there was no template.
 
-The setting is configurable via Settings.yaml with `Flowpack.NodeTemplates.exceptionHandlingBehaviour` it defaults to `APPLY_PARTIAL_TEMPLATE`.
+The setting is configurable via Settings.yaml in `Flowpack.NodeTemplates.continueWithPartiallyEvaluatedTemplate` it defaults to `true`.
 
 ```yaml
 Flowpack:
   NodeTemplates:
-    # one of "APPLY_PARTIAL_TEMPLATE", "DONT_APPLY_PARTIAL_TEMPLATE"
-    exceptionHandlingBehaviour: "APPLY_PARTIAL_TEMPLATE"
+    exceptionHandlingStrategy:
+      continueWithPartiallyEvaluatedTemplate: true
 ```
 
 In case exceptions are thrown while applying the template like because a node constraint was not met or the `type` field was not set the creation of the childNode is aborted, but we continue with applying the other left over parts of the template.

@@ -3,7 +3,7 @@
 namespace Flowpack\NodeTemplates\Application\NodeCreationHandler;
 
 use Flowpack\NodeTemplates\Domain\CaughtExceptions;
-use Flowpack\NodeTemplates\Domain\ExceptionHandlingBehaviour;
+use Flowpack\NodeTemplates\Domain\ExceptionHandlingStrategy;
 use Flowpack\NodeTemplates\Domain\TemplateFactory\TemplateFactory;
 use Flowpack\NodeTemplates\Domain\TemplatePartiallyAppliedException;
 use Flowpack\NodeTemplates\Infrastructure\ContentRepository\ContentRepositoryTemplateHandler;
@@ -49,9 +49,9 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
     protected $throwableStorage;
 
     /**
-     * @Flow\InjectConfiguration(package="Flowpack.NodeTemplates", path="exceptionHandlingBehaviour")
+     * @Flow\InjectConfiguration(package="Flowpack.NodeTemplates", path="exceptionHandlingStrategy")
      */
-    public ?string $exceptionHandlingBehaviourConfiguration;
+    public array $exceptionHandlingStrategyConfiguration;
 
     /**
      * Create child nodes and change properties upon node creation
@@ -72,26 +72,26 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 
         $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');
 
-        $exceptionHandlingBehaviour = ExceptionHandlingBehaviour::fromConfiguration($this->exceptionHandlingBehaviourConfiguration);
+        $exceptionHandlingStrategy = ExceptionHandlingStrategy::fromConfiguration($this->exceptionHandlingStrategyConfiguration);
 
         $caughtExceptions = CaughtExceptions::create();
         try {
             $template = $this->templateFactory->createFromTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
-            if (!$caughtExceptions->hasExceptions() || $exceptionHandlingBehaviour->shouldApplyPartialTemplate()) {
+            if (!$caughtExceptions->hasExceptions() || $exceptionHandlingStrategy->continueWithPartiallyEvaluatedTemplate()) {
                 $this->contentRepositoryTemplateHandler->apply($template, $node, $caughtExceptions);
             }
         } finally {
-            $this->handleCaughtExceptionsForNode($caughtExceptions, $node, $exceptionHandlingBehaviour);
+            $this->handleCaughtExceptionsForNode($caughtExceptions, $node, $exceptionHandlingStrategy);
         }
     }
 
-    private function handleCaughtExceptionsForNode(CaughtExceptions $caughtExceptions, NodeInterface $node, ExceptionHandlingBehaviour $exceptionHandlingBehaviour): void
+    private function handleCaughtExceptionsForNode(CaughtExceptions $caughtExceptions, NodeInterface $node, ExceptionHandlingStrategy $exceptionHandlingStrategy): void
     {
         if (!$caughtExceptions->hasExceptions()) {
             return;
         }
 
-        $initialMessageInCaseOfException = $exceptionHandlingBehaviour->shouldApplyPartialTemplate()
+        $initialMessageInCaseOfException = $exceptionHandlingStrategy->continueWithPartiallyEvaluatedTemplate()
             ? sprintf('Template for "%s" only partially applied. Please check the newly created nodes beneath %s.', $node->getNodeType()->getLabel(), (string)$node)
             : sprintf('Template for "%s" was not applied. Only %s was created.', $node->getNodeType()->getLabel(), (string)$node);
 
