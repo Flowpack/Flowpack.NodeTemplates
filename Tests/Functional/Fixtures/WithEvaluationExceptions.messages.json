@@ -44,6 +44,14 @@
         "severity": "ERROR"
     },
     {
+        "message": "Property \"_hidden\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because internal legacy property \"_hidden\" not implement., 1686149513158)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Property \"_hiddenAfterDateTime\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because internal legacy property \"_hiddenAfterDateTime\" not implement., 1686149513158)",
+        "severity": "ERROR"
+    },
+    {
         "message": "Property \"boolValue\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because value `123` is not assignable to property type \"boolean\"., 1685958105644)",
         "severity": "ERROR"
     },
