@@ -129,15 +129,15 @@ The following example creates three different text child nodes in the main conte
 We call conditions ``when`` and loops ``withItems`` (instead of ``if`` and ``forEach``),
 because it inspires a more declarative mood. The naming is inspired by Ansible.
 
-## Hide Nodes
+## Disable nodes (previously called "hidden")
 
-The following example hides a newly created node:
+The following example disables a newly created node:
 
 ```yaml
 'Neos.NodeTypes:Page':
   options:
     template:
-      hidden: true
+      disabled: true
 ```
 
 ## EEL context variables
