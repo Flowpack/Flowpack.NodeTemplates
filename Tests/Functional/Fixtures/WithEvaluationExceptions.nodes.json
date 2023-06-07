@@ -1,0 +1,29 @@
+{
+    "properties": {
+        "working": "working"
+    },
+    "childNodes": [
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+            "nodeName": "type-cant-mutate"
+        },
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+            "properties": {
+                "text": "bar"
+            }
+        },
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+            "properties": {
+                "text": "123"
+            }
+        },
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+            "properties": {
+                "text": "foo"
+            }
+        }
+    ]
+}

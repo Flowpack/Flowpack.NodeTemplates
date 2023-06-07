@@ -12,8 +12,6 @@ template is applied can be changed or removed by the editor.
 The desired node structure is defined in a declarative way in the NodeTypes.yaml
 under the path "options.template".
 
-**Please note that the node templates package only works when using the new React UI.**
-
 ## TL;DR
 
 1. `composer require flowpack/nodetemplates`
@@ -80,16 +78,23 @@ You could let the editor choose between different dummy texts like this:
 If you want to apply a template only under some conditions, you can use the ``when`` configuration
 key. It can be used in the main node template or in any child node template.
 
-The following example hides a newly created node if the title entered in the node creation dialog
-contains the string "dummy":
+The following example only creates a text node if the option was selected in the creation dialog:
 
 ```yaml
-'Neos.NodeTypes:Page':
+'Your.NodeType:ContentCollection':
+  ui:
+    creationDialog:
+      elements:
+        createText:
+          type: boolean
   options:
     template:
-      properties:
-        _hidden: true
-      when: '${String.indexOf(String.toLowerCase(data.title), "dummy") >= 0}'
+      childNodes:
+        text:
+          type: 'Your.NodeType:Text'
+          properties:
+            text: "bar"
+          when: '${data.createText}'
 ```
 
 As a ``when`` condition that evaluates to ``false`` prevents the whole template (and all child
@@ -126,16 +131,14 @@ because it inspires a more declarative mood. The naming is inspired by Ansible.
 
 ## EEL context variables
 
-There are several variables available in the EEL context that allow for accessing node data, for example.
+There are several variables available in the EEL context for example.
 
-| Variable name  | Description                                                                               | Availability            |
-|----------------|-------------------------------------------------------------------------------------------|-------------------------|
-| data           | Data from the node creation dialog                                                        | Global (if data exists) |
-| triggeringNode | The main node whose creation triggered template processing                                | Global                  |
-| node           | The current node that has been created (equals triggeringNode for the outermost template) | Global                  |
-| parentNode     | The parentNode of the current node                                                        | Child nodes             |
-| item           | The current item inside a withItems loop                                                  | Inside withItems loop   |
-| key            | The current key inside a withItems loop                                                   | Inside withItems loop   |
+| Variable name  | Type                 | Description                                                | Availability          |
+|----------------|----------------------|------------------------------------------------------------|-----------------------|
+| data           | array<string, mixed> | Data from the node creation dialog                         | Global                |
+| triggeringNode | NodeInterface        | The main node whose creation triggered template processing | Global                |
+| item           | mixed                | The current item inside a withItems loop                   | Inside withItems loop |
+| key            | string               | The current key inside a withItems loop                    | Inside withItems loop |
 
 ### Additional context
 
@@ -166,15 +169,23 @@ values are not available. As ``withContext`` is evaluated before ``when`` and ``
 access context variables from ``withContext`` in ``withItems`` at the same level – but not the other
 way around.
 
-## Node creation depth
+## Exception handling, resuming with the next possible operation.
 
-The node creation depth can be configured via Settings.yaml with `nodeCreationDepth`, defaults to `10`. 
+In the first step the configuration is processed, exceptions like those caused by an EEL Expression are caught, and any malformed parts of the template are ignored (with their errors being logged).
+This might lead to a partially processed template with some properties or childNodes missing.
+
+You can decide via the exception handling configuration `Flowpack.NodeTemplates.exceptionHandling`, if you want to start the node creation of this partially processed template (`stopOnException: false`) or abort the process (`stopOnException: true`), which will only lead to creating the root node, ignoring the whole template.
 
 ```yaml
 Flowpack:
   NodeTemplates:
-    nodeCreationDepth: 10
+    exceptionHandling:
+     templateConfigurationProcessing:
+        stopOnException: false
 ```
+
+In case exceptions are thrown in the node creation of the template, because a node constraint was not met or the `type` field was not set, the creation of the childNode is aborted, but we continue with the node creation of the other left over parts of the template.
+It behaves similar with properties: In case a property value doesn't match its declared type the exception is logged, but we will try to continue with the next property.
 
 ## Create template from node subtree
 

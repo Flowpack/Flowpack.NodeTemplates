@@ -1,0 +1,95 @@
+'Flowpack.NodeTemplates:Content.WithOneEvaluationException':
+  superTypes:
+    'Neos.Neos:ContentCollection': true
+  ui:
+    label: "WithOneEvaluationException"
+  options:
+    template:
+      childNodes:
+        abort:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          when: "${'left open"
+
+'Flowpack.NodeTemplates:Content.WithEvaluationExceptions':
+  superTypes:
+    'Neos.Neos:ContentCollection': true
+  ui:
+    label: "WithEvaluationExceptions"
+  properties:
+    boolValue:
+      type: boolean
+    stringValue:
+      type: string
+    reference:
+      type: reference
+    references:
+      type: references
+    working:
+      type: string
+  childNodes:
+    type-cant-mutate:
+      type: 'Flowpack.NodeTemplates:Content.Text'
+  options:
+    template:
+      properties:
+        foo: "${cannotCallThis()}"
+        # legacy properties fail
+        _hidden: true
+        _hiddenAfterDateTime: 123
+        boolValue: 123
+        stringValue: false
+        reference: "non-existing-node-id"
+        references: "${['non-existing-node-id']}"
+        working: "working"
+        nonDeclaredProperty: "hi"
+        bar: "${'left open"
+        # only simple scalar types
+        nonEelArrayNotAllowed:
+          not: allowed
+      childNodes:
+        whenAbort:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          when: "${parse äüäö error}"
+        working:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          properties:
+            text: bar
+        illegalNodeAbort:
+          type: 'Neos.Neos:Document'
+          name: 'illegal'
+          properties:
+            text: huhu
+        withContextAbort:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          withContext:
+            foo: "${}"
+        withItemsAbort:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          withItems: "${Array.map()}"
+        propertiesPartiallyWorking:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          properties:
+            propertyIsExcludedFromTemplate: "${"
+            text: "123"
+        typeAbort:
+          type: "${"
+        nameAbort:
+          name: "${"
+        withItemsPartiallyWorking:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          withItems: [1, 2]
+          name: "${item == 1 ? cannotCallThis() : null}"
+          properties:
+            text: "foo"
+        withItemsAbortBecauseNotIterable:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          withItems: null
+        typeIsNull:
+          type: null
+        typeIsInvalidNodeType:
+          type: "Flowpack.NodeTemplates:InvalidNodeType"
+        typeCantMutate:
+          name: "type-cant-mutate"
+          type: "Flowpack.NodeTemplates:Content.WithEvaluationExceptions"
+        invalidOption:
+          crazy: me

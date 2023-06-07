@@ -1,0 +1,16 @@
+{
+    "properties": {
+        "unsetValueWithDefault": null,
+        "someValueWithDefault": true,
+        "text": "abc",
+        "isEnchanted": false,
+        "selectBox": "karma"
+    },
+    "references": {
+        "reference": [
+            {
+                "node": "Node(7f7bac1c-9400-4db5-bbaa-2b8251d127c5, unstructured)"
+            }
+        ]
+    }
+}

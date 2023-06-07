@@ -1,0 +1,98 @@
+[
+    {
+        "message": "Template for \"WithEvaluationExceptions\" only partially applied. Please check the newly created nodes beneath Node \/sites\/test-site\/homepage\/main\/new-node@live[Flowpack.NodeTemplates:Content.WithEvaluationExceptions].",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${cannotCallThis()}\" in \"properties.foo\" | NotAllowedException(Method \"cannotCallThis\" is not callable in untrusted context, 1369043080)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${'left open\" in \"properties.bar\" | EelException(The EEL expression \"${'left open\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "RuntimeException(Template configuration properties can only hold int|float|string|bool|null. Property \"nonEelArrayNotAllowed\" has type \"array\", 1685725310730)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${parse \u00e4\u00fc\u00e4\u00f6 error}\" in \"childNodes.whenAbort.when\" | ParserException(Expression \"parse \u00e4\u00fc\u00e4\u00f6 error\" could not be parsed. Error starting at character 5: \" \u00e4\u00fc\u00e4\u00f6 error\"., 1327682383)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${}\" in \"childNodes.withContextAbort.withContext.foo\" | ParserException(Expression \"\" could not be parsed., 1344513194)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${Array.map()}\" in \"childNodes.withItemsAbort.withItems\" | ArgumentCountError(Too few arguments to function Neos\\Eel\\Helper\\ArrayHelper::map(), 0 passed and exactly 2 expected, 0)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${\" in \"childNodes.propertiesPartiallyWorking.properties.propertyIsExcludedFromTemplate\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${\" in \"childNodes.typeAbort.type\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${\" in \"childNodes.nameAbort.name\" | EelException(The EEL expression \"${\" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Expression \"${item == 1 ? cannotCallThis() : null}\" in \"childNodes.withItemsPartiallyWorking.name\" | NotAllowedException(Method \"cannotCallThis\" is not callable in untrusted context, 1369043080)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Configuration \"null\" in \"childNodes.withItemsAbortBecauseNotIterable.withItems\" | RuntimeException(Type NULL is not iterable., 1685802354186)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "InvalidArgumentException(Template configuration has illegal key \"crazy\", 1686150349274)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Property \"_hidden\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because internal legacy property \"_hidden\" not implement., 1686149513158)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Property \"_hiddenAfterDateTime\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because internal legacy property \"_hiddenAfterDateTime\" not implement., 1686149513158)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Property \"boolValue\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because value `123` is not assignable to property type \"boolean\"., 1685958105644)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Property \"stringValue\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because value `false` is not assignable to property type \"string\"., 1685958105644)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Property \"nonDeclaredProperty\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because property is not declared in NodeType. Got value `\"hi\"`., 1685869035209)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Reference \"reference\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | RuntimeException(Reference could not be set, because node reference(s) \"non-existing-node-id\" cannot be resolved., 1685958176560)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Reference \"references\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | RuntimeException(Reference could not be set, because node reference(s) [\"non-existing-node-id\"] cannot be resolved., 1685958176560)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "NodeConstraintException(Cannot create new node \"illegal\" of Type \"Neos.Neos:Document\" in Node \/sites\/test-site\/homepage\/main\/new-node@live[Flowpack.NodeTemplates:Content.WithEvaluationExceptions], 1400782413)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "RuntimeException(Template requires type to be set for non auto created child nodes., 1685999829307)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "RuntimeException(Template requires type to be a valid NodeType. Got: \"Flowpack.NodeTemplates:InvalidNodeType\"., 1685999795564)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "RuntimeException(Template cant mutate type of auto created child nodes. Got: \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\", 1685999829307)",
+        "severity": "ERROR"
+    }
+]

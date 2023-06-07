@@ -1,0 +1,66 @@
+{
+    "properties": {
+        "_hidden": true,
+        "_hiddenAfterDateTime": 123,
+        "boolValue": 123,
+        "stringValue": false,
+        "reference": "non-existing-node-id",
+        "references": [
+            "non-existing-node-id"
+        ],
+        "working": "working",
+        "nonDeclaredProperty": "hi"
+    },
+    "childNodes": [
+        {
+            "type": "Flowpack.NodeTemplates:Content.Text",
+            "name": null,
+            "properties": {
+                "text": "bar"
+            },
+            "childNodes": []
+        },
+        {
+            "type": "Neos.Neos:Document",
+            "name": "illegal",
+            "properties": {
+                "text": "huhu"
+            },
+            "childNodes": []
+        },
+        {
+            "type": "Flowpack.NodeTemplates:Content.Text",
+            "name": null,
+            "properties": {
+                "text": "123"
+            },
+            "childNodes": []
+        },
+        {
+            "type": "Flowpack.NodeTemplates:Content.Text",
+            "name": null,
+            "properties": {
+                "text": "foo"
+            },
+            "childNodes": []
+        },
+        {
+            "type": null,
+            "name": null,
+            "properties": [],
+            "childNodes": []
+        },
+        {
+            "type": "Flowpack.NodeTemplates:InvalidNodeType",
+            "name": null,
+            "properties": [],
+            "childNodes": []
+        },
+        {
+            "type": "Flowpack.NodeTemplates:Content.WithEvaluationExceptions",
+            "name": "type-cant-mutate",
+            "properties": [],
+            "childNodes": []
+        }
+    ]
+}

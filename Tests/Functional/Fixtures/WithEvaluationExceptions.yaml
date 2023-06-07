@@ -1,0 +1,21 @@
+'{nodeTypeName}':
+  options:
+    template:
+      properties:
+        working: working
+      childNodes:
+        content1:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          properties:
+            # Text
+            text: bar
+        content2:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          properties:
+            # Text
+            text: '123'
+        content3:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          properties:
+            # Text
+            text: foo
