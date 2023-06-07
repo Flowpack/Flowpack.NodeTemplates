@@ -1,12 +1,12 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Application\NodeCreationHandler;
+namespace Flowpack\NodeTemplates\Domain;
 
-use Flowpack\NodeTemplates\Domain\CaughtExceptions;
-use Flowpack\NodeTemplates\Domain\ExceptionHandlingStrategy;
-use Flowpack\NodeTemplates\Domain\TemplateFactory\TemplateFactory;
-use Flowpack\NodeTemplates\Domain\TemplatePartiallyAppliedException;
-use Flowpack\NodeTemplates\Infrastructure\ContentRepository\ContentRepositoryTemplateHandler;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\ExceptionHandlingStrategy;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplatePartiallyAppliedException;
+use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
+use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Log\ThrowableStorageInterface;
@@ -19,13 +19,13 @@ use Psr\Log\LoggerInterface;
 class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 {
     /**
-     * @var TemplateFactory
+     * @var TemplateConfigurationProcessor
      * @Flow\Inject
      */
     protected $templateFactory;
 
     /**
-     * @var ContentRepositoryTemplateHandler
+     * @var NodeCreationService
      * @Flow\Inject
      */
     protected $contentRepositoryTemplateHandler;
@@ -76,7 +76,7 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 
         $caughtExceptions = CaughtExceptions::create();
         try {
-            $template = $this->templateFactory->createFromTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
+            $template = $this->templateFactory->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
             if (!$caughtExceptions->hasExceptions() || $exceptionHandlingStrategy->continueWithPartiallyEvaluatedTemplate()) {
                 $this->contentRepositoryTemplateHandler->apply($template, $node, $caughtExceptions);
             }

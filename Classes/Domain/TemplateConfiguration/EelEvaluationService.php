@@ -1,6 +1,6 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Infrastructure;
+namespace Flowpack\NodeTemplates\Domain\TemplateConfiguration;
 
 use Neos\Eel\CompilingEvaluator;
 use Neos\Eel\ParserException;

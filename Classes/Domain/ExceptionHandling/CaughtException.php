@@ -1,6 +1,6 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain;
+namespace Flowpack\NodeTemplates\Domain\ExceptionHandling;
 
 
 use Neos\Flow\Annotations as Flow;

@@ -1,13 +1,13 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain\TemplateFactory;
+namespace Flowpack\NodeTemplates\Domain\TemplateConfiguration;
 
-use Flowpack\NodeTemplates\Domain\CaughtException;
-use Flowpack\NodeTemplates\Domain\CaughtExceptions;
-use Flowpack\NodeTemplates\Domain\RootTemplate;
-use Flowpack\NodeTemplates\Domain\Template;
-use Flowpack\NodeTemplates\Domain\Templates;
-use Flowpack\NodeTemplates\Infrastructure\EelEvaluationService;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
+use Flowpack\NodeTemplates\Domain\Template\Template;
+use Flowpack\NodeTemplates\Domain\Template\Templates;
+use Flowpack\NodeTemplates\Domain\TemplateConfiguration\EelEvaluationService;
 use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
 use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
 use Neos\Flow\Annotations as Flow;
@@ -15,7 +15,7 @@ use Neos\Flow\Annotations as Flow;
 /**
  * @Flow\Scope("singleton")
  */
-class TemplateFactory
+class TemplateConfigurationProcessor
 {
     /**
      * @Flow\Inject
@@ -29,53 +29,53 @@ class TemplateFactory
      * @param CaughtExceptions $caughtEvaluationExceptions
      * @return RootTemplate
      */
-    public function createFromTemplateConfiguration(array $configuration, array $evaluationContext, CaughtExceptions $caughtEvaluationExceptions): RootTemplate
+    public function processTemplateConfiguration(array $configuration, array $evaluationContext, CaughtExceptions $caughtEvaluationExceptions): RootTemplate
     {
-        $builder = TemplateBuilder::createForRoot(
+        $templatePart = TemplatePart::createRoot(
             $configuration,
             $evaluationContext,
             fn ($value, $evaluationContext) => $this->preprocessConfigurationValue($value, $evaluationContext),
             $caughtEvaluationExceptions
         );
-        return $this->createTemplatesFromBuilder($builder)->toRootTemplate();
+        return $this->createTemplatesFromTemplatePart($templatePart)->toRootTemplate();
     }
 
-    private function createTemplatesFromBuilder(TemplateBuilder $builder): Templates
+    private function createTemplatesFromTemplatePart(TemplatePart $templatePart): Templates
     {
         try {
             $withContext = [];
-            foreach ($builder->getRawConfiguration('withContext') ?? [] as $key => $_) {
-                $withContext[$key] = $builder->processConfiguration(['withContext', $key]);
+            foreach ($templatePart->getRawConfiguration('withContext') ?? [] as $key => $_) {
+                $withContext[$key] = $templatePart->processConfiguration(['withContext', $key]);
             }
-            $builder = $builder->withMergedEvaluationContext($withContext);
+            $templatePart = $templatePart->withMergedEvaluationContext($withContext);
 
-            if ($builder->hasConfiguration('when') && !$builder->processConfiguration('when')) {
+            if ($templatePart->hasConfiguration('when') && !$templatePart->processConfiguration('when')) {
                 return Templates::empty();
             }
 
-            if (!$builder->hasConfiguration('withItems')) {
-                return new Templates($this->createTemplateFromBuilder($builder));
+            if (!$templatePart->hasConfiguration('withItems')) {
+                return new Templates($this->createTemplateFromTemplatePart($templatePart));
             }
-            $items = $builder->processConfiguration('withItems');
+            $items = $templatePart->processConfiguration('withItems');
 
             if (!is_iterable($items)) {
-                $builder->getCaughtExceptions()->add(
+                $templatePart->getCaughtExceptions()->add(
                     CaughtException::fromException(
                         new \RuntimeException(sprintf('Type %s is not iterable.', gettype($items)), 1685802354186)
-                    )->withOrigin(sprintf('Configuration "%s" in "%s"', json_encode($builder->getRawConfiguration('withItems')), join('.', array_merge($builder->getFullPathToConfiguration(), ['withItems']))))
+                    )->withOrigin(sprintf('Configuration "%s" in "%s"', json_encode($templatePart->getRawConfiguration('withItems')), join('.', array_merge($templatePart->getFullPathToConfiguration(), ['withItems']))))
                 );
                 return Templates::empty();
             }
 
             $templates = Templates::empty();
             foreach ($items as $itemKey => $itemValue) {
-                $itemBuilder = $builder->withMergedEvaluationContext([
+                $itemTemplatePart = $templatePart->withMergedEvaluationContext([
                     'item' => $itemValue,
                     'key' => $itemKey
                 ]);
 
                 try {
-                    $templates = $templates->withAdded($this->createTemplateFromBuilder($itemBuilder));
+                    $templates = $templates->withAdded($this->createTemplateFromTemplatePart($itemTemplatePart));
                 } catch (StopBuildingTemplatePartException $e) {
                 }
             }
@@ -85,33 +85,33 @@ class TemplateFactory
         }
     }
 
-    private function createTemplateFromBuilder(TemplateBuilder $builder): Template
+    private function createTemplateFromTemplatePart(TemplatePart $templatePart): Template
     {
         // process the properties
         $processedProperties = [];
-        foreach ($builder->getRawConfiguration('properties') ?? [] as $propertyName => $value) {
+        foreach ($templatePart->getRawConfiguration('properties') ?? [] as $propertyName => $value) {
             if (!is_scalar($value) && !is_null($value)) {
                 throw new \InvalidArgumentException(sprintf('Template configuration properties can only hold int|float|string|bool|null. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730);
             }
             try {
-                $processedProperties[$propertyName] = $builder->processConfiguration(['properties', $propertyName]);
+                $processedProperties[$propertyName] = $templatePart->processConfiguration(['properties', $propertyName]);
             } catch (StopBuildingTemplatePartException $e) {
             }
         }
 
         // process the childNodes
         $childNodeTemplates = Templates::empty();
-        foreach ($builder->getRawConfiguration('childNodes') ?? [] as $childNodeConfigurationPath => $_) {
-            $childNodeBuilder = $builder->withConfigurationByConfigurationPath(['childNodes', $childNodeConfigurationPath]);
-            $childNodeTemplates = $childNodeTemplates->merge($this->createTemplatesFromBuilder($childNodeBuilder));
+        foreach ($templatePart->getRawConfiguration('childNodes') ?? [] as $childNodeConfigurationPath => $_) {
+            $childNodeTemplatePart = $templatePart->withConfigurationByConfigurationPath(['childNodes', $childNodeConfigurationPath]);
+            $childNodeTemplates = $childNodeTemplates->merge($this->createTemplatesFromTemplatePart($childNodeTemplatePart));
         }
 
-        $type = $builder->processConfiguration('type');
-        $name = $builder->processConfiguration('name');
+        $type = $templatePart->processConfiguration('type');
+        $name = $templatePart->processConfiguration('name');
         return new Template(
             $type ? NodeTypeName::fromString($type) : null,
             $name ? NodeName::fromString($name) : null,
-            $builder->hasConfiguration('disabled') ? (bool)$builder->processConfiguration('disabled') : null,
+            $templatePart->hasConfiguration('disabled') ? (bool)$templatePart->processConfiguration('disabled') : null,
             $processedProperties,
             $childNodeTemplates
         );

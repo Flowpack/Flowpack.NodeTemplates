@@ -1,17 +1,17 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain\TemplateFactory;
+namespace Flowpack\NodeTemplates\Domain\TemplateConfiguration;
 
-use Flowpack\NodeTemplates\Domain\CaughtException;
-use Flowpack\NodeTemplates\Domain\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
 use Neos\Flow\Annotations as Flow;
 
 /**
- * @internal implementation detail of {@see TemplateFactory}
+ * @internal implementation detail of {@see TemplateConfigurationProcessor}
  * @psalm-immutable
  * @Flow\Proxy(false)
  */
-class TemplateBuilder
+class TemplatePart
 {
     /**
      * @psalm-readonly
@@ -64,7 +64,7 @@ class TemplateBuilder
      * @psalm-param array<string, mixed> $evaluationContext
      * @psalm-param \Closure(mixed $value, array<string, mixed> $evaluationContext): mixed $configurationValueProcessor
      */
-    public static function createForRoot(
+    public static function createRoot(
         array $configuration,
         array $evaluationContext,
         \Closure $configurationValueProcessor,

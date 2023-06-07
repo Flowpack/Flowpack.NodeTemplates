@@ -1,6 +1,6 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain;
+namespace Flowpack\NodeTemplates\Domain\ExceptionHandling;
 
 class TemplatePartiallyAppliedException extends \RuntimeException
 {

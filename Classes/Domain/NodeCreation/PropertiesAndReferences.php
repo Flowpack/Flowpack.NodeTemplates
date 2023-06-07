@@ -1,9 +1,9 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Infrastructure\ContentRepository;
+namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
-use Flowpack\NodeTemplates\Domain\CaughtException;
-use Flowpack\NodeTemplates\Domain\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
 use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\ContentRepository\Domain\Service\Context;
 use Neos\Flow\Annotations as Flow;

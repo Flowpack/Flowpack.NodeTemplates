@@ -1,6 +1,6 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Infrastructure\ContentRepository;
+namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 class PropertyIgnoredException extends \RuntimeException
 {

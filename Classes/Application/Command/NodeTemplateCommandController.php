@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Application\Command;
 
-use Flowpack\NodeTemplates\Infrastructure\NodeTemplateDumper\NodeTemplateDumper;
+use Flowpack\NodeTemplates\Domain\NodeTemplateDumper\NodeTemplateDumper;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 use Neos\Neos\Domain\Service\ContentContextFactory;

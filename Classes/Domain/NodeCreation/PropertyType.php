@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Flowpack\NodeTemplates\Infrastructure\ContentRepository;
+namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 use GuzzleHttp\Psr7\Uri;
 use Neos\ContentRepository\Domain\Model\NodeType;

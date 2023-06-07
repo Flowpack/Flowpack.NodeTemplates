@@ -1,7 +1,8 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain;
+namespace Flowpack\NodeTemplates\Domain\ExceptionHandling;
 
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
 use Neos\Flow\Annotations as Flow;
 
 /** @Flow\Proxy(false) */

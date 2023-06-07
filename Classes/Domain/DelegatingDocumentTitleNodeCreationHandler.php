@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Flowpack\NodeTemplates\Application\NodeCreationHandler;
+namespace Flowpack\NodeTemplates\Domain;
 
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\Flow\Annotations as Flow;
@@ -15,13 +15,13 @@ use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
  *
  * @todo once we have sorting with https://github.com/neos/neos-ui/pull/3511 we can put our handler at the end instead.
  */
-class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerInterface
+class DelegatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerInterface
 {
     /**
      * @Flow\Inject
      * @var DocumentTitleNodeCreationHandler
      */
-    protected $augmentedDocumentTitleNodeCreationHandler;
+    protected $originalDocumentTitleNodeCreationHandler;
 
     /**
      * @throws \Neos\Eel\Exception
@@ -34,7 +34,7 @@ class TemplatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerI
             !$template
             || !isset($template['properties']['uriPathSegment'])
         ) {
-            $this->augmentedDocumentTitleNodeCreationHandler->handle($node, $data);
+            $this->originalDocumentTitleNodeCreationHandler->handle($node, $data);
             return;
         }
 

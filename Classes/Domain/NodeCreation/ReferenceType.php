@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Flowpack\NodeTemplates\Infrastructure\ContentRepository;
+namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;
@@ -73,7 +73,7 @@ final class ReferenceType
         return $this->value;
     }
 
-    public function isMatchedBy($propertyValue, Context $subgraph): bool
+    public function isMatchedBy($propertyValue, Context $subgraphForResolving): bool
     {
         if ($propertyValue === null) {
             return true;
@@ -86,7 +86,7 @@ final class ReferenceType
             if ($singleNodeAggregateOrId instanceof NodeInterface) {
                 continue;
             }
-            if (is_string($singleNodeAggregateOrId) && $subgraph->getNodeByIdentifier($singleNodeAggregateOrId) instanceof NodeInterface) {
+            if (is_string($singleNodeAggregateOrId) && $subgraphForResolving->getNodeByIdentifier($singleNodeAggregateOrId) instanceof NodeInterface) {
                 continue;
             }
             return false;

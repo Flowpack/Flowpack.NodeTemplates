@@ -1,8 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Flowpack\NodeTemplates\Domain;
+namespace Flowpack\NodeTemplates\Domain\Template;
 
+use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
 use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
 use Neos\Flow\Annotations as Flow;

@@ -1,12 +1,12 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Infrastructure\ContentRepository;
+namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
-use Flowpack\NodeTemplates\Domain\CaughtException;
-use Flowpack\NodeTemplates\Domain\CaughtExceptions;
-use Flowpack\NodeTemplates\Domain\RootTemplate;
-use Flowpack\NodeTemplates\Domain\Template;
-use Flowpack\NodeTemplates\Domain\Templates;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
+use Flowpack\NodeTemplates\Domain\Template\Template;
+use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\ContentRepository\Exception\NodeConstraintException;
@@ -14,7 +14,7 @@ use Neos\Flow\Annotations as Flow;
 use Neos\Neos\Service\NodeOperations;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
-class ContentRepositoryTemplateHandler
+class NodeCreationService
 {
     /**
      * @var NodeOperations

@@ -1,7 +1,9 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain;
+namespace Flowpack\NodeTemplates\Domain\Template;
 
+use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
+use Flowpack\NodeTemplates\Domain\Template\Template;
 use Neos\Flow\Annotations as Flow;
 
 /** @Flow\Proxy(false) */

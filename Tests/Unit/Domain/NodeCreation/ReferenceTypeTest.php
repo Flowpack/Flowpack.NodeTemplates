@@ -1,8 +1,8 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Tests\Unit\Infrastructure;
+namespace Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation;
 
-use Flowpack\NodeTemplates\Infrastructure\ContentRepository\ReferenceType;
+use Flowpack\NodeTemplates\Domain\NodeCreation\ReferenceType;
 use GuzzleHttp\Psr7\Uri;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;

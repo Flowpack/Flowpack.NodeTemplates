@@ -1,5 +1,5 @@
 <?php
-namespace Flowpack\NodeTemplates\Tests\Unit\Infrastructure;
+namespace Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation;
 
 /*
  * This file is part of the Neos.ContentRepository package.
@@ -11,8 +11,8 @@ namespace Flowpack\NodeTemplates\Tests\Unit\Infrastructure;
  * source code.
  */
 
-use Flowpack\NodeTemplates\Infrastructure\ContentRepository\PropertyType;
-use Flowpack\NodeTemplates\Tests\Unit\Infrastructure\Fixture\PostalAddress;
+use Flowpack\NodeTemplates\Domain\NodeCreation\PropertyType;
+use Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation\Fixture\PostalAddress;
 use GuzzleHttp\Psr7\Uri;
 use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\Flow\ResourceManagement\PersistentResource;

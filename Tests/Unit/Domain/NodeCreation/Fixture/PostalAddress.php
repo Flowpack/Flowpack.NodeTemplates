@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Flowpack\NodeTemplates\Tests\Unit\Infrastructure\Fixture;
+namespace Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation\Fixture;
 
 /*
  * This file is part of the Neos.ContentRepository package.

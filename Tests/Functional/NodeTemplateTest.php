@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Tests\Functional;
 
-use Flowpack\NodeTemplates\Domain\RootTemplate;
-use Flowpack\NodeTemplates\Domain\TemplateFactory\TemplateFactory;
-use Flowpack\NodeTemplates\Infrastructure\NodeTemplateDumper\NodeTemplateDumper;
+use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
+use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
+use Flowpack\NodeTemplates\Domain\NodeTemplateDumper\NodeTemplateDumper;
 use Neos\ContentRepository\Domain\Model\Node;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\Workspace;
@@ -45,15 +45,15 @@ class NodeTemplateTest extends FunctionalTestCase
         $this->setupContentRepository();
         $this->nodeTemplateDumper = $this->objectManager->get(NodeTemplateDumper::class);
 
-        $templateFactory = $this->objectManager->get(TemplateFactory::class);
+        $templateFactory = $this->objectManager->get(TemplateConfigurationProcessor::class);
 
-        $templateFactoryMock = $this->getMockBuilder(TemplateFactory::class)->disableOriginalConstructor()->getMock();
-        $templateFactoryMock->expects(self::once())->method('createFromTemplateConfiguration')->willReturnCallback(function (...$args) use($templateFactory) {
-            $rootTemplate = $templateFactory->createFromTemplateConfiguration(...$args);
+        $templateFactoryMock = $this->getMockBuilder(TemplateConfigurationProcessor::class)->disableOriginalConstructor()->getMock();
+        $templateFactoryMock->expects(self::once())->method('processTemplateConfiguration')->willReturnCallback(function (...$args) use($templateFactory) {
+            $rootTemplate = $templateFactory->processTemplateConfiguration(...$args);
             $this->lastCreatedRootTemplate = $rootTemplate;
             return $rootTemplate;
         });
-        $this->objectManager->setInstance(TemplateFactory::class, $templateFactoryMock);
+        $this->objectManager->setInstance(TemplateConfigurationProcessor::class, $templateFactoryMock);
     }
 
     public function tearDown(): void
@@ -62,7 +62,7 @@ class NodeTemplateTest extends FunctionalTestCase
         $this->inject($this->contextFactory, 'contextInstances', []);
         $this->objectManager->get(FeedbackCollection::class)->reset();
         $this->objectManager->forgetInstance(ContentDimensionRepository::class);
-        $this->objectManager->forgetInstance(TemplateFactory::class);
+        $this->objectManager->forgetInstance(TemplateConfigurationProcessor::class);
     }
 
     private function setupContentRepository(): void
