@@ -1,7 +1,8 @@
 Flowpack:
   NodeTemplates:
-    exceptionHandlingStrategy:
-      continueWithPartiallyEvaluatedTemplate: true
+    exceptionHandling:
+      templateConfigurationProcessing:
+        stopOnException: false
 
     defaultEelContext:
       String: 'Neos\Eel\Helper\StringHelper'

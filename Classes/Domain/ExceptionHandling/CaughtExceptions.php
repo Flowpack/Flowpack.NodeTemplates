@@ -30,6 +30,11 @@ class CaughtExceptions implements \IteratorAggregate
         $this->exceptions[] = $exception;
     }
 
+    public function first(): ?CaughtException
+    {
+        return $this->exceptions[0] ?? null;
+    }
+
     /**
      * @return \Traversable<int, CaughtException>|CaughtException[]
      */

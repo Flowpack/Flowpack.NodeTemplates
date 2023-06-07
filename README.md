@@ -182,21 +182,20 @@ way around.
 
 ## Exception handling, resuming with the next possible operation.
 
-In the first step the configuration is evaluated, all Runtime Exceptions (for example caused in an EEL Expression) are caught, and any malformed parts of the template are ignored (with their errors being logged).
-This might lead to a partially evaluated template with some properties or childNodes missing.
+In the first step the configuration is processed, exceptions like those caused by an EEL Expression are caught, and any malformed parts of the template are ignored (with their errors being logged).
+This might lead to a partially processed template with some properties or childNodes missing.
 
-You can decide via the exception handling strategy `continueWithPartiallyEvaluatedTemplate`, if you want to apply this partially evaluated template `true` or abort the process `false` which will only lead to creating the root node as if there was no template.
-
-The setting is configurable via Settings.yaml in `Flowpack.NodeTemplates.continueWithPartiallyEvaluatedTemplate` it defaults to `true`.
+You can decide via the exception handling configuration `Flowpack.NodeTemplates.exceptionHandling`, if you want to start the node creation of this partially processed template (`stopOnException: false`) or abort the process (`stopOnException: true`), which will only lead to creating the root node, ignoring the whole template.
 
 ```yaml
 Flowpack:
   NodeTemplates:
-    exceptionHandlingStrategy:
-      continueWithPartiallyEvaluatedTemplate: true
+    exceptionHandling:
+     templateConfigurationProcessing:
+        stopOnException: false
 ```
 
-In case exceptions are thrown while applying the template like because a node constraint was not met or the `type` field was not set the creation of the childNode is aborted, but we continue with applying the other left over parts of the template.
+In case exceptions are thrown in the node creation of the template, because a node constraint was not met or the `type` field was not set, the creation of the childNode is aborted, but we continue with the node creation of the other left over parts of the template.
 It behaves similar with properties: In case a property value doesn't match its declared type the exception is logged, but we will try to continue with the next property.
 
 ## Create template from node subtree

@@ -221,8 +221,10 @@ class NodeTemplateTest extends FunctionalTestCase
         $this->withMockedConfigurationSettings([
             'Flowpack' => [
                 'NodeTemplates' => [
-                    'exceptionHandlingStrategy' => [
-                        'continueWithPartiallyEvaluatedTemplate' => false
+                    'exceptionHandling' => [
+                        'templateConfigurationProcessing' => [
+                            'stopOnException' => true
+                        ]
                     ]
                 ]
             ]
