@@ -255,26 +255,6 @@ class NodeTemplateTest extends FunctionalTestCase
     }
 
     /** @test */
-    public function nodeCanBeHiddenViaTemplate(): void
-    {
-        $this->createNodeInto(
-            $targetNode = $this->homePageNode->getNode('main'),
-            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Hidden'),
-            []
-        );
-
-        $this->assertLastCreatedTemplateMatchesSnapshot('HiddenNode');
-
-        $subgraphWithHiddenContent = $this->contextFactory->create(['workspaceName' => 'live', 'invisibleContentShown' => true]);
-
-        $createdNode = $subgraphWithHiddenContent->getNodeByIdentifier($targetNode->getIdentifier())->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
-
-        self::assertTrue($createdNode->isHidden(), 'Expected node to be hidden.');
-
-        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('HiddenNode', $createdNode);
-    }
-
-    /** @test */
     public function testPageNodeCreationMatchesSnapshot1(): void
     {
         $this->createNodeInto(

@@ -53,10 +53,6 @@ class NodeCreationService
             $node->setProperty($key, $value);
         }
 
-        if ($template->getDisabled() === true) {
-            $node->setHidden(true);
-        }
-
         $this->ensureNodeHasUriPathSegment($node, $template);
         $this->applyTemplateRecursively($template->getChildNodes(), $node, $caughtExceptions);
     }
@@ -114,9 +110,6 @@ class NodeCreationService
                 $node->setProperty($key, $value);
             }
 
-            if ($template->getDisabled() === true) {
-                $node->setHidden(true);
-            }
             $this->ensureNodeHasUriPathSegment($node, $template);
             $this->applyTemplateRecursively($template->getChildNodes(), $node, $caughtExceptions);
         }
