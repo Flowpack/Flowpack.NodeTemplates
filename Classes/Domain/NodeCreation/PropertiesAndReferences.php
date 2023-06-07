@@ -53,10 +53,9 @@ class PropertiesAndReferences
     public function requireValidProperties(NodeType $nodeType, CaughtExceptions $caughtExceptions): array
     {
         $validProperties = [];
-        $defaultValues = $nodeType->getDefaultValuesForProperties();
         foreach ($this->properties as $propertyName => $propertyValue) {
-            $this->assertValidPropertyName($propertyName);
             try {
+                $this->assertValidPropertyName($propertyName);
                 if (!isset($nodeType->getProperties()[$propertyName])) {
                     throw new PropertyIgnoredException(
                         sprintf(
@@ -109,14 +108,14 @@ class PropertiesAndReferences
 
     /**
      * In the old CR, it was common practice to set internal or meta properties via this syntax: `_hidden` but we don't allow this anymore.
-     * @throws \InvalidArgumentException
+     * @throws PropertyIgnoredException
      */
     private function assertValidPropertyName($propertyName): void
     {
         $legacyInternalProperties = ['_accessRoles', '_contentObject', '_hidden', '_hiddenAfterDateTime', '_hiddenBeforeDateTime', '_hiddenInIndex',
             '_index', '_name', '_nodeType', '_removed', '_workspace'];
         if (!is_string($propertyName) || $propertyName === '') {
-            throw new \InvalidArgumentException(sprintf('Property name must be a non empty string. Got "%s".', $propertyName));
+            throw new PropertyIgnoredException(sprintf('Because property name must be a non empty string. Got "%s".', $propertyName), 1686149518395);
         }
         if ($propertyName[0] === '_') {
             $lowerPropertyName = strtolower($propertyName);
@@ -125,7 +124,7 @@ class PropertiesAndReferences
             }
             foreach ($legacyInternalProperties as $legacyInternalProperty) {
                 if ($lowerPropertyName === strtolower($legacyInternalProperty)) {
-                    throw new \InvalidArgumentException(sprintf('Internal legacy property "%s" not implement.', $propertyName));
+                    throw new PropertyIgnoredException(sprintf('Because internal legacy property "%s" not implement.', $propertyName), 1686149513158);
                 }
             }
         }

@@ -7,7 +7,6 @@ use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
-use Flowpack\NodeTemplates\Domain\TemplateConfiguration\EelEvaluationService;
 use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
 use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
 use Neos\Flow\Annotations as Flow;
@@ -31,12 +30,16 @@ class TemplateConfigurationProcessor
      */
     public function processTemplateConfiguration(array $configuration, array $evaluationContext, CaughtExceptions $caughtEvaluationExceptions): RootTemplate
     {
-        $templatePart = TemplatePart::createRoot(
-            $configuration,
-            $evaluationContext,
-            fn ($value, $evaluationContext) => $this->preprocessConfigurationValue($value, $evaluationContext),
-            $caughtEvaluationExceptions
-        );
+        try {
+            $templatePart = TemplatePart::createRoot(
+                $configuration,
+                $evaluationContext,
+                fn ($value, $evaluationContext) => $this->preprocessConfigurationValue($value, $evaluationContext),
+                $caughtEvaluationExceptions
+            );
+        } catch (StopBuildingTemplatePartException $e) {
+            return RootTemplate::empty();
+        }
         return $this->createTemplatesFromTemplatePart($templatePart)->toRootTemplate();
     }
 
@@ -91,7 +94,10 @@ class TemplateConfigurationProcessor
         $processedProperties = [];
         foreach ($templatePart->getRawConfiguration('properties') ?? [] as $propertyName => $value) {
             if (!is_scalar($value) && !is_null($value)) {
-                throw new \InvalidArgumentException(sprintf('Template configuration properties can only hold int|float|string|bool|null. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730);
+                $templatePart->getCaughtExceptions()->add(CaughtException::fromException(
+                    new \RuntimeException(sprintf('Template configuration properties can only hold int|float|string|bool|null. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730)
+                ));
+                continue;
             }
             try {
                 $processedProperties[$propertyName] = $templatePart->processConfiguration(['properties', $propertyName]);
@@ -102,7 +108,11 @@ class TemplateConfigurationProcessor
         // process the childNodes
         $childNodeTemplates = Templates::empty();
         foreach ($templatePart->getRawConfiguration('childNodes') ?? [] as $childNodeConfigurationPath => $_) {
-            $childNodeTemplatePart = $templatePart->withConfigurationByConfigurationPath(['childNodes', $childNodeConfigurationPath]);
+            try {
+                $childNodeTemplatePart = $templatePart->withConfigurationByConfigurationPath(['childNodes', $childNodeConfigurationPath]);
+            } catch (StopBuildingTemplatePartException $e) {
+                continue;
+            }
             $childNodeTemplates = $childNodeTemplates->merge($this->createTemplatesFromTemplatePart($childNodeTemplatePart));
         }
 

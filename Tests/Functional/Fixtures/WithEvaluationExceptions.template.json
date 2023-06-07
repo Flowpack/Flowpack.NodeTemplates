@@ -1,6 +1,8 @@
 {
     "disabled": null,
     "properties": {
+        "_hidden": true,
+        "_hiddenAfterDateTime": 123,
         "boolValue": 123,
         "stringValue": false,
         "reference": "non-existing-node-id",

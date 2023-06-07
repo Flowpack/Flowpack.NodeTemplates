@@ -43,6 +43,7 @@ class TemplatePart
      * @psalm-param array<string, mixed> $configuration
      * @psalm-param array<string, mixed> $evaluationContext
      * @psalm-param \Closure(mixed $value, array<string, mixed> $evaluationContext): mixed $configurationValueProcessor
+     * @throws StopBuildingTemplatePartException
      */
     private function __construct(
         array $configuration,
@@ -63,6 +64,7 @@ class TemplatePart
      * @psalm-param array<string, mixed> $configuration
      * @psalm-param array<string, mixed> $evaluationContext
      * @psalm-param \Closure(mixed $value, array<string, mixed> $evaluationContext): mixed $configurationValueProcessor
+     * @throws StopBuildingTemplatePartException
      */
     public static function createRoot(
         array $configuration,
@@ -91,6 +93,7 @@ class TemplatePart
 
     /**
      * @psalm-param string|list<string> $configurationPath
+     * @throws StopBuildingTemplatePartException
      */
     public function withConfigurationByConfigurationPath($configurationPath): self
     {
@@ -188,16 +191,25 @@ class TemplatePart
         return true;
     }
 
+    /**
+     * @throws StopBuildingTemplatePartException
+     */
     private function validateTemplateConfigurationKeys(): void
     {
         $isRootTemplate = $this->fullPathToConfiguration === [];
         foreach (array_keys($this->configuration) as $key) {
             if (!in_array($key, ['type', 'name', 'disabled', 'properties', 'childNodes', 'when', 'withItems', 'withContext'], true)) {
-                throw new \InvalidArgumentException(sprintf('Template configuration has illegal key "%s"', $key));
+                $this->caughtExceptions->add(
+                    CaughtException::fromException(new \InvalidArgumentException(sprintf('Template configuration has illegal key "%s"', $key), 1686150349274))
+                );
+                throw new StopBuildingTemplatePartException();
             }
             if ($isRootTemplate) {
                 if (!in_array($key, ['disabled', 'properties', 'childNodes', 'when', 'withContext'], true)) {
-                    throw new \InvalidArgumentException(sprintf('Root template configuration doesnt allow option "%s', $key));
+                    $this->caughtExceptions->add(
+                        CaughtException::fromException(new \InvalidArgumentException(sprintf('Root template configuration doesnt allow option "%s', $key), 1686150340657))
+                    );
+                    throw new StopBuildingTemplatePartException();
                 }
             }
         }

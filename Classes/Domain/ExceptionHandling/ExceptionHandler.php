@@ -31,9 +31,10 @@ class ExceptionHandler
     protected $throwableStorage;
 
     /**
+     * @var ExceptionHandlingConfiguration
      * @Flow\Inject
      */
-    protected ExceptionHandlingConfiguration $configuration;
+    protected $configuration;
 
     public function handleAfterTemplateConfigurationProcessing(CaughtExceptions $caughtExceptions, NodeInterface $node): void
     {

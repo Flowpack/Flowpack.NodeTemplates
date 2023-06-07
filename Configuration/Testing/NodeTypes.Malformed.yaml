@@ -33,6 +33,9 @@
     template:
       properties:
         foo: "${cannotCallThis()}"
+        # legacy properties fail
+        _hidden: true
+        _hiddenAfterDateTime: 123
         boolValue: 123
         stringValue: false
         reference: "non-existing-node-id"
@@ -40,6 +43,9 @@
         working: "working"
         nonDeclaredProperty: "hi"
         bar: "${'left open"
+        # only simple scalar types
+        nonEelArrayNotAllowed:
+          not: allowed
       childNodes:
         whenAbort:
           type: 'Flowpack.NodeTemplates:Content.Text'
@@ -85,3 +91,5 @@
         typeCantMutate:
           name: "type-cant-mutate"
           type: "Flowpack.NodeTemplates:Content.WithEvaluationExceptions"
+        invalidOption:
+          crazy: me
