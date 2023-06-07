@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Domain\Template;
 
-use Flowpack\NodeTemplates\Domain\Template\Template;
-use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -29,6 +27,11 @@ class RootTemplate implements \JsonSerializable
     {
         $this->properties = $properties;
         $this->childNodes = $childNodes;
+    }
+
+    public static function empty(): self
+    {
+        return new RootTemplate([], Templates::empty());
     }
 
     /**

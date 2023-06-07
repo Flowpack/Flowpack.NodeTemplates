@@ -2,8 +2,6 @@
 
 namespace Flowpack\NodeTemplates\Domain\Template;
 
-use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
-use Flowpack\NodeTemplates\Domain\Template\Template;
 use Neos\Flow\Annotations as Flow;
 
 /** @Flow\Proxy(false) */
@@ -52,7 +50,7 @@ class Templates implements \IteratorAggregate, \JsonSerializable
                 $first->getChildNodes()
             );
         }
-        return new RootTemplate( [], Templates::empty());
+        return RootTemplate::empty();
     }
 
     public function jsonSerialize()

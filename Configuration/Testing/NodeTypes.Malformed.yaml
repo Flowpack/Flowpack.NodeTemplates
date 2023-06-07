@@ -43,6 +43,7 @@
         working: "working"
         nonDeclaredProperty: "hi"
         bar: "${'left open"
+        # only simple scalar types
         nonEelArrayNotAllowed:
           not: allowed
       childNodes:
@@ -90,3 +91,5 @@
         typeCantMutate:
           name: "type-cant-mutate"
           type: "Flowpack.NodeTemplates:Content.WithEvaluationExceptions"
+        invalidOption:
+          crazy: me
