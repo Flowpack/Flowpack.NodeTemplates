@@ -53,7 +53,7 @@ class ContentRepositoryTemplateHandler
             $node->setProperty($key, $value);
         }
 
-        if ($template->getHidden() === true) {
+        if ($template->getDisabled() === true) {
             $node->setHidden(true);
         }
 
@@ -114,7 +114,7 @@ class ContentRepositoryTemplateHandler
                 $node->setProperty($key, $value);
             }
 
-            if ($template->getHidden() === true) {
+            if ($template->getDisabled() === true) {
                 $node->setHidden(true);
             }
             $this->ensureNodeHasUriPathSegment($node, $template);

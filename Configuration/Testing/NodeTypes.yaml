@@ -19,7 +19,7 @@
     'Neos.Neos:Content': true
   options:
     template:
-      hidden: true
+      disabled: true
 
 'Flowpack.NodeTemplates:Content.DifferentPropertyTypes':
   superTypes:

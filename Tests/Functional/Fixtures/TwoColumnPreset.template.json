@@ -1,17 +1,17 @@
 {
-    "hidden": null,
+    "disabled": null,
     "properties": [],
     "childNodes": [
         {
             "type": null,
             "name": "column0",
-            "hidden": null,
+            "disabled": null,
             "properties": [],
             "childNodes": [
                 {
                     "type": "Flowpack.NodeTemplates:Content.Text",
                     "name": null,
-                    "hidden": null,
+                    "disabled": null,
                     "properties": {
                         "text": "<p>foo<\/p>"
                     },
@@ -22,13 +22,13 @@
         {
             "type": null,
             "name": "column1",
-            "hidden": null,
+            "disabled": null,
             "properties": [],
             "childNodes": [
                 {
                     "type": "Flowpack.NodeTemplates:Content.Text",
                     "name": null,
-                    "hidden": null,
+                    "disabled": null,
                     "properties": {
                         "text": "<p>bar<\/p>"
                     },

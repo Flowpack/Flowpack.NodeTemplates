@@ -1,5 +1,5 @@
 {
-    "hidden": null,
+    "disabled": null,
     "properties": {
         "title": "Page1",
         "uriPathSegment": "page1"
@@ -8,13 +8,13 @@
         {
             "type": null,
             "name": "main",
-            "hidden": null,
+            "disabled": null,
             "properties": [],
             "childNodes": [
                 {
                     "type": "Flowpack.NodeTemplates:Content.Text",
                     "name": null,
-                    "hidden": null,
+                    "disabled": null,
                     "properties": {
                         "text": "textOnPage1"
                     },
@@ -25,7 +25,7 @@
         {
             "type": "Flowpack.NodeTemplates:Document.Page",
             "name": null,
-            "hidden": null,
+            "disabled": null,
             "properties": {
                 "title": "Page2",
                 "uriPathSegment": "page2"
@@ -34,13 +34,13 @@
                 {
                     "type": null,
                     "name": "main",
-                    "hidden": null,
+                    "disabled": null,
                     "properties": [],
                     "childNodes": [
                         {
                             "type": "Flowpack.NodeTemplates:Content.Text",
                             "name": null,
-                            "hidden": null,
+                            "disabled": null,
                             "properties": {
                                 "text": "textOnPage2"
                             },
@@ -51,7 +51,7 @@
                 {
                     "type": "Flowpack.NodeTemplates:Document.Page",
                     "name": null,
-                    "hidden": null,
+                    "disabled": null,
                     "properties": {
                         "title": "Page3",
                         "uriPathSegment": "page3"
@@ -60,13 +60,13 @@
                         {
                             "type": null,
                             "name": "main",
-                            "hidden": null,
+                            "disabled": null,
                             "properties": [],
                             "childNodes": [
                                 {
                                     "type": "Flowpack.NodeTemplates:Content.Text",
                                     "name": null,
-                                    "hidden": null,
+                                    "disabled": null,
                                     "properties": {
                                         "text": "textOnPage3"
                                     },
@@ -81,7 +81,7 @@
         {
             "type": "Flowpack.NodeTemplates:Document.Page",
             "name": null,
-            "hidden": null,
+            "disabled": null,
             "properties": {
                 "title": "Page4",
                 "uriPathSegment": "page4"
@@ -90,13 +90,13 @@
                 {
                     "type": null,
                     "name": "main",
-                    "hidden": null,
+                    "disabled": null,
                     "properties": [],
                     "childNodes": [
                         {
                             "type": "Flowpack.NodeTemplates:Content.Text",
                             "name": null,
-                            "hidden": null,
+                            "disabled": null,
                             "properties": {
                                 "text": "textOnPage4"
                             },

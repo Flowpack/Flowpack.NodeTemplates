@@ -1,5 +1,5 @@
 {
-    "hidden": null,
+    "disabled": null,
     "properties": {
         "boolValue": 123,
         "stringValue": false,
@@ -14,7 +14,7 @@
         {
             "type": "Flowpack.NodeTemplates:Content.Text",
             "name": null,
-            "hidden": null,
+            "disabled": null,
             "properties": {
                 "text": "bar"
             },
@@ -23,7 +23,7 @@
         {
             "type": "Neos.Neos:Document",
             "name": "illegal",
-            "hidden": null,
+            "disabled": null,
             "properties": {
                 "text": "huhu"
             },
@@ -32,7 +32,7 @@
         {
             "type": "Flowpack.NodeTemplates:Content.Text",
             "name": null,
-            "hidden": null,
+            "disabled": null,
             "properties": {
                 "text": "123"
             },
@@ -41,7 +41,7 @@
         {
             "type": "Flowpack.NodeTemplates:Content.Text",
             "name": null,
-            "hidden": null,
+            "disabled": null,
             "properties": {
                 "text": "foo"
             },
@@ -50,21 +50,21 @@
         {
             "type": null,
             "name": null,
-            "hidden": null,
+            "disabled": null,
             "properties": [],
             "childNodes": []
         },
         {
             "type": "Flowpack.NodeTemplates:InvalidNodeType",
             "name": null,
-            "hidden": null,
+            "disabled": null,
             "properties": [],
             "childNodes": []
         },
         {
             "type": "Flowpack.NodeTemplates:Content.WithEvaluationExceptions",
             "name": "type-cant-mutate",
-            "hidden": null,
+            "disabled": null,
             "properties": [],
             "childNodes": []
         }
