@@ -43,6 +43,8 @@
         working: "working"
         nonDeclaredProperty: "hi"
         bar: "${'left open"
+        nonEelArrayNotAllowed:
+          not: allowed
       childNodes:
         whenAbort:
           type: 'Flowpack.NodeTemplates:Content.Text'

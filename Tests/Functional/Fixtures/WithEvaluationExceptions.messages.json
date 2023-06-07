@@ -12,6 +12,10 @@
         "severity": "ERROR"
     },
     {
+        "message": "RuntimeException(Template configuration properties can only hold int|float|string|bool|null. Property \"nonEelArrayNotAllowed\" has type \"array\", 1685725310730)",
+        "severity": "ERROR"
+    },
+    {
         "message": "Expression \"${parse \u00e4\u00fc\u00e4\u00f6 error}\" in \"childNodes.whenAbort.when\" | ParserException(Expression \"parse \u00e4\u00fc\u00e4\u00f6 error\" could not be parsed. Error starting at character 5: \" \u00e4\u00fc\u00e4\u00f6 error\"., 1327682383)",
         "severity": "ERROR"
     },

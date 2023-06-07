@@ -91,7 +91,10 @@ class TemplateConfigurationProcessor
         $processedProperties = [];
         foreach ($templatePart->getRawConfiguration('properties') ?? [] as $propertyName => $value) {
             if (!is_scalar($value) && !is_null($value)) {
-                throw new \InvalidArgumentException(sprintf('Template configuration properties can only hold int|float|string|bool|null. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730);
+                $templatePart->getCaughtExceptions()->add(CaughtException::fromException(
+                    new \RuntimeException(sprintf('Template configuration properties can only hold int|float|string|bool|null. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730)
+                ));
+                continue;
             }
             try {
                 $processedProperties[$propertyName] = $templatePart->processConfiguration(['properties', $propertyName]);
