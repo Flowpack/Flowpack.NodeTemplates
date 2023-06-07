@@ -192,11 +192,11 @@ class TemplatePart
     {
         $isRootTemplate = $this->fullPathToConfiguration === [];
         foreach (array_keys($this->configuration) as $key) {
-            if (!in_array($key, ['type', 'name', 'properties', 'childNodes', 'when', 'withItems', 'withContext'], true)) {
+            if (!in_array($key, ['type', 'name', 'disabled', 'properties', 'childNodes', 'when', 'withItems', 'withContext'], true)) {
                 throw new \InvalidArgumentException(sprintf('Template configuration has illegal key "%s"', $key));
             }
             if ($isRootTemplate) {
-                if (!in_array($key, ['properties', 'childNodes', 'when', 'withContext'], true)) {
+                if (!in_array($key, ['disabled', 'properties', 'childNodes', 'when', 'withContext'], true)) {
                     throw new \InvalidArgumentException(sprintf('Root template configuration doesnt allow option "%s', $key));
                 }
             }

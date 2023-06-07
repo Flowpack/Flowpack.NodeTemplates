@@ -1,4 +1,5 @@
 {
+    "disabled": null,
     "properties": {
         "text": "abc",
         "isEnchanted": false,
