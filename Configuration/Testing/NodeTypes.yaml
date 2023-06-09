@@ -1,6 +1,9 @@
 'Flowpack.NodeTemplates:Document.Page':
   superTypes:
     'Neos.Neos:Document': true
+  constraints:
+    nodeTypes:
+      'unstructured': true
   childNodes:
     main:
       type: 'Neos.Neos:ContentCollection'

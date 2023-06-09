@@ -41,10 +41,15 @@ class ReferenceTypeTest extends TestCase
             $nodeTypeMock,
         );
         foreach ($validValues as $validValue) {
-            Assert::assertTrue($subject->isMatchedBy($validValue, $subgraphMock), sprintf('Value %s should match.', get_debug_type($validValue)));
+            Assert::assertTrue((bool)$subject->resolveNodeAggregateIds($validValue, $subgraphMock), sprintf('Value %s should match.', get_debug_type($validValue)));
         }
         foreach ($invalidValues as $invalidValue) {
-            Assert::assertFalse($subject->isMatchedBy($invalidValue, $subgraphMock), sprintf('Value %s should not match.', get_debug_type($validValue)));
+            try {
+                $subject->resolveNodeAggregateIds($invalidValue, $subgraphMock);
+                self::fail(sprintf('Value %s should not match.', get_debug_type($validValue)));
+            } catch (\RuntimeException) {
+                Assert::assertTrue(true);
+            }
         }
     }
 

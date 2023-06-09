@@ -48,7 +48,7 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
         $evaluationContext = [
             'data' => $data,
             // todo evaluate which context variables
-            'subgraph' => $contentRepository->getContentGraph()->getSubgraph(
+            'subgraph' => $subgraph = $contentRepository->getContentGraph()->getSubgraph(
                 $commands->initialCreateCommand->contentStreamId,
                 $commands->initialCreateCommand->originDimensionSpacePoint->toDimensionSpacePoint(),
                 VisibilityConstraints::frontend()
@@ -60,7 +60,7 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
             $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
             // $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $node);
 
-            return (new NodeCreationService($contentRepository, $contentRepository->getNodeTypeManager()))->apply($template, $commands, $caughtExceptions);
+            return (new NodeCreationService($subgraph, $contentRepository->getNodeTypeManager()))->apply($template, $commands, $caughtExceptions);
             // $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $node);
         } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
             throw $templateCreationException;

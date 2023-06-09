@@ -7,12 +7,19 @@ use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
-use Neos\ContentRepository\Core\ContentRepository;
+use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
 use Neos\ContentRepository\Core\Feature\NodeCreation\Command\CreateNodeAggregateWithNode;
 use Neos\ContentRepository\Core\Feature\NodeModification\Command\SetNodeProperties;
+use Neos\ContentRepository\Core\Feature\NodeModification\Dto\PropertyValuesToWrite;
+use Neos\ContentRepository\Core\Feature\NodeReferencing\Command\SetNodeReferences;
+use Neos\ContentRepository\Core\Feature\NodeReferencing\Dto\NodeReferencesToWrite;
 use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
+use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateIds;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
+use Neos\ContentRepository\Core\SharedModel\Node\ReferenceName;
+use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
 use Neos\Flow\Annotations as Flow;
 use Neos\Neos\Ui\NodeCreationHandler\NodeCreationCommands;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
@@ -26,7 +33,7 @@ class NodeCreationService
     protected $nodeUriPathSegmentGenerator;
 
     public function __construct(
-        private readonly ContentRepository $contentRepository,
+        private readonly ContentSubgraphInterface $subgraph,
         private readonly NodeTypeManager $nodeTypeManager
     ) {
     }
@@ -45,13 +52,8 @@ class NodeCreationService
         $initialProperties = $commands->initialCreateCommand->initialPropertyValues;
 
         $initialProperties = $initialProperties->merge(
-            $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions)
+            PropertyValuesToWrite::fromArray($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions))
         );
-
-        // todo set references
-        // foreach ($propertiesAndReferences->requireValidReferences($nodeType, $commands->getContext(), $caughtExceptions) as $key => $value) {
-        //     $commands->setProperty($key, $value);
-        // }
 
         // $this->ensureNodeHasUriPathSegment($commands, $template);
         return $this->applyTemplateRecursively(
@@ -62,7 +64,14 @@ class NodeCreationService
                 $commands->initialCreateCommand->nodeAggregateId,
                 $nodeType,
             ),
-            $commands->withInitialPropertyValues($initialProperties),
+            $commands->withInitialPropertyValues($initialProperties)->withAdditionalCommands(
+                ...$this->createReferencesCommands(
+                    $commands->initialCreateCommand->contentStreamId,
+                    $commands->initialCreateCommand->nodeAggregateId,
+                    $commands->initialCreateCommand->originDimensionSpacePoint,
+                    $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
+                )
+            ),
             $caughtExceptions
         );
     }
@@ -89,11 +98,15 @@ class NodeCreationService
                             $template->getName()
                         ),
                         $parentNode->originDimensionSpacePoint,
-                        $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions)
+                        PropertyValuesToWrite::fromArray($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions))
+                    ),
+                    ...$this->createReferencesCommands(
+                        $parentNode->contentStreamId,
+                        $nodeAggregateId,
+                        $parentNode->originDimensionSpacePoint,
+                        $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
                     )
                 );
-
-                // todo references
 
                 $commands = $this->applyTemplateRecursively(
                     $template->getChildNodes(),
@@ -104,7 +117,6 @@ class NodeCreationService
                     $commands,
                     $caughtExceptions
                 );
-
                 continue;
             }
 
@@ -125,10 +137,7 @@ class NodeCreationService
 
             $nodeType = $this->nodeTypeManager->getNodeType($template->getType());
 
-
             $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
-
-            // hande references
 
             $commands = $commands->withAdditionalCommands(
                 new CreateNodeAggregateWithNode(
@@ -138,14 +147,16 @@ class NodeCreationService
                     $parentNode->originDimensionSpacePoint,
                     $parentNode->nodeAggregateId,
                     nodeName: NodeName::fromString(uniqid('node-', false)),
-                    initialPropertyValues: $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions)
+                    initialPropertyValues: PropertyValuesToWrite::fromArray($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions))
+                ),
+                ...$this->createReferencesCommands(
+                    $parentNode->contentStreamId,
+                    $nodeAggregateId,
+                    $parentNode->originDimensionSpacePoint,
+                    $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
                 )
             );
 
-            // set references
-            // foreach ($propertiesAndReferences->requireValidReferences($nodeType, $node->getContext(), $caughtExceptions) as $key => $value) {
-            //     $node->setProperty($key, $value);
-            // }
 
             // $this->ensureNodeHasUriPathSegment($node, $template);
             $commands = $this->applyTemplateRecursively(
@@ -159,6 +170,25 @@ class NodeCreationService
             );
         }
 
+        return $commands;
+    }
+
+    /**
+     * @param array<string, NodeAggregateIds> $references
+     * @return list<SetNodeReferences>
+     */
+    private function createReferencesCommands(ContentStreamId $contentStreamId, NodeAggregateId $nodeAggregateId, OriginDimensionSpacePoint $originDimensionSpacePoint, array $references): array
+    {
+        $commands = [];
+        foreach ($references as $name => $nodeAggregateIds) {
+            $commands[] = new SetNodeReferences(
+                $contentStreamId,
+                $nodeAggregateId,
+                $originDimensionSpacePoint,
+                ReferenceName::fromString($name),
+                NodeReferencesToWrite::fromNodeAggregateIds($nodeAggregateIds)
+            );
+        }
         return $commands;
     }
 

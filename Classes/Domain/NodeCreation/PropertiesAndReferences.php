@@ -4,8 +4,9 @@ namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
-use Neos\ContentRepository\Core\Feature\NodeModification\Dto\PropertyValuesToWrite;
 use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateIds;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -50,7 +51,7 @@ class PropertiesAndReferences
      *  This is a problem, as setting `null` might not be possible via the Neos UI and the Fusion rendering is most likely not going to handle this edge case.
      *  Related discussion {@link https://github.com/Flowpack/Flowpack.NodeTemplates/issues/41}
      */
-    public function requireValidProperties(NodeType $nodeType, CaughtExceptions $caughtExceptions): PropertyValuesToWrite
+    public function requireValidProperties(NodeType $nodeType, CaughtExceptions $caughtExceptions): array
     {
         $validProperties = [];
         foreach ($this->properties as $propertyName => $propertyValue) {
@@ -83,25 +84,29 @@ class PropertiesAndReferences
                 );
             }
         }
-        return PropertyValuesToWrite::fromArray($validProperties);
+        return $validProperties;
     }
 
-    public function requireValidReferences(NodeType $nodeType, Context $subgraph, CaughtExceptions $caughtExceptions): array
+    /**
+     * @return array<string, NodeAggregateIds>
+     */
+    public function requireValidReferences(NodeType $nodeType, ContentSubgraphInterface $subgraph, CaughtExceptions $caughtExceptions): array
     {
         $validReferences = [];
         foreach ($this->references as $referenceName => $referenceValue) {
             $referenceType = ReferenceType::fromPropertyOfNodeType($referenceName, $nodeType);
-            if (!$referenceType->isMatchedBy($referenceValue, $subgraph)) {
-                $caughtExceptions->add(CaughtException::fromException(new \RuntimeException(
-                    sprintf(
-                        'Reference could not be set, because node reference(s) %s cannot be resolved.',
-                        json_encode($referenceValue)
-                    ),
-                    1685958176560
-                ))->withOrigin(sprintf('Reference "%s" in NodeType "%s"', $referenceName, $nodeType->getName())));
+            try {
+                $nodeAggregateIds = $referenceType->resolveNodeAggregateIds($referenceValue, $subgraph);
+            } catch (\RuntimeException $runtimeException) {
+                $caughtExceptions->add(
+                    CaughtException::fromException($runtimeException)
+                        ->withOrigin(sprintf('Reference "%s" in NodeType "%s"', $referenceName, $nodeType->getName()))
+                );
                 continue;
             }
-            $validReferences[$referenceName] = $referenceValue;
+            if ($nodeAggregateIds->getIterator()->count()) {
+                $validReferences[$referenceName] = $nodeAggregateIds;
+            }
         }
         return $validReferences;
     }

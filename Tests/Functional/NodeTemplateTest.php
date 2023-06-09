@@ -25,13 +25,15 @@ use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceDescription;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceName;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceTitle;
 use Neos\ContentRepository\Core\Tests\Behavior\Features\Bootstrap\Helpers\FakeUserIdProvider;
-use Neos\Flow\Tests\FunctionalTestCase;
+use Neos\Flow\Core\Bootstrap;
+use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Neos\FrontendRouting\NodeAddressFactory;
 use Neos\Neos\Ui\Domain\Model\ChangeCollection;
 use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
 use Neos\Neos\Ui\TypeConverter\ChangeCollectionConverter;
+use PHPUnit\Framework\TestCase;
 
-class NodeTemplateTest extends FunctionalTestCase
+class NodeTemplateTest extends TestCase // we don't use Flows functional test case as it would reset the database afterwards
 {
     use SnapshotTrait;
     use FeedbackCollectionMessagesTrait;
@@ -50,11 +52,14 @@ class NodeTemplateTest extends FunctionalTestCase
 
     private RootTemplate $lastCreatedRootTemplate;
 
-    protected static $testablePersistenceEnabled = true;
+    protected static $testablePersistenceEnabled = false;
+
+    private ObjectManagerInterface $objectManager;
 
     public function setUp(): void
     {
-        parent::setUp();
+        $this->objectManager = Bootstrap::$staticObjectManager;
+
         $this->setupContentRepository();
         $this->nodeTemplateDumper = $this->objectManager->get(NodeTemplateDumper::class);
 
@@ -190,17 +195,14 @@ class NodeTemplateTest extends FunctionalTestCase
     /** @test */
     public function testNodeCreationMatchesSnapshot2(): void
     {
-        $this->createNodeInto(
-            $targetNode = $this->homePageNode->getNode('main'),
-            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Columns.Two.CreationDialogAndWithItems'),
-            [
+        $createdNode = $this->createNodeInto(
+            $this->homePageMainContentCollectionNode,
+            NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Columns.Two.CreationDialogAndWithItems'),            [
                 'text' => '<p>bar</p>'
             ]
         );
 
         $this->assertLastCreatedTemplateMatchesSnapshot('TwoColumnPreset');
-
-        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
         $this->assertNodeDumpAndTemplateDumpMatchSnapshot('TwoColumnPreset', $createdNode);
@@ -209,15 +211,13 @@ class NodeTemplateTest extends FunctionalTestCase
     /** @test */
     public function testNodeCreationMatchesSnapshot3(): void
     {
-        $this->createNodeInto(
-            $targetNode = $this->homePageNode->getNode('main'),
-            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Columns.Two.WithContext'),
+        $createdNode = $this->createNodeInto(
+            $this->homePageMainContentCollectionNode,
+            NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Columns.Two.WithContext'),
             []
         );
 
         $this->assertLastCreatedTemplateMatchesSnapshot('TwoColumnPreset');
-
-        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
         $this->assertNodeDumpAndTemplateDumpMatchSnapshot('TwoColumnPreset', $createdNode);
@@ -226,17 +226,25 @@ class NodeTemplateTest extends FunctionalTestCase
     /** @test */
     public function testNodeCreationWithDifferentPropertyTypes(): void
     {
-        $this->createNodeInto(
-            $targetNode = $this->homePageNode->getNode('main'),
-            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.DifferentPropertyTypes'),
+        $this->contentRepository->handle(
+            new CreateNodeAggregateWithNode(
+                $this->homePageNode->subgraphIdentity->contentStreamId,
+                $someNodeId = NodeAggregateId::fromString('7f7bac1c-9400-4db5-bbaa-2b8251d127c5'),
+                NodeTypeName::fromString('unstructured'),
+                $this->homePageNode->originDimensionSpacePoint,
+                $this->homePageNode->nodeAggregateId
+            )
+        )->block();
+
+        $createdNode = $this->createNodeInto(
+            $this->homePageMainContentCollectionNode,
+            NodeTypeName::fromString('Flowpack.NodeTemplates:Content.DifferentPropertyTypes'),
             [
-                'someNode' => $this->homePageNode->createNode('some-node', null, '7f7bac1c-9400-4db5-bbaa-2b8251d127c5')
+                'someNode' => $this->subgraph->findNodeById($someNodeId)
             ]
         );
 
         $this->assertLastCreatedTemplateMatchesSnapshot('DifferentPropertyTypes');
-
-        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
         $this->assertNodeDumpAndTemplateDumpMatchSnapshot('DifferentPropertyTypes', $createdNode);
