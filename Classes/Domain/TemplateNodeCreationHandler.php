@@ -8,8 +8,10 @@ use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplateNotCreatedException;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplatePartiallyCreatedException;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
-use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Core\ContentRepository;
+use Neos\ContentRepository\Core\Projection\ContentGraph\VisibilityConstraints;
 use Neos\Flow\Annotations as Flow;
+use Neos\Neos\Ui\NodeCreationHandler\NodeCreationCommands;
 use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
 
 class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
@@ -21,12 +23,6 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
     protected $templateConfigurationProcessor;
 
     /**
-     * @var NodeCreationService
-     * @Flow\Inject
-     */
-    protected $nodeCreationService;
-
-    /**
      * @var ExceptionHandler
      * @Flow\Inject
      */
@@ -35,30 +31,39 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
     /**
      * Create child nodes and change properties upon node creation
      *
-     * @param NodeInterface $node The newly created node
      * @param array $data incoming data from the creationDialog
      */
-    public function handle(NodeInterface $node, array $data): void
-    {
-        if (!$node->getNodeType()->hasConfiguration('options.template')) {
-            return;
+    public function handle(
+        NodeCreationCommands $commands,
+        array $data,
+        ContentRepository $contentRepository
+    ): NodeCreationCommands {
+        $nodeType = $contentRepository->getNodeTypeManager()
+            ->getNodeType($commands->initialCreateCommand->nodeTypeName);
+        $templateConfiguration = $nodeType->getOptions()['template'] ?? null;
+        if (!$templateConfiguration) {
+            return $commands;
         }
 
         $evaluationContext = [
             'data' => $data,
-            'triggeringNode' => $node,
+            // todo evaluate which context variables
+            'subgraph' => $contentRepository->getContentGraph()->getSubgraph(
+                $commands->initialCreateCommand->contentStreamId,
+                $commands->initialCreateCommand->originDimensionSpacePoint->toDimensionSpacePoint(),
+                VisibilityConstraints::frontend()
+            ),
         ];
-
-        $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');
 
         $caughtExceptions = CaughtExceptions::create();
         try {
             $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
-            $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $node);
+            // $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $node);
 
-            $this->nodeCreationService->apply($template, $node, $caughtExceptions);
-            $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $node);
+            return (new NodeCreationService($contentRepository, $contentRepository->getNodeTypeManager()))->apply($template, $commands, $caughtExceptions);
+            // $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $node);
         } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
+            throw $templateCreationException;
         }
     }
 }

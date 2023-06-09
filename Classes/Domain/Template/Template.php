@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Domain\Template;
 
-use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
-use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
+use Neos\ContentRepository\Core\NodeType\NodeTypeName;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
 use Neos\Flow\Annotations as Flow;
 
 /** @Flow\Proxy(false) */

@@ -7,16 +7,9 @@ namespace Flowpack\NodeTemplates\Application\Command;
 use Flowpack\NodeTemplates\Domain\NodeTemplateDumper\NodeTemplateDumper;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
-use Neos\Neos\Domain\Service\ContentContextFactory;
 
 class NodeTemplateCommandController extends CommandController
 {
-    /**
-     * @Flow\Inject
-     * @var ContentContextFactory
-     */
-    protected $contentContextFactory;
-
     /**
      * @Flow\Inject
      * @var NodeTemplateDumper
@@ -33,6 +26,8 @@ class NodeTemplateCommandController extends CommandController
      */
     public function createFromNodeSubtreeCommand(string $startingNodeId, string $workspaceName = 'live'): void
     {
+        // TODO re-enable
+        throw new \BadMethodCallException('Not implemented.');
         $subgraph = $this->contentContextFactory->create([
             'workspaceName' => $workspaceName
         ]);

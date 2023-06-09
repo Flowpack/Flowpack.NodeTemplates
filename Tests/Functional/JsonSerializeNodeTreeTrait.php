@@ -2,38 +2,28 @@
 
 namespace Flowpack\NodeTemplates\Tests\Functional;
 
-use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Subtree;
 
 trait JsonSerializeNodeTreeTrait
 {
-    private function jsonSerializeNodeAndDescendents(NodeInterface $node): array
+    private function jsonSerializeNodeAndDescendents(Subtree $subtree): array
     {
-        $nodeType = $node->getNodeType();
-        $references = [];
-        $properties = [];
-        foreach ($node->getProperties() as $propertyName => $propertyValue) {
-            $declaration = $nodeType->getPropertyType($propertyName);
-            if ($declaration === 'reference' || $declaration === 'references') {
-                $references[$propertyName] = [];
-                foreach ($declaration === 'reference' ? [$propertyValue] : $propertyValue as $reference) {
-                    $references[$propertyName][] = array_filter([
-                        'node' => $reference,
-                        'properties' => []
-                    ]);
-                }
-                continue;
-            }
-            $properties[$propertyName] = $propertyValue;
-        }
+        $node = $subtree->node;
+
         return array_filter([
-            'nodeTypeName' => $node->getNodeType()->getName(),
-            'nodeName' => $node->isAutoCreated() ? $node->getName() : null,
-            'isDisabled' => $node->isHidden(),
-            'properties' => $this->serializeValuesInArray($properties),
-            'references' => $this->serializeValuesInArray($references),
+            'nodeTypeName' => $node->nodeTypeName,
+            'nodeName' =>  $node->classification->isTethered() ? $node->nodeName : null,
+            // todo
+            'isDisabled' => false,
+            'properties' => $this->serializeValuesInArray(
+                iterator_to_array($node->properties->getIterator())
+            ),
+            // todo
+            'references' => [], // $this->serializeValuesInArray($references)
             'childNodes' => array_map(
-                fn ($node) => $this->jsonSerializeNodeAndDescendents($node),
-                $node->getChildNodes('Neos.Neos:Node')
+                fn ($subtree) => $this->jsonSerializeNodeAndDescendents($subtree),
+                $subtree->children
             )
         ]);
     }
@@ -43,8 +33,8 @@ trait JsonSerializeNodeTreeTrait
         foreach ($array as $key => $value) {
             if (is_array($value)) {
                 $value = $this->serializeValuesInArray($value);
-            } elseif ($value instanceof NodeInterface) {
-                $value = sprintf('Node(%s, %s)', $value->getIdentifier(), $value->getNodeType()->getName());
+            } elseif ($value instanceof Node) {
+                $value = sprintf('Node(%s, %s)', $value->nodeAggregateId->value, $value->nodeTypeName->value);
             } elseif ($value instanceof \JsonSerializable) {
                 $value = $value->jsonSerialize();
                 if (is_array($value)) {

@@ -7,112 +7,159 @@ use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
-use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Service\NodeTypeManager;
-use Neos\ContentRepository\Exception\NodeConstraintException;
+use Neos\ContentRepository\Core\ContentRepository;
+use Neos\ContentRepository\Core\Feature\NodeCreation\Command\CreateNodeAggregateWithNode;
+use Neos\ContentRepository\Core\Feature\NodeModification\Command\SetNodeProperties;
+use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
 use Neos\Flow\Annotations as Flow;
-use Neos\Neos\Service\NodeOperations;
+use Neos\Neos\Ui\NodeCreationHandler\NodeCreationCommands;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
 class NodeCreationService
 {
-    /**
-     * @var NodeOperations
-     * @Flow\Inject
-     */
-    protected $nodeOperations;
-
-    /**
-     * @var NodeTypeManager
-     * @Flow\Inject
-     */
-    protected $nodeTypeManager;
-
     /**
      * @Flow\Inject
      * @var NodeUriPathSegmentGenerator
      */
     protected $nodeUriPathSegmentGenerator;
 
+    public function __construct(
+        private readonly ContentRepository $contentRepository,
+        private readonly NodeTypeManager $nodeTypeManager
+    ) {
+    }
+
     /**
      * Applies the root template and its descending configured child node templates on the given node.
      * @throws \InvalidArgumentException
      */
-    public function apply(RootTemplate $template, NodeInterface $node, CaughtExceptions $caughtExceptions): void
+    public function apply(RootTemplate $template, NodeCreationCommands $commands, CaughtExceptions $caughtExceptions): NodeCreationCommands
     {
-        $nodeType = $node->getNodeType();
+        $nodeType = $this->nodeTypeManager->getNodeType($commands->initialCreateCommand->nodeTypeName);
         $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
 
         // set properties
-        foreach ($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions) as $key => $value) {
-            $node->setProperty($key, $value);
-        }
 
-        // set references
-        foreach ($propertiesAndReferences->requireValidReferences($nodeType, $node->getContext(), $caughtExceptions) as $key => $value) {
-            $node->setProperty($key, $value);
-        }
+        $initialProperties = $commands->initialCreateCommand->initialPropertyValues;
 
-        $this->ensureNodeHasUriPathSegment($node, $template);
-        $this->applyTemplateRecursively($template->getChildNodes(), $node, $caughtExceptions);
+        $initialProperties = $initialProperties->merge(
+            $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions)
+        );
+
+        // todo set references
+        // foreach ($propertiesAndReferences->requireValidReferences($nodeType, $commands->getContext(), $caughtExceptions) as $key => $value) {
+        //     $commands->setProperty($key, $value);
+        // }
+
+        // $this->ensureNodeHasUriPathSegment($commands, $template);
+        return $this->applyTemplateRecursively(
+            $template->getChildNodes(),
+            new ToBeCreatedNode(
+                $commands->initialCreateCommand->contentStreamId,
+                $commands->initialCreateCommand->originDimensionSpacePoint,
+                $commands->initialCreateCommand->nodeAggregateId,
+                $nodeType,
+            ),
+            $commands->withInitialPropertyValues($initialProperties),
+            $caughtExceptions
+        );
     }
 
-    private function applyTemplateRecursively(Templates $templates, NodeInterface $parentNode, CaughtExceptions $caughtExceptions): void
+    private function applyTemplateRecursively(Templates $templates, ToBeCreatedNode $parentNode, NodeCreationCommands $commands, CaughtExceptions $caughtExceptions): NodeCreationCommands
     {
         foreach ($templates as $template) {
-            if ($template->getName() && $parentNode->getNodeType()->hasAutoCreatedChildNode($template->getName())) {
-                $node = $parentNode->getNode($template->getName()->__toString());
+            if ($template->getName() && $parentNode->nodeType->hasAutoCreatedChildNode($template->getName())) {
                 if ($template->getType() !== null) {
                     $caughtExceptions->add(
-                        CaughtException::fromException(new \RuntimeException(sprintf('Template cant mutate type of auto created child nodes. Got: "%s"', $template->getType()->getValue()), 1685999829307))
+                        CaughtException::fromException(new \RuntimeException(sprintf('Template cant mutate type of auto created child nodes. Got: "%s"', $template->getType()->value), 1685999829307))
                     );
                     // we continue processing the node
                 }
-            } else {
-                if ($template->getType() === null) {
-                    $caughtExceptions->add(
-                        CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be set for non auto created child nodes.'), 1685999829307))
-                    );
-                    continue;
-                }
-                if (!$this->nodeTypeManager->hasNodeType($template->getType()->getValue())) {
-                    $caughtExceptions->add(
-                        CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a valid NodeType. Got: "%s".', $template->getType()->getValue()), 1685999795564))
-                    );
-                    continue;
-                }
-                try {
-                    $node = $this->nodeOperations->create(
-                        $parentNode,
-                        [
-                            'nodeType' => $template->getType()->getValue(),
-                            'nodeName' => $template->getName() ? $template->getName()->__toString() : null
-                        ],
-                        'into'
-                    );
-                } catch (NodeConstraintException $nodeConstraintException) {
-                    $caughtExceptions->add(
-                        CaughtException::fromException($nodeConstraintException)
-                    );
-                    continue; // try the next childNode
-                }
+
+                $nodeType = $parentNode->nodeType->getTypeOfAutoCreatedChildNode($template->getName());
+                $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
+
+                $commands = $commands->withAdditionalCommands(
+                    new SetNodeProperties(
+                        $parentNode->contentStreamId,
+                        $nodeAggregateId = NodeAggregateId::fromParentNodeAggregateIdAndNodeName(
+                            $parentNode->nodeAggregateId,
+                            $template->getName()
+                        ),
+                        $parentNode->originDimensionSpacePoint,
+                        $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions)
+                    )
+                );
+
+                // todo references
+
+                $commands = $this->applyTemplateRecursively(
+                    $template->getChildNodes(),
+                    $parentNode->withNodeTypeAndNodeAggregateId(
+                        $nodeType,
+                        $nodeAggregateId
+                    ),
+                    $commands,
+                    $caughtExceptions
+                );
+
+                continue;
             }
-            $nodeType = $node->getNodeType();
+
+            if ($template->getType() === null) {
+                $caughtExceptions->add(
+                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be set for non auto created child nodes.'), 1685999829307))
+                );
+                continue;
+            }
+            if (!$this->nodeTypeManager->hasNodeType($template->getType())) {
+                $caughtExceptions->add(
+                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a valid NodeType. Got: "%s".', $template->getType()->value), 1685999795564))
+                );
+                continue;
+            }
+
+            // todo handle NodeConstraintException
+
+            $nodeType = $this->nodeTypeManager->getNodeType($template->getType());
+
+
             $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
 
-            // set properties
-            foreach ($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions) as $key => $value) {
-                $node->setProperty($key, $value);
-            }
+            // hande references
+
+            $commands = $commands->withAdditionalCommands(
+                new CreateNodeAggregateWithNode(
+                    $parentNode->contentStreamId,
+                    $nodeAggregateId = NodeAggregateId::create(),
+                    $template->getType(),
+                    $parentNode->originDimensionSpacePoint,
+                    $parentNode->nodeAggregateId,
+                    nodeName: NodeName::fromString(uniqid('node-', false)),
+                    initialPropertyValues: $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions)
+                )
+            );
 
             // set references
-            foreach ($propertiesAndReferences->requireValidReferences($nodeType, $node->getContext(), $caughtExceptions) as $key => $value) {
-                $node->setProperty($key, $value);
-            }
+            // foreach ($propertiesAndReferences->requireValidReferences($nodeType, $node->getContext(), $caughtExceptions) as $key => $value) {
+            //     $node->setProperty($key, $value);
+            // }
 
-            $this->ensureNodeHasUriPathSegment($node, $template);
-            $this->applyTemplateRecursively($template->getChildNodes(), $node, $caughtExceptions);
+            // $this->ensureNodeHasUriPathSegment($node, $template);
+            $commands = $this->applyTemplateRecursively(
+                $template->getChildNodes(),
+                $parentNode->withNodeTypeAndNodeAggregateId(
+                    $nodeType,
+                    $nodeAggregateId
+                ),
+                $commands,
+                $caughtExceptions
+            );
         }
+
+        return $commands;
     }
 
     /**

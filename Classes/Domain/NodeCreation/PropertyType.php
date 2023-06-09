@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 use GuzzleHttp\Psr7\Uri;
-use Neos\ContentRepository\Domain\Model\NodeType;
+use Neos\ContentRepository\Core\NodeType\NodeType;
 use Neos\Flow\Annotations as Flow;
 use Psr\Http\Message\UriInterface;
 

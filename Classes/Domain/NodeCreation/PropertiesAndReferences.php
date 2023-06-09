@@ -4,8 +4,8 @@ namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
-use Neos\ContentRepository\Domain\Model\NodeType;
-use Neos\ContentRepository\Domain\Service\Context;
+use Neos\ContentRepository\Core\Feature\NodeModification\Dto\PropertyValuesToWrite;
+use Neos\ContentRepository\Core\NodeType\NodeType;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -50,7 +50,7 @@ class PropertiesAndReferences
      *  This is a problem, as setting `null` might not be possible via the Neos UI and the Fusion rendering is most likely not going to handle this edge case.
      *  Related discussion {@link https://github.com/Flowpack/Flowpack.NodeTemplates/issues/41}
      */
-    public function requireValidProperties(NodeType $nodeType, CaughtExceptions $caughtExceptions): array
+    public function requireValidProperties(NodeType $nodeType, CaughtExceptions $caughtExceptions): PropertyValuesToWrite
     {
         $validProperties = [];
         foreach ($this->properties as $propertyName => $propertyValue) {
@@ -83,7 +83,7 @@ class PropertiesAndReferences
                 );
             }
         }
-        return $validProperties;
+        return PropertyValuesToWrite::fromArray($validProperties);
     }
 
     public function requireValidReferences(NodeType $nodeType, Context $subgraph, CaughtExceptions $caughtExceptions): array

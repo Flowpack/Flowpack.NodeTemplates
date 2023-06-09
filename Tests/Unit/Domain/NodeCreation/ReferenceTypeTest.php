@@ -3,10 +3,11 @@
 namespace Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation;
 
 use Flowpack\NodeTemplates\Domain\NodeCreation\ReferenceType;
+use Flowpack\NodeTemplates\Tests\Unit\NodeMockTrait;
 use GuzzleHttp\Psr7\Uri;
-use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Model\NodeType;
-use Neos\ContentRepository\Domain\Service\Context;
+use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\Flow\ResourceManagement\PersistentResource;
 use Neos\Media\Domain\Model\Asset;
 use Neos\Media\Domain\Model\Image;
@@ -15,6 +16,7 @@ use PHPUnit\Framework\TestCase;
 
 class ReferenceTypeTest extends TestCase
 {
+    use NodeMockTrait;
 
     private const VALID_NODE_ID_1 = '123';
     private const VALID_NODE_ID_2 = '456';
@@ -25,10 +27,10 @@ class ReferenceTypeTest extends TestCase
     public function testIsMatchedBy(string $declarationType, array $validValues, array $invalidValues): void
     {
         // subgraph that knows the nodes 123 and 456
-        $subgraphMock = $this->getMockBuilder(Context::class)->disableOriginalConstructor()->getMock();
-        $subgraphMock->expects(self::any())->method('getNodeByIdentifier')->willReturnCallback(function ($nodeId) {
-            if ($nodeId === self::VALID_NODE_ID_1 || $nodeId === self::VALID_NODE_ID_2) {
-                return $this->createStub(NodeInterface::class);
+        $subgraphMock = $this->getMockBuilder(ContentSubgraphInterface::class)->getMock();
+        $subgraphMock->expects(self::any())->method('findNodeById')->willReturnCallback(function (NodeAggregateId $nodeId) {
+            if ($nodeId->value === self::VALID_NODE_ID_1 || $nodeId->value === self::VALID_NODE_ID_2) {
+                return $this->createNodeMock();
             }
             return null;
         });
@@ -57,8 +59,8 @@ class ReferenceTypeTest extends TestCase
         $date = \DateTimeImmutable::createFromFormat(\DateTimeInterface::W3C, '2020-08-20T18:56:15+00:00');
         $uri = new Uri('https://www.neos.io');
 
-        $nodeMock1 = $this->createStub(NodeInterface::class);
-        $nodeMock2 = $this->createStub(NodeInterface::class);
+        $nodeMock1 = $this->createNodeMock();
+        $nodeMock2 = $this->createNodeMock();
 
         return [
             [

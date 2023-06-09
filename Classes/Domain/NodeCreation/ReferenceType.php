@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
-use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Model\NodeType;
-use Neos\ContentRepository\Domain\Service\Context;
+use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -73,7 +74,7 @@ final class ReferenceType
         return $this->value;
     }
 
-    public function isMatchedBy($propertyValue, Context $subgraphForResolving): bool
+    public function isMatchedBy($propertyValue, ContentSubgraphInterface $subgraphForResolving): bool
     {
         if ($propertyValue === null) {
             return true;
@@ -83,10 +84,15 @@ final class ReferenceType
             return false;
         }
         foreach ($nodeAggregatesOrIds as $singleNodeAggregateOrId) {
-            if ($singleNodeAggregateOrId instanceof NodeInterface) {
+            if ($singleNodeAggregateOrId instanceof Node) {
                 continue;
             }
-            if (is_string($singleNodeAggregateOrId) && $subgraphForResolving->getNodeByIdentifier($singleNodeAggregateOrId) instanceof NodeInterface) {
+            try {
+                $singleNodeAggregateId = is_string($singleNodeAggregateOrId) ? NodeAggregateId::fromString($singleNodeAggregateOrId) : $singleNodeAggregateOrId;
+            } catch (\Exception) {
+                return false;
+            }
+            if ($singleNodeAggregateId instanceof NodeAggregateId && $subgraphForResolving->findNodeById($singleNodeAggregateId) instanceof Node) {
                 continue;
             }
             return false;

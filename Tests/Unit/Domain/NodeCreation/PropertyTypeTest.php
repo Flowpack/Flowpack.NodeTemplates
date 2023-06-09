@@ -14,7 +14,7 @@ namespace Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation;
 use Flowpack\NodeTemplates\Domain\NodeCreation\PropertyType;
 use Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation\Fixture\PostalAddress;
 use GuzzleHttp\Psr7\Uri;
-use Neos\ContentRepository\Domain\Model\NodeType;
+use Neos\ContentRepository\Core\NodeType\NodeType;
 use Neos\Flow\ResourceManagement\PersistentResource;
 use Neos\Media\Domain\Model\Asset;
 use Neos\Media\Domain\Model\Image;

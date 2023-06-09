@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Domain;
 
-use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Core\ContentRepository;
 use Neos\Flow\Annotations as Flow;
 use Neos\Neos\Ui\NodeCreationHandler\DocumentTitleNodeCreationHandler;
+use Neos\Neos\Ui\NodeCreationHandler\NodeCreationCommands;
 use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
 
 /**
@@ -23,21 +24,22 @@ class DelegatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerI
      */
     protected $originalDocumentTitleNodeCreationHandler;
 
-    /**
-     * @throws \Neos\Eel\Exception
-     * @throws \Neos\Neos\Exception
-     */
-    public function handle(NodeInterface $node, array $data): void
-    {
-        $template = $node->getNodeType()->getOptions()['template'] ?? null;
+    public function handle(
+        NodeCreationCommands $commands,
+        array $data,
+        ContentRepository $contentRepository
+    ): NodeCreationCommands {
+        $nodeType = $contentRepository->getNodeTypeManager()
+            ->getNodeType($commands->initialCreateCommand->nodeTypeName);
+        $template = $nodeType->getOptions()['template'] ?? null;
         if (
             !$template
             || !isset($template['properties']['uriPathSegment'])
         ) {
-            $this->originalDocumentTitleNodeCreationHandler->handle($node, $data);
-            return;
+            return $this->originalDocumentTitleNodeCreationHandler->handle($commands, $data, $contentRepository);
         }
 
         // do nothing, as we handle this already when applying the template
+        return $commands;
     }
 }
