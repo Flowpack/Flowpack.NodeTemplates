@@ -15,6 +15,7 @@ use Neos\ContentRepository\Core\Feature\RootNodeCreation\Command\CreateRootNodeA
 use Neos\ContentRepository\Core\Feature\WorkspaceCreation\Command\CreateRootWorkspace;
 use Neos\ContentRepository\Core\NodeType\NodeTypeName;
 use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindChildNodesFilter;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindSubtreeFilter;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
 use Neos\ContentRepository\Core\Projection\ContentGraph\VisibilityConstraints;
@@ -112,13 +113,16 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
             $contentStreamId,
             $testSiteId = NodeAggregateId::fromString('test-site'),
             NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page'),
-            OriginDimensionSpacePoint::fromDimensionSpacePoint(DimensionSpacePoint::fromArray([])),
-            $sitesId
+            OriginDimensionSpacePoint::fromDimensionSpacePoint(
+                $dimensionSpacePoint = DimensionSpacePoint::fromArray([])
+            ),
+            $sitesId,
+            nodeName: NodeName::fromString('test-site')
         );
 
         $this->contentRepository->handle($siteNodeCommand)->block();
 
-        $this->subgraph = $this->contentRepository->getContentGraph()->getSubgraph($contentStreamId, DimensionSpacePoint::fromArray([]), VisibilityConstraints::withoutRestrictions());
+        $this->subgraph = $this->contentRepository->getContentGraph()->getSubgraph($contentStreamId, $dimensionSpacePoint, VisibilityConstraints::withoutRestrictions());
 
         $this->homePageNode = $this->subgraph->findNodeById($testSiteId);
 
@@ -257,15 +261,13 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
     /** @test */
     public function exceptionsAreCaughtAndPartialTemplateIsBuild(): void
     {
-        $this->createNodeInto(
-            $targetNode = $this->homePageNode->getNode('main'),
-            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithEvaluationExceptions'),
+        $createdNode = $this->createNodeInto(
+            $this->homePageMainContentCollectionNode,
+            NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithEvaluationExceptions'),
             []
         );
 
         $this->assertLastCreatedTemplateMatchesSnapshot('WithEvaluationExceptions');
-
-        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/WithEvaluationExceptions.messages.json', json_encode($this->getMessagesOfFeedbackCollection(), JSON_PRETTY_PRINT));
 
@@ -286,9 +288,9 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
                 ]
             ]
         ], function () {
-            $this->createNodeInto(
-                $targetNode = $this->homePageNode->getNode('main'),
-                $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithOneEvaluationException'),
+            $createdNode = $this->createNodeInto(
+                $this->homePageMainContentCollectionNode,
+                NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithOneEvaluationException'),
                 []
             );
 
@@ -305,24 +307,20 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
                 ]
             ], $this->getMessagesOfFeedbackCollection());
 
-            $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
-
-            self::assertEmpty($createdNode->getChildNodes());
+            self::assertCount(0, $this->subgraph->findChildNodes($createdNode->nodeAggregateId, FindChildNodesFilter::create()));
         });
     }
 
     /** @test */
     public function testPageNodeCreationMatchesSnapshot1(): void
     {
-        $this->createNodeInto(
-            $targetNode = $this->homePageNode,
-            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page.Static'),
+        $createdNode = $this->createNodeInto(
+            $this->homePageNode,
+            NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page.Static'),
             []
         );
 
         $this->assertLastCreatedTemplateMatchesSnapshot('PagePreset');
-
-        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
         $this->assertNodeDumpAndTemplateDumpMatchSnapshot('PagePreset', $createdNode);
@@ -331,15 +329,13 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
     /** @test */
     public function testPageNodeCreationMatchesSnapshot2(): void
     {
-        $this->createNodeInto(
-            $targetNode = $this->homePageNode,
-            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page.Dynamic'),
+        $createdNode = $this->createNodeInto(
+            $this->homePageNode,
+            NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page.Dynamic'),
             [
                 'title' => 'Page1'
             ]
         );
-
-        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
         $this->assertNodeDumpAndTemplateDumpMatchSnapshot('PagePreset', $createdNode);
@@ -350,7 +346,7 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
         $lastCreatedTemplate = $this->serializeValuesInArray(
             $this->lastCreatedRootTemplate->jsonSerialize()
         );
-        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.template.json', json_encode($lastCreatedTemplate, JSON_PRETTY_PRINT));
+        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.template.json', json_encode($lastCreatedTemplate, JSON_PRETTY_PRINT));
     }
 
     private function assertNodeDumpAndTemplateDumpMatchSnapshot(string $snapShotName, Node $node): void
@@ -364,7 +360,7 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
             )
         );
         unset($serializedNodes['nodeTypeName']);
-        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.nodes.json', json_encode($serializedNodes, JSON_PRETTY_PRINT));
+        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.nodes.json', json_encode($serializedNodes, JSON_PRETTY_PRINT));
 
         // todo test dumper
         return;
