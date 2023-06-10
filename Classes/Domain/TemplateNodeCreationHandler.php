@@ -58,12 +58,14 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
         $caughtExceptions = CaughtExceptions::create();
         try {
             $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
-            // $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $node);
+            $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $nodeType, $commands->initialCreateCommand->nodeAggregateId);
 
-            return (new NodeCreationService($subgraph, $contentRepository->getNodeTypeManager()))->apply($template, $commands, $caughtExceptions);
-            // $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $node);
+            $commands = (new NodeCreationService($subgraph, $contentRepository->getNodeTypeManager()))->apply($template, $commands, $caughtExceptions);
+            $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $nodeType, $commands->initialCreateCommand->nodeAggregateId);
+
         } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
-            throw $templateCreationException;
         }
+
+        return $commands;
     }
 }

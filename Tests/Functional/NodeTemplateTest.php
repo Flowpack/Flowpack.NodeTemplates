@@ -292,7 +292,7 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
 
             self::assertSame([
                 [
-                    'message' => 'Template for "WithOneEvaluationException" was not applied. Only Node /sites/test-site/homepage/main/new-node@live[Flowpack.NodeTemplates:Content.WithOneEvaluationException] was created.',
+                    'message' => 'Template for "WithOneEvaluationException" was not applied. Only 186b511b-b807-6208-9e1c-593e7c1a63d3 was created.',
                     'severity' => 'ERROR'
                 ],
                 [

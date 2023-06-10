@@ -2,7 +2,8 @@
 
 namespace Flowpack\NodeTemplates\Domain\ExceptionHandling;
 
-use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Log\ThrowableStorageInterface;
 use Neos\Flow\Log\Utility\LogEnvironment;
@@ -36,7 +37,7 @@ class ExceptionHandler
      */
     protected $configuration;
 
-    public function handleAfterTemplateConfigurationProcessing(CaughtExceptions $caughtExceptions, NodeInterface $node): void
+    public function handleAfterTemplateConfigurationProcessing(CaughtExceptions $caughtExceptions, NodeType $nodeType, NodeAggregateId $nodeAggregateId): void
     {
         if (!$caughtExceptions->hasExceptions()) {
             return;
@@ -47,7 +48,7 @@ class ExceptionHandler
         }
 
         $templateNotCreatedException = new TemplateNotCreatedException(
-            sprintf('Template for "%s" was not applied. Only %s was created.', $node->getNodeType()->getLabel(), (string)$node),
+            sprintf('Template for "%s" was not applied. Only %s was created.', $nodeType->getLabel(), $nodeAggregateId->value),
             1686135532992,
             $caughtExceptions->first()->getException(),
         );
@@ -57,14 +58,14 @@ class ExceptionHandler
         throw $templateNotCreatedException;
     }
 
-    public function handleAfterNodeCreation(CaughtExceptions $caughtExceptions, NodeInterface $node): void
+    public function handleAfterNodeCreation(CaughtExceptions $caughtExceptions, NodeType $nodeType, NodeAggregateId $nodeAggregateId): void
     {
         if (!$caughtExceptions->hasExceptions()) {
             return;
         }
 
         $templatePartiallyCreatedException = new TemplatePartiallyCreatedException(
-            sprintf('Template for "%s" only partially applied. Please check the newly created nodes beneath %s.', $node->getNodeType()->getLabel(), (string)$node),
+            sprintf('Template for "%s" only partially applied. Please check the newly created nodes beneath %s.', $nodeType->getLabel(), $nodeAggregateId->value),
             1686135564160,
             $caughtExceptions->first()->getException(),
         );
