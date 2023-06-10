@@ -9,6 +9,7 @@ use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
 use Neos\ContentRepository\Core\DimensionSpace\DimensionSpacePoint;
 use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
+use Neos\ContentRepository\Core\Factory\ContentRepositoryId;
 use Neos\ContentRepository\Core\Feature\NodeCreation\Command\CreateNodeAggregateWithNode;
 use Neos\ContentRepository\Core\Feature\RootNodeCreation\Command\CreateRootNodeAggregateWithNode;
 use Neos\ContentRepository\Core\Feature\WorkspaceCreation\Command\CreateRootWorkspace;
@@ -25,6 +26,7 @@ use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceDescription;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceName;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceTitle;
 use Neos\ContentRepository\Core\Tests\Behavior\Features\Bootstrap\Helpers\FakeUserIdProvider;
+use Neos\ContentRepositoryRegistry\Factory\ProjectionCatchUpTrigger\CatchUpTriggerWithSynchronousOption;
 use Neos\Flow\Core\Bootstrap;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Neos\FrontendRouting\NodeAddressFactory;
@@ -83,7 +85,9 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
 
     private function setupContentRepository(): void
     {
-        $this->initCleanContentRepository();
+        CatchUpTriggerWithSynchronousOption::enableSynchonityForSpeedingUpTesting();
+
+        $this->initCleanContentRepository(ContentRepositoryId::fromString('node_templates'));
 
         $liveWorkspaceCommand = new CreateRootWorkspace(
             WorkspaceName::fromString('live'),

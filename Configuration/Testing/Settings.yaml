@@ -1,0 +1,10 @@
+Neos:
+  ContentRepositoryRegistry:
+    contentRepositories:
+      node_templates:
+        preset: default
+        contentDimensions: []
+        userIdProvider:
+          factoryObjectName: Neos\ContentRepository\Core\Tests\Behavior\Features\Bootstrap\Helpers\FakeUserIdProviderFactory
+        clock:
+          factoryObjectName: Neos\ContentRepository\Core\Tests\Behavior\Features\Bootstrap\Helpers\FakeClockFactory

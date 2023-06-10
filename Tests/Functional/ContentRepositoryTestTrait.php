@@ -2,12 +2,9 @@
 
 namespace Flowpack\NodeTemplates\Tests\Functional;
 
-
 use Neos\ContentRepository\Core\ContentRepository;
 use Neos\ContentRepository\Core\Factory\ContentRepositoryId;
 use Neos\ContentRepository\Core\Infrastructure\DbalClientInterface;
-use Neos\ContentRepository\Core\Tests\Behavior\Features\Bootstrap\Helpers\FakeClockFactory;
-use Neos\ContentRepository\Core\Tests\Behavior\Features\Bootstrap\Helpers\FakeUserIdProviderFactory;
 use Neos\ContentRepositoryRegistry\ContentRepositoryRegistry;
 use Neos\EventStore\Exception\CheckpointException;
 use Neos\Flow\Configuration\ConfigurationManager;
@@ -20,25 +17,19 @@ trait ContentRepositoryTestTrait
 {
     private readonly ContentRepository $contentRepository;
 
-    private ContentRepositoryId $contentRepositoryId;
+    private readonly ContentRepositoryId $contentRepositoryId;
 
-    private static $wasContentRepositorySetupCalled = false;
+    private static bool $wasContentRepositorySetupCalled = false;
 
-    private function initCleanContentRepository(): void
+    private function initCleanContentRepository(ContentRepositoryId $contentRepositoryId): void
     {
-        $this->contentRepositoryId ??= ContentRepositoryId::fromString('default');
+        $this->contentRepositoryId = $contentRepositoryId;
 
         $configurationManager = $this->objectManager->get(ConfigurationManager::class);
         $registrySettings = $configurationManager->getConfiguration(
             ConfigurationManager::CONFIGURATION_TYPE_SETTINGS,
             'Neos.ContentRepositoryRegistry'
         );
-
-        $registrySettings['presets'][$this->contentRepositoryId->value]['userIdProvider']['factoryObjectName'] = FakeUserIdProviderFactory::class;
-        $registrySettings['presets'][$this->contentRepositoryId->value]['clock']['factoryObjectName'] = FakeClockFactory::class;
-
-        // no dimensions
-        $registrySettings['contentRepositories'][$this->contentRepositoryId->value]['contentDimensions'] = [];
 
         $contentRepositoryRegistry = new ContentRepositoryRegistry(
             $registrySettings,
@@ -57,16 +48,18 @@ trait ContentRepositoryTestTrait
         // reset events and projections
         $eventTableName = sprintf('cr_%s_events', $this->contentRepositoryId->value);
         $connection->executeStatement('TRUNCATE ' . $eventTableName);
-        // todo Projection Reset may fail because the lock cannot be acquired
         try {
             $this->contentRepository->resetProjectionStates();
         } catch (CheckpointException $checkpointException) {
+            // Projection Reset may fail because the lock cannot be acquired
+            // see working workaround: https://github.com/neos/neos-development-collection/blob/27f57c6cdec1deaa6a5fba04f85c2638b605f2e1/Neos.ContentRepository.Core/Tests/Behavior/Features/Bootstrap/EventSourcedTrait.php#L226-L304
+            // we don't implement this workaround, since I didn't encounter this state in my simpler tests.
             if ($checkpointException->getCode() === 1652279016) {
                 // another process is in the critical section; a.k.a.
                 // the lock is acquired already by another process.
 
                 // in case this actually happens, we should implement a retry
-                throw new \RuntimeException('Projection reset failed because the lock cannot be acquired', 1686342087789, $checkpointException);
+                throw new \RuntimeException('Projection reset failed because the lock cannot be acquired, please implement a retry.', 1686342087789, $checkpointException);
             } else {
                 // some error error - we re-throw
                 throw $checkpointException;
