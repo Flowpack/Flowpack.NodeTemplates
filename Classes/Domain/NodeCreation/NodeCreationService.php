@@ -7,12 +7,14 @@ use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
+use Neos\ContentRepository\Core\DimensionSpace\DimensionSpacePoint;
 use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
 use Neos\ContentRepository\Core\Feature\NodeCreation\Command\CreateNodeAggregateWithNode;
 use Neos\ContentRepository\Core\Feature\NodeModification\Command\SetNodeProperties;
 use Neos\ContentRepository\Core\Feature\NodeModification\Dto\PropertyValuesToWrite;
 use Neos\ContentRepository\Core\Feature\NodeReferencing\Command\SetNodeReferences;
 use Neos\ContentRepository\Core\Feature\NodeReferencing\Dto\NodeReferencesToWrite;
+use Neos\ContentRepository\Core\NodeType\NodeType;
 use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
 use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
@@ -55,7 +57,14 @@ class NodeCreationService
             PropertyValuesToWrite::fromArray($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions))
         );
 
-        // $this->ensureNodeHasUriPathSegment($commands, $template);
+        $initialProperties = $this->ensureNodeHasUriPathSegment(
+            $nodeType,
+            $commands->initialCreateCommand->nodeName,
+            $commands->initialCreateCommand->originDimensionSpacePoint->toDimensionSpacePoint(),
+            $initialProperties,
+            $template
+        );
+
         return $this->applyTemplateRecursively(
             $template->getChildNodes(),
             new ToBeCreatedNode(
@@ -139,6 +148,18 @@ class NodeCreationService
 
             $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
 
+            $nodeName = NodeName::fromString(uniqid('node-', false));
+
+            $initialProperties = PropertyValuesToWrite::fromArray($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions));
+
+            $initialProperties = $this->ensureNodeHasUriPathSegment(
+                $nodeType,
+                $nodeName,
+                $parentNode->originDimensionSpacePoint->toDimensionSpacePoint(),
+                $initialProperties,
+                $template
+            );
+
             $commands = $commands->withAdditionalCommands(
                 new CreateNodeAggregateWithNode(
                     $parentNode->contentStreamId,
@@ -146,8 +167,8 @@ class NodeCreationService
                     $template->getType(),
                     $parentNode->originDimensionSpacePoint,
                     $parentNode->nodeAggregateId,
-                    nodeName: NodeName::fromString(uniqid('node-', false)),
-                    initialPropertyValues: PropertyValuesToWrite::fromArray($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions))
+                    nodeName: $nodeName,
+                    initialPropertyValues: $initialProperties
                 ),
                 ...$this->createReferencesCommands(
                     $parentNode->contentStreamId,
@@ -158,7 +179,6 @@ class NodeCreationService
             );
 
 
-            // $this->ensureNodeHasUriPathSegment($node, $template);
             $commands = $this->applyTemplateRecursively(
                 $template->getChildNodes(),
                 $parentNode->withNodeTypeAndNodeAggregateId(
@@ -193,20 +213,30 @@ class NodeCreationService
     }
 
     /**
-     * All document node types get a uri path segment; if it is not explicitly set in the properties,
+     * All document node types get a uri path segmfent; if it is not explicitly set in the properties,
      * it should be built based on the title property
-     *
-     * @param Template|RootTemplate $template
      */
-    private function ensureNodeHasUriPathSegment(NodeInterface $node, $template)
-    {
-        if (!$node->getNodeType()->isOfType('Neos.Neos:Document')) {
-            return;
+    private function ensureNodeHasUriPathSegment(
+        NodeType $nodeType,
+        ?NodeName $nodeName,
+        DimensionSpacePoint $dimensionSpacePoint,
+        PropertyValuesToWrite $propertiesToWrite,
+        Template|RootTemplate $template
+    ): PropertyValuesToWrite {
+        if (!$nodeType->isOfType('Neos.Neos:Document')) {
+            return $propertiesToWrite;
         }
         $properties = $template->getProperties();
         if (isset($properties['uriPathSegment'])) {
-            return;
+            return $propertiesToWrite;
         }
-        $node->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($node, $properties['title'] ?? null));
+
+        return $propertiesToWrite->withValue(
+            'uriPathSegment',
+            $this->nodeUriPathSegmentGenerator->generateUriPathSegmentFromText(
+                $properties['title'] ?? $nodeName?->value ?? uniqid('', true),
+                $dimensionSpacePoint
+            )
+        );
     }
 }
