@@ -4,7 +4,8 @@
         "someValueWithDefault": true,
         "text": "abc",
         "isEnchanted": false,
-        "selectBox": "karma"
+        "selectBox": "karma",
+        "nullValue": null
     },
     "references": {
         "reference": [
