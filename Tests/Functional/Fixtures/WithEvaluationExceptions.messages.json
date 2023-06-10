@@ -80,7 +80,11 @@
         "severity": "ERROR"
     },
     {
-        "message": "NodeConstraintException(Cannot create new node \"illegal\" of Type \"Neos.Neos:Document\" in Node \/sites\/test-site\/homepage\/main\/new-node@live[Flowpack.NodeTemplates:Content.WithEvaluationExceptions], 1400782413)",
+        "message": "RuntimeException(Template requires type to be a non abstract NodeType. Got: \"Neos.Neos:Node\"., 1686417628976)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "RuntimeException(Node type \"Flowpack.NodeTemplates:Document.Page.Static\" is not allowed for child nodes of type Flowpack.NodeTemplates:Content.WithEvaluationExceptions, 1686417627173)",
         "severity": "ERROR"
     },
     {

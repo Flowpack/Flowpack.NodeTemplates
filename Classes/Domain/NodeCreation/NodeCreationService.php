@@ -142,9 +142,23 @@ class NodeCreationService
                 continue;
             }
 
-            // todo handle NodeConstraintException
-
             $nodeType = $this->nodeTypeManager->getNodeType($template->getType());
+
+            if ($nodeType->isAbstract()) {
+                $caughtExceptions->add(
+                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a non abstract NodeType. Got: "%s".', $template->getType()->value), 1686417628976))
+                );
+                continue;
+            }
+
+            if (!$parentNode->nodeType->allowsChildNodeType($nodeType)) {
+                $caughtExceptions->add(
+                    CaughtException::fromException(new \RuntimeException(sprintf('Node type "%s" is not allowed for child nodes of type %s', $template->getType()->value, $parentNode->nodeType->name->value), 1686417627173))
+                );
+                continue;
+            }
+
+            // todo maybe check also allowsGrandchildNodeType
 
             $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
 

@@ -54,8 +54,10 @@
           type: 'Flowpack.NodeTemplates:Content.Text'
           properties:
             text: bar
+        abstractNodeAbort:
+          type: 'Neos.Neos:Node'
         illegalNodeAbort:
-          type: 'Neos.Neos:Document'
+          type: 'Flowpack.NodeTemplates:Document.Page.Static'
           name: 'illegal'
           properties:
             text: huhu
