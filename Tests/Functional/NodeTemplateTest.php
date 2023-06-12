@@ -178,6 +178,25 @@ class NodeTemplateTest extends FunctionalTestCase
         $this->assertNodeDumpAndTemplateDumpMatchSnapshot('TwoColumnPreset', $createdNode);
     }
 
+
+    /** @test */
+    public function transliterateNodeName(): void
+    {
+        $this->createNodeInto(
+            $targetNode = $this->homePageNode->getNode('main'),
+            $toBeCreatedNodeTypeName = NodeTypeName::fromString('Flowpack.NodeTemplates:Content.TransliterateNodeName'),
+            []
+        );
+
+        $this->assertLastCreatedTemplateMatchesSnapshot('TransliterateNodeName');
+
+        $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
+
+        self::assertSame([], $this->getMessagesOfFeedbackCollection());
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('TransliterateNodeName', $createdNode);
+    }
+
+
     /** @test */
     public function testNodeCreationWithDifferentPropertyTypes(): void
     {

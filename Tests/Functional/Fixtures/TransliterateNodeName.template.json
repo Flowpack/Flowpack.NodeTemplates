@@ -1,0 +1,45 @@
+{
+    "properties": [],
+    "childNodes": [
+        {
+            "type": null,
+            "name": "my-node",
+            "properties": {
+                "text": "legalNodeName"
+            },
+            "childNodes": []
+        },
+        {
+            "type": null,
+            "name": "foobar",
+            "properties": {
+                "text": "capitalsInName"
+            },
+            "childNodes": []
+        },
+        {
+            "type": null,
+            "name": "o",
+            "properties": {
+                "text": "\u00f6 - was soll das"
+            },
+            "childNodes": []
+        },
+        {
+            "type": null,
+            "name": "ablabei-jing-ss-ha",
+            "properties": {
+                "text": "everythingMixedTogether"
+            },
+            "childNodes": []
+        },
+        {
+            "type": null,
+            "name": "node-d41d8cd98f00b204e9800998ecf8427e",
+            "properties": {
+                "text": "emptyString"
+            },
+            "childNodes": []
+        }
+    ]
+}
