@@ -21,12 +21,6 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
     protected $templateConfigurationProcessor;
 
     /**
-     * @var NodeCreationService
-     * @Flow\Inject
-     */
-    protected $nodeCreationService;
-
-    /**
      * @var ExceptionHandler
      * @Flow\Inject
      */
@@ -56,7 +50,8 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
             $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
             $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $node);
 
-            $this->nodeCreationService->apply($template, $node, $caughtExceptions);
+            $nodeMutators = (new NodeCreationService($node->getContext()))->apply($template, $node, $caughtExceptions);
+            $nodeMutators->apply($node);
             $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $node);
         } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
         }
