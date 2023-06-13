@@ -59,8 +59,11 @@ class NodeCreationService
 
     private function applyTemplateRecursively(Templates $templates, NodeInterface $parentNode, CaughtExceptions $caughtExceptions): void
     {
+        // `hasAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
+        // https://github.com/neos/neos-ui/issues/3527
+        $parentNodesAutoCreatedChildNodes = $parentNode->getNodeType()->getAutoCreatedChildNodes();
         foreach ($templates as $template) {
-            if ($template->getName() && $parentNode->getNodeType()->hasAutoCreatedChildNode($template->getName())) {
+            if ($template->getName() && isset($parentNodesAutoCreatedChildNodes[$template->getName()->__toString()])) {
                 $node = $parentNode->getNode($template->getName()->__toString());
                 if ($template->getType() !== null) {
                     $caughtExceptions->add(

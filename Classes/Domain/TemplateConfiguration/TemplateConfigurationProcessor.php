@@ -9,6 +9,7 @@ use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
 use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
+use Neos\ContentRepository\Utility;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -119,8 +120,8 @@ class TemplateConfigurationProcessor
         $type = $templatePart->processConfiguration('type');
         $name = $templatePart->processConfiguration('name');
         return new Template(
-            $type ? NodeTypeName::fromString($type) : null,
-            $name ? NodeName::fromString($name) : null,
+            $type !== null ? NodeTypeName::fromString($type) : null,
+            $name !== null ? NodeName::fromString(Utility::renderValidNodeName($name)) : null,
             $processedProperties,
             $childNodeTemplates
         );
