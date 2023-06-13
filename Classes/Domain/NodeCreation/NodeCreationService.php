@@ -38,7 +38,7 @@ class NodeCreationService
      * Applies the root template and its descending configured child node templates on the given node.
      * @throws \InvalidArgumentException
      */
-    public function apply(RootTemplate $template, NodeInterface $node, CaughtExceptions $caughtExceptions): NodeMutators
+    public function apply(RootTemplate $template, ToBeCreatedNode $node, CaughtExceptions $caughtExceptions): NodeMutators
     {
         $nodeType = $node->getNodeType();
 
