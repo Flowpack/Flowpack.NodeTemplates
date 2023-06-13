@@ -229,7 +229,7 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
-        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/WithEvaluationExceptions.messages.json', json_encode($this->getMessagesOfFeedbackCollection(), JSON_PRETTY_PRINT));
+        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot(__DIR__ . '/Fixtures/WithEvaluationExceptions.messages.json', json_encode($this->getMessagesOfFeedbackCollection(), JSON_PRETTY_PRINT));
 
         $this->assertNodeDumpAndTemplateDumpMatchSnapshot('WithEvaluationExceptions', $createdNode);
     }
@@ -312,14 +312,14 @@ class NodeTemplateTest extends FunctionalTestCase
         $lastCreatedTemplate = $this->serializeValuesInArray(
             $this->lastCreatedRootTemplate->jsonSerialize()
         );
-        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.template.json', json_encode($lastCreatedTemplate, JSON_PRETTY_PRINT));
+        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.template.json', json_encode($lastCreatedTemplate, JSON_PRETTY_PRINT));
     }
 
     private function assertNodeDumpAndTemplateDumpMatchSnapshot(string $snapShotName, NodeInterface $node): void
     {
         $serializedNodes = $this->jsonSerializeNodeAndDescendents($node);
         unset($serializedNodes['nodeTypeName']);
-        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.nodes.json', json_encode($serializedNodes, JSON_PRETTY_PRINT));
+        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.nodes.json', json_encode($serializedNodes, JSON_PRETTY_PRINT));
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($node);
 
