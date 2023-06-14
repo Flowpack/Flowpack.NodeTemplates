@@ -8,11 +8,15 @@ use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\ContentRepository\Exception\NodeConstraintException;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Property\PropertyMapper;
+use Neos\Flow\Property\TypeConverter\PersistentObjectConverter;
 use Neos\Neos\Service\NodeOperations;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
+use Neos\Utility\TypeHandling;
 
 class NodeCreationService
 {
@@ -35,13 +39,19 @@ class NodeCreationService
     protected $nodeUriPathSegmentGenerator;
 
     /**
+     * @Flow\Inject
+     * @var PropertyMapper
+     */
+    protected $propertyMapper;
+
+    /**
      * Applies the root template and its descending configured child node templates on the given node.
      * @throws \InvalidArgumentException
      */
     public function apply(RootTemplate $template, NodeInterface $node, CaughtExceptions $caughtExceptions): void
     {
         $nodeType = $node->getNodeType();
-        $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
+        $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties()), $nodeType);
 
         // set properties
         foreach ($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions) as $key => $value) {
@@ -101,7 +111,7 @@ class NodeCreationService
                 }
             }
             $nodeType = $node->getNodeType();
-            $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
+            $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties()), $nodeType);
 
             // set properties
             foreach ($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions) as $key => $value) {
@@ -134,5 +144,34 @@ class NodeCreationService
             return;
         }
         $node->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($node, $properties['title'] ?? null));
+    }
+
+    private function convertProperties(NodeType $nodeType, array $properties): array
+    {
+        $propertyMappingConfiguration = $this->propertyMapper->buildPropertyMappingConfiguration();
+        $propertyMappingConfiguration->forProperty('*')->allowAllProperties();
+        $propertyMappingConfiguration->setTypeConverterOption(PersistentObjectConverter::class, PersistentObjectConverter::CONFIGURATION_OVERRIDE_TARGET_TYPE_ALLOWED, true);
+
+        foreach ($nodeType->getConfiguration('properties') as $propertyName => $propertyConfiguration) {
+            if (
+                !isset($propertyConfiguration['ui']['showInCreationDialog'])
+                || $propertyConfiguration['ui']['showInCreationDialog'] !== true
+            ) {
+                continue;
+            }
+            if (!isset($properties[$propertyName])) {
+                continue;
+            }
+            $propertyType = TypeHandling::normalizeType($propertyConfiguration['type'] ?? 'string');
+            $propertyValue = $properties[$propertyName];
+            if ($propertyType === 'references' || $propertyType === 'reference') {
+                continue;
+            }
+            if ($propertyType === TypeHandling::getTypeForValue($propertyValue)) {
+                continue;
+            }
+            $properties[$propertyName] = $this->propertyMapper->convert($propertyValue, $propertyType, $propertyMappingConfiguration);
+        }
+        return $properties;
     }
 }
