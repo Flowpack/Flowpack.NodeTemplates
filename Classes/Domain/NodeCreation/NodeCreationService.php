@@ -84,6 +84,24 @@ class NodeCreationService
                     );
                     continue;
                 }
+
+                $nodeType = $this->nodeTypeManager->getNodeType($template->getType()->getValue());
+
+                if ($nodeType->isAbstract()) {
+                    $caughtExceptions->add(
+                        CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a non abstract NodeType. Got: "%s".', $template->getType()->getValue()), 1686417628976))
+                    );
+                    continue;
+                }
+
+                if (!$parentNode->getNodeType()->allowsChildNodeType($nodeType)) {
+                    $caughtExceptions->add(
+                        CaughtException::fromException(new \RuntimeException(sprintf('Node type "%s" is not allowed for child nodes of type %s', $template->getType()->getValue(), $parentNode->getNodeType()->getName()), 1686417627173))
+                    );
+                    continue;
+                }
+
+                // todo maybe check also explicitly for allowsGrandchildNodeType (we do this currently like below)
                 try {
                     $node = $this->nodeOperations->create(
                         $parentNode,
