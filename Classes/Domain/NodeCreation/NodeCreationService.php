@@ -13,10 +13,10 @@ use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\ContentRepository\Exception\NodeConstraintException;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Property\PropertyMapper;
-use Neos\Flow\Property\TypeConverter\PersistentObjectConverter;
+use Neos\Flow\Property\PropertyMappingConfiguration;
 use Neos\Neos\Service\NodeOperations;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
-use Neos\Utility\TypeHandling;
+use Neos\Flow\Property\Exception as PropertyWasNotMappedException;
 
 class NodeCreationService
 {
@@ -51,7 +51,7 @@ class NodeCreationService
     public function apply(RootTemplate $template, NodeInterface $node, CaughtExceptions $caughtExceptions): void
     {
         $nodeType = $node->getNodeType();
-        $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties()), $nodeType);
+        $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties(), $caughtExceptions), $nodeType);
 
         // set properties
         foreach ($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions) as $key => $value) {
@@ -111,7 +111,7 @@ class NodeCreationService
                 }
             }
             $nodeType = $node->getNodeType();
-            $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties()), $nodeType);
+            $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties(), $caughtExceptions), $nodeType);
 
             // set properties
             foreach ($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions) as $key => $value) {
@@ -146,31 +146,39 @@ class NodeCreationService
         $node->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($node, $properties['title'] ?? null));
     }
 
-    private function convertProperties(NodeType $nodeType, array $properties): array
+    private function convertProperties(NodeType $nodeType, array $properties, CaughtExceptions $caughtExceptions): array
     {
-        $propertyMappingConfiguration = $this->propertyMapper->buildPropertyMappingConfiguration();
-        $propertyMappingConfiguration->forProperty('*')->allowAllProperties();
-        $propertyMappingConfiguration->setTypeConverterOption(PersistentObjectConverter::class, PersistentObjectConverter::CONFIGURATION_OVERRIDE_TARGET_TYPE_ALLOWED, true);
-
+        // TODO combine with PropertiesAndReferences::requireValidProperties
         foreach ($nodeType->getConfiguration('properties') as $propertyName => $propertyConfiguration) {
-            if (
-                !isset($propertyConfiguration['ui']['showInCreationDialog'])
-                || $propertyConfiguration['ui']['showInCreationDialog'] !== true
-            ) {
-                continue;
-            }
             if (!isset($properties[$propertyName])) {
                 continue;
             }
-            $propertyType = TypeHandling::normalizeType($propertyConfiguration['type'] ?? 'string');
-            $propertyValue = $properties[$propertyName];
+            $propertyType = $nodeType->getPropertyType($propertyName);
             if ($propertyType === 'references' || $propertyType === 'reference') {
                 continue;
             }
-            if ($propertyType === TypeHandling::getTypeForValue($propertyValue)) {
+            $propertyType = PropertyType::fromPropertyOfNodeType($propertyName, $nodeType);
+            $propertyValue = $properties[$propertyName];
+            if (!$propertyType->isClass()
+                && !($propertyType->isArrayOf() && $propertyType->getArrayOfType()->isClass())) {
+                // property mapping only for class types or array of classes!
                 continue;
             }
-            $properties[$propertyName] = $this->propertyMapper->convert($propertyValue, $propertyType, $propertyMappingConfiguration);
+            try {
+                $propertyMappingConfiguration = new PropertyMappingConfiguration();
+                $propertyMappingConfiguration->allowAllProperties();
+
+                $properties[$propertyName] = $this->propertyMapper->convert($propertyValue, $propertyType->getValue(), $propertyMappingConfiguration);
+                $messages = $this->propertyMapper->getMessages();
+                if ($messages->hasErrors()) {
+                    throw new PropertyWasNotMappedException($this->propertyMapper->getMessages()->getFirstError()->getMessage(), 1686779371122);
+                }
+            } catch (PropertyWasNotMappedException $exception) {
+                $caughtExceptions->add(CaughtException::fromException(
+                    $exception
+                )->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->getName())));
+                unset($properties[$propertyName]);
+            }
         }
         return $properties;
     }

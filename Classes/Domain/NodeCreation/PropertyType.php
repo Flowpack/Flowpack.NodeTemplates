@@ -178,6 +178,19 @@ final class PropertyType
         return (bool)preg_match(self::PATTERN_ARRAY_OF, $this->value);
     }
 
+    public function getArrayOfType(): self
+    {
+        return $this->arrayOfType;
+    }
+
+    public function isClass(): bool
+    {
+        $className = $this->value[0] != '\\'
+            ? '\\' . $this->value
+            : $this->value;
+        return (class_exists($className) || interface_exists($className));
+    }
+
     public function isDate(): bool
     {
         return $this->value === self::TYPE_DATE;

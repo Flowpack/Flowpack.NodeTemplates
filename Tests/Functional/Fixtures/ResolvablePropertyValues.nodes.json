@@ -1,0 +1,26 @@
+{
+    "properties": {
+        "asset": "object(Neos\\Media\\Domain\\Model\\Asset, c228200e-7472-4290-9936-4454a5b5692a)",
+        "images": [
+            "object(Neos\\Media\\Domain\\Model\\Image, c8ae9f9f-dd11-4373-bf42-4bf31ec5bd19)"
+        ]
+    },
+    "references": {
+        "reference": [
+            {
+                "node": "Node(some-node-id, unstructured)"
+            }
+        ],
+        "references": [
+            {
+                "node": "Node(some-node-id, unstructured)"
+            },
+            {
+                "node": "Node(other-node-id, unstructured)"
+            },
+            {
+                "node": "Node(real-node-id, unstructured)"
+            }
+        ]
+    }
+}

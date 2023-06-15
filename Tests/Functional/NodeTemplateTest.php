@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Tests\Functional;
 
+use Flowpack\NodeTemplates\Domain\NodeTemplateDumper\NodeTemplateDumper;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
-use Flowpack\NodeTemplates\Domain\NodeTemplateDumper\NodeTemplateDumper;
-use Neos\ContentRepository\Domain\Model\Node;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\Workspace;
 use Neos\ContentRepository\Domain\NodeType\NodeTypeName;
@@ -15,12 +14,18 @@ use Neos\ContentRepository\Domain\Repository\ContentDimensionRepository;
 use Neos\ContentRepository\Domain\Repository\WorkspaceRepository;
 use Neos\ContentRepository\Domain\Service\ContextFactoryInterface;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
+use Neos\Flow\ResourceManagement\ResourceManager;
 use Neos\Flow\Tests\FunctionalTestCase;
+use Neos\Media\Domain\Model\Asset;
+use Neos\Media\Domain\Model\Image;
+use Neos\Media\Domain\Repository\AssetRepository;
+use Neos\Media\Domain\Repository\ImageRepository;
 use Neos\Neos\Domain\Model\Site;
 use Neos\Neos\Domain\Repository\SiteRepository;
 use Neos\Neos\Ui\Domain\Model\ChangeCollection;
 use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
 use Neos\Neos\Ui\TypeConverter\ChangeCollectionConverter;
+use Neos\Utility\ObjectAccess;
 
 class NodeTemplateTest extends FunctionalTestCase
 {
@@ -33,7 +38,7 @@ class NodeTemplateTest extends FunctionalTestCase
 
     private ContextFactoryInterface $contextFactory;
 
-    private Node $homePageNode;
+    private NodeInterface $homePageNode;
 
     private NodeTemplateDumper $nodeTemplateDumper;
 
@@ -96,10 +101,10 @@ class NodeTemplateTest extends FunctionalTestCase
     }
 
     /**
-     * @param Node|NodeInterface $targetNode
+     * @param NodeInterface $targetNode
      * @param array<string, mixed> $nodeCreationDialogValues
      */
-    private function createNodeInto(Node $targetNode, NodeTypeName $nodeTypeName, array $nodeCreationDialogValues): void
+    private function createNodeInto(NodeInterface $targetNode, NodeTypeName $nodeTypeName, array $nodeCreationDialogValues): NodeInterface
     {
         $targetNodeContextPath = $targetNode->getContextPath();
 
@@ -121,6 +126,8 @@ class NodeTemplateTest extends FunctionalTestCase
         $changeCollection = (new ChangeCollectionConverter())->convertFrom($changeCollectionSerialized, null);
         assert($changeCollection instanceof ChangeCollection);
         $changeCollection->apply();
+
+        return $targetNode->getNode('new-node');
     }
 
 
@@ -217,6 +224,55 @@ class NodeTemplateTest extends FunctionalTestCase
     }
 
     /** @test */
+    public function resolvablePropertyValues(): void
+    {
+        $this->homePageNode->createNode('some-node', null, 'some-node-id');
+        $this->homePageNode->createNode('other-node', null, 'other-node-id');
+
+        $resource = $this->objectManager->get(ResourceManager::class)->importResource(__DIR__ . '/image.png');
+
+        $asset = new Asset($resource);
+        ObjectAccess::setProperty($asset, 'Persistence_Object_Identifier', 'c228200e-7472-4290-9936-4454a5b5692a', true);
+        $this->objectManager->get(AssetRepository::class)->add($asset);
+
+        $resource = $this->objectManager->get(ResourceManager::class)->importResource(__DIR__ . '/image.png');
+
+        $image = new Image($resource);
+        ObjectAccess::setProperty($image, 'Persistence_Object_Identifier', 'c8ae9f9f-dd11-4373-bf42-4bf31ec5bd19', true);
+        $this->objectManager->get(ImageRepository::class)->add($image);
+
+        $this->persistenceManager->persistAll();
+
+        $createdNode = $this->createNodeInto(
+            $this->homePageNode->getNode('main'),
+            NodeTypeName::fromString('Flowpack.NodeTemplates:Content.ResolvablePropertyValues'),
+            [
+                'realNode' => $this->homePageNode->createNode('real-node', null, 'real-node-id')
+            ]
+        );
+
+        $this->assertLastCreatedTemplateMatchesSnapshot('ResolvablePropertyValues');
+
+        self::assertSame([], $this->getMessagesOfFeedbackCollection());
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('ResolvablePropertyValues', $createdNode);
+    }
+
+    /** @test */
+    public function unresolvablePropertyValues(): void
+    {
+        $createdNode = $this->createNodeInto(
+            $this->homePageNode->getNode('main'),
+            NodeTypeName::fromString('Flowpack.NodeTemplates:Content.UnresolvablePropertyValues'),
+            []
+        );
+
+        $this->assertLastCreatedTemplateMatchesSnapshot('UnresolvablePropertyValues');
+
+        $this->assertCaughtExceptionsMatchesSnapshot('UnresolvablePropertyValues');
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('UnresolvablePropertyValues', $createdNode);
+    }
+
+    /** @test */
     public function exceptionsAreCaughtAndPartialTemplateIsBuild(): void
     {
         $this->createNodeInto(
@@ -229,8 +285,7 @@ class NodeTemplateTest extends FunctionalTestCase
 
         $createdNode = $targetNode->getChildNodes($toBeCreatedNodeTypeName->getValue())[0];
 
-        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/WithEvaluationExceptions.messages.json', json_encode($this->getMessagesOfFeedbackCollection(), JSON_PRETTY_PRINT));
-
+        $this->assertCaughtExceptionsMatchesSnapshot('WithEvaluationExceptions');
         $this->assertNodeDumpAndTemplateDumpMatchSnapshot('WithEvaluationExceptions', $createdNode);
     }
 
@@ -313,6 +368,11 @@ class NodeTemplateTest extends FunctionalTestCase
             $this->lastCreatedRootTemplate->jsonSerialize()
         );
         $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.template.json', json_encode($lastCreatedTemplate, JSON_PRETTY_PRINT));
+    }
+
+    private function assertCaughtExceptionsMatchesSnapshot(string $snapShotName): void
+    {
+        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.messages.json', json_encode($this->getMessagesOfFeedbackCollection(), JSON_PRETTY_PRINT));
     }
 
     private function assertNodeDumpAndTemplateDumpMatchSnapshot(string $snapShotName, NodeInterface $node): void
