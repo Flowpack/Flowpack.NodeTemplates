@@ -1,0 +1,73 @@
+name: Tests
+
+on:
+  push:
+    branches: [ master, '[0-9]+.[0-9]' ]
+  pull_request:
+    branches: [ master, '[0-9]+.[0-9]' ]
+
+jobs:
+  build:
+    env:
+      NEOS_TARGET_VERSION: 7.3
+      FLOW_CONTEXT: Testing
+      FLOW_PATH_ROOT: ../neos-base-distribution
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php-versions: ['7.4']
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: mbstring, xml, json, zlib, iconv, intl, pdo_sqlite, mysql
+          coverage: xdebug #optional
+          ini-values: opcache.fast_shutdown=0
+
+      - name: Update Composer
+        run: |
+          sudo composer self-update
+          composer --version
+
+      # Directory permissions for .composer are wrong, so we remove the complete directory
+      # https://github.com/actions/virtual-environments/issues/824
+      - name: Delete .composer directory
+        run: |
+          sudo rm -rf ~/.composer
+
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ~/.composer/cache
+          key: dependencies-composer-${{ hashFiles('composer.json') }}
+
+      - name: Prepare Neos distribution
+        run: |
+          git clone https://github.com/neos/neos-base-distribution.git -b ${NEOS_TARGET_VERSION} ${FLOW_PATH_ROOT}
+          cd ${FLOW_PATH_ROOT}
+          composer require --no-update --no-interaction flowpack/nodetemplates
+
+      - name: Install distribution
+        run: |
+          cd ${FLOW_PATH_ROOT}
+          composer config --no-plugins allow-plugins.neos/composer-plugin true
+          composer install --no-interaction --no-progress
+          rm -rf Packages/Application/Flowpack.NodeTemplates
+          cp -r ../Flowpack.NodeTemplates Packages/Application/Flowpack.NodeTemplates
+
+      - name: Run Unit tests
+        run: |
+          cd ${FLOW_PATH_ROOT}
+          bin/phpunit --colors -c Build/BuildEssentials/PhpUnit/UnitTests.xml Packages/Application/Flowpack.NodeTemplates/Tests/Unit
+
+      - name: Run Functional tests
+        run: |
+          cd ${FLOW_PATH_ROOT}
+          bin/phpunit --colors -c Build/BuildEssentials/PhpUnit/FunctionalTests.xml Packages/Application/Flowpack.NodeTemplates/Tests/Functional

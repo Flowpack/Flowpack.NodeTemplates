@@ -21,7 +21,13 @@
             "childNodes": []
         },
         {
-            "type": "Neos.Neos:Document",
+            "type": "Neos.Neos:Node",
+            "name": null,
+            "properties": [],
+            "childNodes": []
+        },
+        {
+            "type": "Flowpack.NodeTemplates:Document.Page.Static",
             "name": "illegal",
             "properties": {
                 "text": "huhu"
