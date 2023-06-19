@@ -10,7 +10,7 @@ use Neos\Flow\Annotations as Flow;
 /**
  * @Flow\Proxy(false)
  */
-class NodeMutators
+class NodeMutatorCollection
 {
     private array $items;
 
@@ -20,7 +20,7 @@ class NodeMutators
         $this->items = $items;
     }
 
-    public static function create(NodeMutator ...$items): self
+    public static function from(NodeMutator ...$items): self
     {
         return new self(...$items);
     }

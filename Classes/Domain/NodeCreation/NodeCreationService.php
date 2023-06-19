@@ -38,7 +38,7 @@ class NodeCreationService
      * Applies the root template and its descending configured child node templates on the given node.
      * @throws \InvalidArgumentException
      */
-    public function apply(RootTemplate $template, ToBeCreatedNode $node, CaughtExceptions $caughtExceptions): NodeMutators
+    public function createMutatorCollection(RootTemplate $template, ToBeCreatedNode $node, CaughtExceptions $caughtExceptions): NodeMutatorCollection
     {
         $nodeType = $node->getNodeType();
 
@@ -49,24 +49,23 @@ class NodeCreationService
             $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
         );
 
-        $nodeMutators = NodeMutators::create(
+        $nodeMutators = NodeMutatorCollection::from(
             NodeMutator::setProperties($properties),
-            $this->ensureNodeHasUriPathSegment($template),
-            NodeMutator::isolated(
-                $this->applyTemplateRecursively(
-                    $template->getChildNodes(),
-                    new ToBeCreatedNode($nodeType),
-                    $caughtExceptions
-                )
+            $this->createMutatorForUriPathSegment($template),
+        )->merge(
+            $this->createMutatorCollectionFromTemplate(
+                $template->getChildNodes(),
+                new ToBeCreatedNode($nodeType),
+                $caughtExceptions
             )
         );
 
         return $nodeMutators;
     }
 
-    private function applyTemplateRecursively(Templates $templates, ToBeCreatedNode $parentNode, CaughtExceptions $caughtExceptions): NodeMutators
+    private function createMutatorCollectionFromTemplate(Templates $templates, ToBeCreatedNode $parentNode, CaughtExceptions $caughtExceptions): NodeMutatorCollection
     {
-        $nodeMutators = NodeMutators::empty();
+        $nodeMutators = NodeMutatorCollection::empty();
 
         // `hasAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
         // https://github.com/neos/neos-ui/issues/3527
@@ -90,10 +89,10 @@ class NodeCreationService
 
                 $nodeMutators = $nodeMutators->withNodeMutators(
                     NodeMutator::isolated(
-                        NodeMutators::create(
+                        NodeMutatorCollection::from(
                             NodeMutator::selectChildNode($template->getName()),
                             NodeMutator::setProperties($properties)
-                        )->merge($this->applyTemplateRecursively(
+                        )->merge($this->createMutatorCollectionFromTemplate(
                             $template->getChildNodes(),
                             new ToBeCreatedNode($nodeType),
                             $caughtExceptions
@@ -144,11 +143,11 @@ class NodeCreationService
 
             $nodeMutators = $nodeMutators->withNodeMutators(
                 NodeMutator::isolated(
-                    NodeMutators::create(
-                        NodeMutator::createIntoAndSelectNode($template->getType(), $template->getName()),
+                    NodeMutatorCollection::from(
+                        NodeMutator::createAndSelectNode($template->getType(), $template->getName()),
                         NodeMutator::setProperties($properties),
-                        $this->ensureNodeHasUriPathSegment($template)
-                    )->merge($this->applyTemplateRecursively(
+                        $this->createMutatorForUriPathSegment($template)
+                    )->merge($this->createMutatorCollectionFromTemplate(
                         $template->getChildNodes(),
                         new ToBeCreatedNode($nodeType),
                         $caughtExceptions
@@ -167,10 +166,10 @@ class NodeCreationService
      *
      * @param Template|RootTemplate $template
      */
-    private function ensureNodeHasUriPathSegment($template): NodeMutator
+    private function createMutatorForUriPathSegment($template): NodeMutator
     {
         $properties = $template->getProperties();
-        return NodeMutator::bind(function (NodeInterface $previousNode) use ($properties) {
+        return NodeMutator::unsafeFromClosure(function (NodeInterface $previousNode) use ($properties) {
             if (!$previousNode->getNodeType()->isOfType('Neos.Neos:Document')) {
                 return;
             }

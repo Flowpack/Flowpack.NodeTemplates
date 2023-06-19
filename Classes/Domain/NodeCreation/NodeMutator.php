@@ -38,15 +38,15 @@ class NodeMutator
      *
      * @param \Closure(NodeInterface $currentNode): ?NodeInterface $mutator
      */
-    public static function bind(\Closure $mutator): self
+    public static function unsafeFromClosure(\Closure $mutator): self
     {
         return new self($mutator);
     }
 
     /**
-     * Queues to execute the {@see NodeMutators} on the current node but the operations wont change the current node.
+     * Queues to execute the {@see NodeMutatorCollection} on the current node but the operations wont change the current node.
      */
-    public static function isolated(NodeMutators $nodeMutators): self
+    public static function isolated(NodeMutatorCollection $nodeMutators): self
     {
         return new self(function (NodeInterface $currentNode) use($nodeMutators) {
             $nodeMutators->apply($currentNode);
@@ -70,7 +70,7 @@ class NodeMutator
     /**
      * Queues to create a new node into the current node and select it
      */
-    public static function createIntoAndSelectNode(NodeTypeName $nodeTypeName, ?NodeName $nodeName): self
+    public static function createAndSelectNode(NodeTypeName $nodeTypeName, ?NodeName $nodeName): self
     {
         return new static(function (NodeInterface $currentNode) use($nodeTypeName, $nodeName) {
             $nodeOperations = Bootstrap::$staticObjectManager->get(NodeOperations::class); // hack
