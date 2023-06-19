@@ -177,8 +177,7 @@ class NodeCreationService
             }
             $propertyType = PropertyType::fromPropertyOfNodeType($propertyName, $nodeType);
             $propertyValue = $properties[$propertyName];
-            if (!$propertyType->isClass()
-                && !($propertyType->isArrayOf() && $propertyType->getArrayOfType()->isClass())) {
+            if (!$propertyType->isClass() && !$propertyType->isArrayOfClass()) {
                 // property mapping only for class types or array of classes!
                 continue;
             }

@@ -178,9 +178,9 @@ final class PropertyType
         return (bool)preg_match(self::PATTERN_ARRAY_OF, $this->value);
     }
 
-    public function getArrayOfType(): self
+    public function isArrayOfClass(): bool
     {
-        return $this->arrayOfType;
+        return $this->isArrayOf() && $this->arrayOfType->isClass();
     }
 
     public function isClass(): bool
