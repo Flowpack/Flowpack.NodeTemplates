@@ -1,0 +1,27 @@
+# We make sure that we dont trigger unwanted property mapping, so we wont allow an array in a string field.
+---
+
+'Flowpack.NodeTemplates:Content.UnresolvablePropertyValues':
+  superTypes:
+    'Neos.Neos:Content': true
+  ui:
+    label: UnresolvablePropertyValues
+  properties:
+    someString:
+      type: string
+    asset:
+      type: Neos\Media\Domain\Model\Asset
+    images:
+      type: array<Neos\Media\Domain\Model\ImageInterface>
+    reference:
+      type: reference
+    references:
+      type: references
+  options:
+    template:
+      properties:
+        someString: "${['foo']}"
+        reference: true
+        references: "${['some-non-existing-node-id']}"
+        asset: "non-existing"
+        images: "${['non-existing']}"
