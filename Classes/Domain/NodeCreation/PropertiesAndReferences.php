@@ -28,6 +28,8 @@ class PropertiesAndReferences
         $references = [];
         $properties = [];
         foreach ($propertiesAndReferences as $propertyName => $propertyValue) {
+            // TODO: remove the next line to initialise the nodeType, once https://github.com/neos/neos-development-collection/issues/4333 is fixed
+            $nodeType->getFullConfiguration();
             $declaration = $nodeType->getPropertyType($propertyName);
             if ($declaration === 'reference' || $declaration === 'references') {
                 $references[$propertyName] = $propertyValue;
