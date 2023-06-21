@@ -1,0 +1,53 @@
+# We test that properties can be set to their declared type or null
+---
+
+'Flowpack.NodeTemplates:Content.Properties':
+  superTypes:
+    'Neos.Neos:Content': true
+  properties:
+    text:
+      type: string
+      ui:
+        label: "Text"
+    isEnchanted:
+      type: boolean
+      ui:
+        label: "Boolean"
+    selectBox:
+      type: string
+      ui:
+        label: "Select Box"
+        inspector:
+          editor: Neos.Neos/Inspector/Editors/SelectBoxEditor
+          editorOptions:
+            values:
+              karma:
+                label: "A"
+              longLive:
+                label: "B"
+    reference:
+      type: reference
+      ui:
+        label: "Reference"
+        inspector:
+          editorOptions:
+            nodeTypes: ['Flowpack.NodeTemplates:Content.Properties']
+    nullValue: # Will be ignored from dumper but we nevertheless test, that we can set the value to "null"
+      type: string
+      ui:
+        label: "Null value"
+    unsetValueWithDefault:
+      defaultValue: true
+      type: boolean
+    someValueWithDefault:
+      defaultValue: true
+      type: boolean
+  options:
+    template:
+      properties:
+        text: "abc"
+        isEnchanted: false
+        selectBox: karma
+        reference: "${data.someNode}"
+        nullValue: null
+        unsetValueWithDefault: null

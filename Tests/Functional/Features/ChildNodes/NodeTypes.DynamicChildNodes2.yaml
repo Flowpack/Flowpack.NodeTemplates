@@ -1,0 +1,37 @@
+'Flowpack.NodeTemplates:Content.DynamicChildNodes2':
+  superTypes:
+    'Neos.Neos:Content': true
+  childNodes:
+    column0:
+      type: 'Neos.Neos:ContentCollection'
+    column1:
+      type: 'Neos.Neos:ContentCollection'
+  options:
+    template:
+      withContext:
+        tagName: 'p'
+        booleanType: true
+        arrayType: ["foo"]
+      childNodes:
+        column0Tethered:
+          name: column0
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              when: "${booleanType}"
+              withItems: "${arrayType}"
+              properties:
+                text: ${'<' + tagName + '>' + item + '</' + tagName + '>'}
+        column1Tethered:
+          name: column1
+          childNodes:
+            content0:
+              withContext:
+                otherBooleanType: true
+                oneItem: "${[false]}"
+                upperContext: "${'</' + tagName + '>'}"
+              when: "${otherBooleanType}"
+              withItems: "${oneItem}"
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                text: "${'<p>bar' + upperContext}"

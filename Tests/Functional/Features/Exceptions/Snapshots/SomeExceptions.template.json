@@ -27,7 +27,7 @@
             "childNodes": []
         },
         {
-            "type": "Flowpack.NodeTemplates:Document.Page.Static",
+            "type": "Flowpack.NodeTemplates:Document.Page",
             "name": "illegal",
             "properties": {
                 "text": "huhu"
@@ -63,7 +63,7 @@
             "childNodes": []
         },
         {
-            "type": "Flowpack.NodeTemplates:Content.WithEvaluationExceptions",
+            "type": "Flowpack.NodeTemplates:Content.SomeExceptions",
             "name": "type-cant-mutate",
             "properties": [],
             "childNodes": []

@@ -1,0 +1,21 @@
+# Basic NodeType definitions for all tests
+---
+
+'Flowpack.NodeTemplates:Document.Page':
+  superTypes:
+    'Neos.Neos:Document': true
+  constraints:
+    nodeTypes:
+      unstructured: true
+  childNodes:
+    main:
+      type: 'Neos.Neos:ContentCollection'
+
+'Flowpack.NodeTemplates:Content.Text':
+  superTypes:
+    'Neos.Neos:Content': true
+  properties:
+    text:
+      type: string
+      ui:
+        label: "Text"

@@ -2,7 +2,7 @@
 # Also reference node id's should be correctly resolved
 ---
 
-'Flowpack.NodeTemplates:Content.ResolvablePropertyValues':
+'Flowpack.NodeTemplates:Content.ResolvableProperties':
   superTypes:
     'Neos.Neos:Content': true
   properties:

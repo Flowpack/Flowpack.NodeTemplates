@@ -1,11 +1,11 @@
 # We make sure that we dont trigger unwanted property mapping, so we wont allow an array in a string field.
 ---
 
-'Flowpack.NodeTemplates:Content.UnresolvablePropertyValues':
+'Flowpack.NodeTemplates:Content.UnresolvableProperties':
   superTypes:
     'Neos.Neos:Content': true
   ui:
-    label: UnresolvablePropertyValues
+    label: UnresolvableProperties
   properties:
     someString:
       type: string
