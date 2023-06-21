@@ -1,0 +1,12 @@
+
+'Flowpack.NodeTemplates:Content.OnlyExceptions':
+  superTypes:
+    'Neos.Neos:ContentCollection': true
+  ui:
+    label: "OnlyExceptions"
+  options:
+    template:
+      childNodes:
+        abort:
+          type: 'Flowpack.NodeTemplates:Content.Text'
+          when: "${'left open"

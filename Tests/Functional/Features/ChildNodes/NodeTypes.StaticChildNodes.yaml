@@ -1,0 +1,25 @@
+'Flowpack.NodeTemplates:Content.StaticChildNodes':
+  superTypes:
+    'Neos.Neos:Content': true
+  childNodes:
+    column0:
+      type: 'Neos.Neos:ContentCollection'
+    column1:
+      type: 'Neos.Neos:ContentCollection'
+  options:
+    template:
+      childNodes:
+        column0Tethered:
+          name: column0
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                text: '<p>foo</p>'
+        column1Tethered:
+          name: column1
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                text: '<p>bar</p>'

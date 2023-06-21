@@ -3,7 +3,7 @@
 # We must make sure that the same transliteration is applied to our childNodes to match the original
 ---
 
-'Flowpack.NodeTemplates:Content.TransliterateNodeName':
+'Flowpack.NodeTemplates:Content.NodeNames':
   superTypes:
     'Neos.Neos:ContentCollection': true
   childNodes:
