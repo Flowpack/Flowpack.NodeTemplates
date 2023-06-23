@@ -8,9 +8,13 @@ use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\ContentRepository\Domain\Service\Context;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Property\Exception as PropertyWasNotMappedException;
+use Neos\Flow\Property\PropertyMapper;
+use Neos\Flow\Property\PropertyMappingConfiguration;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
 class NodeCreationService
@@ -27,6 +31,12 @@ class NodeCreationService
      */
     protected $nodeUriPathSegmentGenerator;
 
+    /**
+     * @Flow\Inject
+     * @var PropertyMapper
+     */
+    protected $propertyMapper;
+
     private Context $subgraph;
 
     public function __construct(Context $subgraph)
@@ -42,7 +52,7 @@ class NodeCreationService
     {
         $nodeType = $node->getNodeType();
 
-        $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
+        $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties(), $caughtExceptions), $nodeType);
 
         $properties = array_merge(
             $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions),
@@ -80,7 +90,7 @@ class NodeCreationService
                 }
 
                 $nodeType = $parentNodesAutoCreatedChildNodes[$template->getName()->__toString()];
-                $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
+                $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties(), $caughtExceptions), $nodeType);
 
                 $properties = array_merge(
                     $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions),
@@ -134,7 +144,7 @@ class NodeCreationService
 
             // todo maybe check also explicitly for allowsGrandchildNodeType (we do this currently like below)
 
-            $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
+            $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties(), $caughtExceptions), $nodeType);
 
             $properties = array_merge(
                 $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions),
@@ -178,5 +188,41 @@ class NodeCreationService
             }
             $previousNode->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($previousNode, $properties['title'] ?? null));
         });
+    }
+
+    private function convertProperties(NodeType $nodeType, array $properties, CaughtExceptions $caughtExceptions): array
+    {
+        // TODO combine with PropertiesAndReferences::requireValidProperties
+        foreach ($nodeType->getConfiguration('properties') as $propertyName => $propertyConfiguration) {
+            if (!isset($properties[$propertyName])) {
+                continue;
+            }
+            $propertyType = $nodeType->getPropertyType($propertyName);
+            if ($propertyType === 'references' || $propertyType === 'reference') {
+                continue;
+            }
+            $propertyType = PropertyType::fromPropertyOfNodeType($propertyName, $nodeType);
+            $propertyValue = $properties[$propertyName];
+            if (!$propertyType->isClass() && !$propertyType->isArrayOfClass()) {
+                // property mapping only for class types or array of classes!
+                continue;
+            }
+            try {
+                $propertyMappingConfiguration = new PropertyMappingConfiguration();
+                $propertyMappingConfiguration->allowAllProperties();
+
+                $properties[$propertyName] = $this->propertyMapper->convert($propertyValue, $propertyType->getValue(), $propertyMappingConfiguration);
+                $messages = $this->propertyMapper->getMessages();
+                if ($messages->hasErrors()) {
+                    throw new PropertyWasNotMappedException($this->propertyMapper->getMessages()->getFirstError()->getMessage(), 1686779371122);
+                }
+            } catch (PropertyWasNotMappedException $exception) {
+                $caughtExceptions->add(CaughtException::fromException(
+                    $exception
+                )->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->getName())));
+                unset($properties[$propertyName]);
+            }
+        }
+        return $properties;
     }
 }

@@ -1,0 +1,26 @@
+[
+    {
+        "message": "Template for \"UnresolvableProperties\" only partially applied. Please check the newly created nodes beneath Node \/sites\/test-site\/homepage\/main\/new-node@live[Flowpack.NodeTemplates:Content.UnresolvableProperties].",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Property \"asset\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | FlowException(Object of type \"Neos\\Media\\Domain\\Model\\Asset\" with identity \"non-existing\" not found., 1686779371122)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Property \"images\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | FlowException(Could not convert target type \"array<Neos\\Media\\Domain\\Model\\ImageInterface>\", at property path \"0\": No converter found which can be used to convert from \"string\" to \"Neos\\Media\\Domain\\Model\\ImageInterface\"., 1297759968) | TypeConverterException(No converter found which can be used to convert from \"string\" to \"Neos\\Media\\Domain\\Model\\ImageInterface\"., 0)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Property \"someString\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | PropertyIgnoredException(Because value `[\"foo\"]` is not assignable to property type \"string\"., 1685958105644)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Reference \"reference\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | RuntimeException(Reference could not be set, because node reference(s) true cannot be resolved., 1685958176560)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Reference \"references\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | RuntimeException(Reference could not be set, because node reference(s) [\"some-non-existing-node-id\"] cannot be resolved., 1685958176560)",
+        "severity": "ERROR"
+    }
+]

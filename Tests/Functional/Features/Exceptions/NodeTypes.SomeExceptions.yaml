@@ -1,20 +1,9 @@
-'Flowpack.NodeTemplates:Content.WithOneEvaluationException':
-  superTypes:
-    'Neos.Neos:ContentCollection': true
-  ui:
-    label: "WithOneEvaluationException"
-  options:
-    template:
-      childNodes:
-        abort:
-          type: 'Flowpack.NodeTemplates:Content.Text'
-          when: "${'left open"
 
-'Flowpack.NodeTemplates:Content.WithEvaluationExceptions':
+'Flowpack.NodeTemplates:Content.SomeExceptions':
   superTypes:
     'Neos.Neos:ContentCollection': true
   ui:
-    label: "WithEvaluationExceptions"
+    label: "SomeExceptions"
   properties:
     boolValue:
       type: boolean
@@ -57,7 +46,7 @@
         abstractNodeAbort:
           type: 'Neos.Neos:Node'
         illegalNodeAbort:
-          type: 'Flowpack.NodeTemplates:Document.Page.Static'
+          type: 'Flowpack.NodeTemplates:Document.Page'
           name: 'illegal'
           properties:
             text: huhu
@@ -92,6 +81,6 @@
           type: "Flowpack.NodeTemplates:InvalidNodeType"
         typeCantMutate:
           name: "type-cant-mutate"
-          type: "Flowpack.NodeTemplates:Content.WithEvaluationExceptions"
+          type: "Flowpack.NodeTemplates:Content.SomeExceptions"
         invalidOption:
           crazy: me

@@ -1,0 +1,16 @@
+{
+    "properties": {
+        "someString": [
+            "foo"
+        ],
+        "reference": true,
+        "references": [
+            "some-non-existing-node-id"
+        ],
+        "asset": "non-existing",
+        "images": [
+            "non-existing"
+        ]
+    },
+    "childNodes": []
+}

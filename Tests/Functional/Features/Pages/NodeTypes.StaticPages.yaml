@@ -1,5 +1,5 @@
 
-'Flowpack.NodeTemplates:Document.Page.Static':
+'Flowpack.NodeTemplates:Document.StaticPages':
   superTypes:
     'Neos.Neos:Document': true
   childNodes:
@@ -57,53 +57,3 @@
                   type: 'Flowpack.NodeTemplates:Content.Text'
                   properties:
                     text: textOnPage4
-
-
-'Flowpack.NodeTemplates:Document.Page.Dynamic':
-  superTypes:
-    'Neos.Neos:Document': true
-  childNodes:
-    main:
-      type: 'Neos.Neos:ContentCollection'
-  options:
-    template:
-      # title and uri path segment should be set via creation dialog data
-      childNodes:
-        'Content Collection (main)':
-          name: main
-          childNodes:
-            content0:
-              type: 'Flowpack.NodeTemplates:Content.Text'
-              properties:
-                # Text
-                text: textOnPage1
-        subPages:
-          withItems:
-            - Page2
-            - Page4
-          type: 'Flowpack.NodeTemplates:Document.Page'
-          properties:
-            title: "${item}"
-            # URL path segment will be set based on title
-          childNodes:
-            'Content Collection (main)':
-              name: main
-              childNodes:
-                content0:
-                  type: 'Flowpack.NodeTemplates:Content.Text'
-                  properties:
-                    text: "${item == 'Page2' ? 'textOnPage2' : 'textOnPage4'}"
-            page1:
-              when: "${item == 'Page2'}"
-              type: 'Flowpack.NodeTemplates:Document.Page'
-              properties:
-                title: Page3
-                uriPathSegment: page3
-              childNodes:
-                'Content Collection (main)':
-                  name: main
-                  childNodes:
-                    content0:
-                      type: 'Flowpack.NodeTemplates:Content.Text'
-                      properties:
-                        text: textOnPage3
