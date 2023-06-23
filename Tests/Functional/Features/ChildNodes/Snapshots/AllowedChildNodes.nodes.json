@@ -1,0 +1,16 @@
+{
+    "childNodes": [
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Collection.Disallowed",
+            "nodeName": "content",
+            "childNodes": [
+                {
+                    "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+                    "properties": {
+                        "text": "Text"
+                    }
+                }
+            ]
+        }
+    ]
+}

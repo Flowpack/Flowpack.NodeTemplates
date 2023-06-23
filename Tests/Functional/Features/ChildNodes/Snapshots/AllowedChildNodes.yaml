@@ -1,0 +1,12 @@
+'{nodeTypeName}':
+  options:
+    template:
+      childNodes:
+        'Content Collection (content)':
+          name: content
+          childNodes:
+            content0:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                # Text
+                text: Text

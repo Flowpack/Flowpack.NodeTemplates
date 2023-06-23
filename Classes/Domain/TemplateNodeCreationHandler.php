@@ -51,7 +51,7 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
             $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
             $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $node);
 
-            $nodeMutators = (new NodeCreationService($node->getContext()))->createMutatorCollection($template, new ToBeCreatedNode($node->getNodeType()), $caughtExceptions);
+            $nodeMutators = (new NodeCreationService($node->getContext()))->createMutatorCollection($template, ToBeCreatedNode::fromRegular($node->getNodeType()), $caughtExceptions);
             $nodeMutators->apply($node);
             $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $node);
         } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
