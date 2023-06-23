@@ -49,7 +49,7 @@ class ToBeCreatedNode
 
     public function forRegularChildNode(NodeType $nodeType): self
     {
-        $parentNodeType = $this->nodeType;
+        $parentNodeType = $nodeType;
         $requireConstraintsImposedByAncestorsAreMet = function (NodeType $nodeType) use ($parentNodeType) : void {
             self::requireNodeTypeConstraintsImposedByParentToBeMet($parentNodeType, $nodeType);
         };

@@ -92,7 +92,7 @@ class NodeTemplateCommandController extends CommandController
             );
 
             $nodeCreation = new NodeCreationService($subgraph);
-            $nodeCreation->createMutatorCollection($template, new ToBeCreatedNode($nodeType), $caughtExceptions);
+            $nodeCreation->createMutatorCollection($template, ToBeCreatedNode::fromRegular($nodeType), $caughtExceptions);
 
 
             if ($caughtExceptions->hasExceptions()) {
