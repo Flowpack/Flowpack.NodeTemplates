@@ -70,8 +70,11 @@ class NodeTemplateCommandController extends CommandController
     public function validateCommand(): void
     {
         $templatesChecked = 0;
-        /** @var array<string, CaughtExceptions> $nodeTypeNamesWithTheirTemplateExceptions */
-        $nodeTypeNamesWithTheirTemplateExceptions = [];
+        /**
+         * nodeTypeNames as index
+         * @var array<string, array{caughtExceptions: CaughtExceptions, dataWasAccessed: bool}> $faultyNodeTypeTemplates
+         */
+        $faultyNodeTypeTemplates = [];
 
         foreach ($this->nodeTypeManager->getNodeTypes(false) as $nodeType) {
             $templateConfiguration = $nodeType->getOptions()['template'] ?? null;
@@ -82,10 +85,20 @@ class NodeTemplateCommandController extends CommandController
 
             $subgraph = $this->contextFactory->create();
 
+            $observableEmptyData = new class ([]) extends \ArrayObject
+            {
+                public bool $dataWasAccessed = false;
+                public function offsetExists($key)
+                {
+                    $this->dataWasAccessed = true;
+                    return false;
+                }
+            };
+
             $template = $this->templateConfigurationProcessor->processTemplateConfiguration(
                 $templateConfiguration,
                 [
-                    'data' => [],
+                    'data' => $observableEmptyData,
                     'triggeringNode' => $subgraph->getRootNode(),
                 ],
                 $caughtExceptions
@@ -94,28 +107,31 @@ class NodeTemplateCommandController extends CommandController
             $nodeCreation = new NodeCreationService($subgraph);
             $nodeCreation->createMutatorCollection($template, ToBeCreatedNode::fromRegular($nodeType), $caughtExceptions);
 
-
             if ($caughtExceptions->hasExceptions()) {
-                $nodeTypeNamesWithTheirTemplateExceptions[$nodeType->getName()] = $caughtExceptions;
+                $faultyNodeTypeTemplates[$nodeType->getName()] = ['caughtExceptions' => $caughtExceptions, 'dataWasAccessed' => $observableEmptyData->dataWasAccessed];
             }
             $templatesChecked++;
         }
 
-        if (empty($nodeTypeNamesWithTheirTemplateExceptions)) {
-            $this->outputFormatted(sprintf('<success>%d NodeType templates validated.</success>', $templatesChecked));
+        if (empty($faultyNodeTypeTemplates)) {
+            $this->outputLine(sprintf('<success>%d NodeType templates validated.</success>', $templatesChecked));
             return;
         }
 
-        $possiblyFaultyTemplates = count($nodeTypeNamesWithTheirTemplateExceptions);
-        $this->outputFormatted(sprintf('<comment>%d of %d NodeType template validated. %d could not be build standalone.</comment>', $templatesChecked - $possiblyFaultyTemplates, $templatesChecked, $possiblyFaultyTemplates));
-        $this->outputFormatted('This might not be a problem, if they depend on certain data from the node-creation dialog.');
+        $possiblyFaultyTemplates = count($faultyNodeTypeTemplates);
+        $this->outputLine(sprintf('<comment>%d of %d NodeType template validated. %d could not be build standalone.</comment>', $templatesChecked - $possiblyFaultyTemplates, $templatesChecked, $possiblyFaultyTemplates));
 
         $this->outputLine();
 
-        foreach ($nodeTypeNamesWithTheirTemplateExceptions as $nodeTypeName => $caughtExceptions) {
-            $this->outputLine($nodeTypeName);
+        foreach ($faultyNodeTypeTemplates as $nodeTypeName => ['caughtExceptions' => $caughtExceptions, 'dataWasAccessed' => $dataWasAccessed]) {
+            if ($dataWasAccessed) {
+                $this->outputLine(sprintf('<comment>%s</comment> <b>(depends on "data" context)</b>', $nodeTypeName));
+            } else {
+                $this->outputLine(sprintf('<error>%s</error>', $nodeTypeName));
+            }
+
             foreach ($caughtExceptions as $caughtException) {
-                $this->outputFormatted($caughtException->toMessage(), [], 4);
+                $this->outputLine('  ' . $caughtException->toMessage());
                 $this->outputLine();
             }
         }
