@@ -45,14 +45,14 @@ class NodeCreationService
 
         $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
-        $properties = array_merge(
+        $validProperties = array_merge(
             $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
             $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
         );
 
         $nodeMutators = NodeMutatorCollection::from(
-            NodeMutator::setProperties($properties),
-            $this->createMutatorForUriPathSegment($template),
+            NodeMutator::setProperties($validProperties),
+            $this->createMutatorForUriPathSegment($template->getProperties()),
         )->merge(
             $this->createMutatorCollectionFromTemplate(
                 $template->getChildNodes(),
@@ -83,7 +83,7 @@ class NodeCreationService
                 $nodeType = $parentNodesAutoCreatedChildNodes[$template->getName()->__toString()];
                 $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
-                $properties = array_merge(
+                $validProperties = array_merge(
                     $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
                     $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
                 );
@@ -92,7 +92,7 @@ class NodeCreationService
                     NodeMutator::isolated(
                         NodeMutatorCollection::from(
                             NodeMutator::selectChildNode($template->getName()),
-                            NodeMutator::setProperties($properties)
+                            NodeMutator::setProperties($validProperties)
                         )->merge($this->createMutatorCollectionFromTemplate(
                             $template->getChildNodes(),
                             new ToBeCreatedNode($nodeType),
@@ -137,7 +137,7 @@ class NodeCreationService
 
             $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
-            $properties = array_merge(
+            $validProperties = array_merge(
                 $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
                 $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
             );
@@ -146,8 +146,8 @@ class NodeCreationService
                 NodeMutator::isolated(
                     NodeMutatorCollection::from(
                         NodeMutator::createAndSelectNode($template->getType(), $template->getName()),
-                        NodeMutator::setProperties($properties),
-                        $this->createMutatorForUriPathSegment($template)
+                        NodeMutator::setProperties($validProperties),
+                        $this->createMutatorForUriPathSegment($template->getProperties())
                     )->merge($this->createMutatorCollectionFromTemplate(
                         $template->getChildNodes(),
                         new ToBeCreatedNode($nodeType),
@@ -164,12 +164,9 @@ class NodeCreationService
     /**
      * All document node types get a uri path segment; if it is not explicitly set in the properties,
      * it should be built based on the title property
-     *
-     * @param Template|RootTemplate $template
      */
-    private function createMutatorForUriPathSegment($template): NodeMutator
+    private function createMutatorForUriPathSegment(array $properties): NodeMutator
     {
-        $properties = $template->getProperties();
         return NodeMutator::unsafeFromClosure(function (NodeInterface $previousNode) use ($properties) {
             if (!$previousNode->getNodeType()->isOfType('Neos.Neos:Document')) {
                 return;

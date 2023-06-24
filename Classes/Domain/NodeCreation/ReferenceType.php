@@ -6,7 +6,7 @@ namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;
-use Neos\ContentRepository\Domain\Service\Context;
+use Neos\ContentRepository\Domain\NodeAggregate\NodeAggregateIdentifier;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -73,24 +73,65 @@ final class ReferenceType
         return $this->value;
     }
 
-    public function isMatchedBy($propertyValue, Context $subgraphForResolving): bool
+    public function toNodeAggregateId($referenceValue): ?NodeAggregateIdentifier
     {
-        if ($propertyValue === null) {
-            return true;
+        if ($referenceValue === null) {
+            return null;
         }
-        $nodeAggregatesOrIds = $this->isReference() ? [$propertyValue] : $propertyValue;
-        if (is_array($nodeAggregatesOrIds) === false) {
-            return false;
+        if ($referenceValue instanceof NodeInterface) {
+            return NodeAggregateIdentifier::fromString($referenceValue->getIdentifier());
         }
-        foreach ($nodeAggregatesOrIds as $singleNodeAggregateOrId) {
+        try {
+            return NodeAggregateIdentifier::fromString($referenceValue);
+        } catch (\Throwable $exception) {
+            throw new InvalidReferenceException(
+                sprintf(
+                    'Invalid reference value. Value `%s` is not a valid node or node identifier.',
+                    json_encode($referenceValue)
+                ),
+                1687632177555
+            );
+        }
+    }
+
+    /**
+     * @param mixed $referenceValue
+     * @return array<int, NodeAggregateIdentifier>
+     */
+    public function toNodeAggregateIds($referenceValue): array
+    {
+        if ($referenceValue === null) {
+            return [];
+        }
+
+        if (is_array($referenceValue) === false) {
+            throw new InvalidReferenceException(
+                sprintf(
+                    'Invalid reference value. Value `%s` is not a valid list of nodes or node identifiers.',
+                    json_encode($referenceValue)
+                ),
+                1685958176560
+            );
+        }
+
+        $nodeAggregateIds = [];
+        foreach ($referenceValue as $singleNodeAggregateOrId) {
             if ($singleNodeAggregateOrId instanceof NodeInterface) {
+                $nodeAggregateIds[] = NodeAggregateIdentifier::fromString($singleNodeAggregateOrId->getIdentifier());
                 continue;
             }
-            if (is_string($singleNodeAggregateOrId) && $subgraphForResolving->getNodeByIdentifier($singleNodeAggregateOrId) instanceof NodeInterface) {
-                continue;
+            try {
+                $nodeAggregateIds[] = NodeAggregateIdentifier::fromString($singleNodeAggregateOrId);
+            } catch (\Throwable $exception) {
+                throw new InvalidReferenceException(
+                    sprintf(
+                        'Invalid reference value. Value `%s` is not a valid list of nodes or node identifiers.',
+                        json_encode($referenceValue)
+                    ),
+                    1685958176560
+                );
             }
-            return false;
         }
-        return true;
+        return $nodeAggregateIds;
     }
 }

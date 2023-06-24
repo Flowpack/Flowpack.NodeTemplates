@@ -4,6 +4,7 @@ namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\ContentRepository\Domain\Service\Context;
 use Neos\Flow\Annotations as Flow;
@@ -107,17 +108,47 @@ class PropertiesHandler
         $validReferences = [];
         foreach ($properties->getReferences() as $referenceName => $referenceValue) {
             $referenceType = ReferenceType::fromPropertyOfNodeType($referenceName, $nodeType);
-            if (!$referenceType->isMatchedBy($referenceValue, $this->subgraph)) {
-                $caughtExceptions->add(CaughtException::fromException(new \RuntimeException(
-                    sprintf(
-                        'Reference could not be set, because node reference(s) %s cannot be resolved.',
-                        json_encode($referenceValue)
-                    ),
-                    1685958176560
-                ))->withOrigin(sprintf('Reference "%s" in NodeType "%s"', $referenceName, $nodeType->getName())));
+
+            try {
+                if ($referenceType->isReference()) {
+                    $nodeAggregateIdentifier = $referenceType->toNodeAggregateId($referenceValue);
+                    if ($nodeAggregateIdentifier === null) {
+                        continue;
+                    }
+                    if (!($node = $this->subgraph->getNodeByIdentifier($nodeAggregateIdentifier->__toString())) instanceof NodeInterface) {
+                        throw new InvalidReferenceException(sprintf(
+                            'Node with identifier "%s" does not exist.',
+                            $nodeAggregateIdentifier->__toString()
+                        ), 1687632330292);
+                    }
+                    $validReferences[$referenceName] = $node;
+                    continue;
+                }
+
+                if ($referenceType->isReferences()) {
+                    $nodeAggregateIdentifiers = $referenceType->toNodeAggregateIds($referenceValue);
+                    if (count($nodeAggregateIdentifiers) === 0) {
+                        continue;
+                    }
+                    $nodes = [];
+                    foreach ($nodeAggregateIdentifiers as $nodeAggregateIdentifier) {
+                        if (!($nodes[] = $this->subgraph->getNodeByIdentifier($nodeAggregateIdentifier->__toString())) instanceof NodeInterface) {
+                            throw new InvalidReferenceException(sprintf(
+                                'Node with identifier "%s" does not exist.',
+                                $nodeAggregateIdentifier->__toString()
+                            ), 1687632330292);
+                        }
+                    }
+                    $validReferences[$referenceName] = $nodes;
+                    continue;
+                }
+            } catch (InvalidReferenceException $runtimeException) {
+                $caughtExceptions->add(
+                    CaughtException::fromException($runtimeException)
+                        ->withOrigin(sprintf('Reference "%s" in NodeType "%s"', $referenceName, $nodeType->getName()))
+                );
                 continue;
             }
-            $validReferences[$referenceName] = $referenceValue;
         }
         return $validReferences;
     }
