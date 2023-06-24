@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Tests\Functional\Features\Properties;
 
-use Flowpack\NodeTemplates\Tests\Functional\AbstractNodeTemplateTest;
+use Flowpack\NodeTemplates\Tests\Functional\AbstractNodeTemplateTestCase;
 
-class PropertiesTest extends AbstractNodeTemplateTest
+class PropertiesTest extends AbstractNodeTemplateTestCase
 {
     /** @test */
     public function itMatchesSnapshot(): void

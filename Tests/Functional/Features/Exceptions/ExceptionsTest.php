@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Tests\Functional\Features\Exceptions;
 
-use Flowpack\NodeTemplates\Tests\Functional\AbstractNodeTemplateTest;
+use Flowpack\NodeTemplates\Tests\Functional\AbstractNodeTemplateTestCase;
 use Flowpack\NodeTemplates\Tests\Functional\WithConfigurationTrait;
 
-class ExceptionsTest extends AbstractNodeTemplateTest
+class ExceptionsTest extends AbstractNodeTemplateTestCase
 {
     use WithConfigurationTrait;
 

@@ -13,8 +13,7 @@ use Neos\ContentRepository\Domain\Repository\ContentDimensionRepository;
 use Neos\ContentRepository\Domain\Repository\WorkspaceRepository;
 use Neos\ContentRepository\Domain\Service\ContextFactoryInterface;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
-use Neos\Flow\Configuration\Source\YamlSource;
-use Neos\Flow\Package\PackageManager;
+use Neos\Flow\Configuration\ConfigurationManager;
 use Neos\Flow\Tests\FunctionalTestCase;
 use Neos\Neos\Domain\Model\Site;
 use Neos\Neos\Domain\Repository\SiteRepository;
@@ -24,7 +23,7 @@ use Neos\Neos\Ui\TypeConverter\ChangeCollectionConverter;
 use Neos\Utility\Arrays;
 use Symfony\Component\Yaml\Yaml;
 
-abstract class AbstractNodeTemplateTest extends FunctionalTestCase
+abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
 {
     use SnapshotTrait;
     use FeedbackCollectionMessagesTrait;
@@ -74,15 +73,7 @@ abstract class AbstractNodeTemplateTest extends FunctionalTestCase
 
     private function loadFakeNodeTypes(): void
     {
-        $configuration = [];
-        $yamlSource = new YamlSource();
-        foreach (['Neos.Neos', 'Neos.ContentRepository', 'Flowpack.NodeTemplates'] as $packageKey) {
-            $package = $this->objectManager->get(PackageManager::class)->getPackage($packageKey);
-            $configuration = Arrays::arrayMergeRecursiveOverrule(
-                $configuration,
-                $yamlSource->load($package->getConfigurationPath() . 'NodeTypes', true)
-            );
-        }
+        $configuration = $this->objectManager->get(ConfigurationManager::class)->getConfiguration('NodeTypes');
 
         $fileIterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(__DIR__ . '/Features'));
 
