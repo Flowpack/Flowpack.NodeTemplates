@@ -9,7 +9,6 @@ on:
 jobs:
   build:
     env:
-      NEOS_TARGET_VERSION: 7.3
       FLOW_CONTEXT: Testing
       FLOW_PATH_ROOT: ../neos-base-distribution
 
@@ -18,7 +17,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['7.4']
+        include:
+          - php-version: 7.4
+            neos-version: 7.3
+          - php-version: 8.1
+            neos-version: 8.3
 
     steps:
       - uses: actions/checkout@v2
@@ -26,7 +29,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-versions }}
+          php-version: ${{ matrix.php-version }}
           extensions: mbstring, xml, json, zlib, iconv, intl, pdo_sqlite, mysql
           coverage: xdebug #optional
           ini-values: opcache.fast_shutdown=0
@@ -50,7 +53,7 @@ jobs:
 
       - name: Prepare Neos distribution
         run: |
-          git clone https://github.com/neos/neos-base-distribution.git -b ${NEOS_TARGET_VERSION} ${FLOW_PATH_ROOT}
+          git clone https://github.com/neos/neos-base-distribution.git -b ${{ matrix.neos-version }} ${FLOW_PATH_ROOT}
           cd ${FLOW_PATH_ROOT}
           composer require --no-update --no-interaction flowpack/nodetemplates
 
