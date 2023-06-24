@@ -55,15 +55,14 @@ jobs:
         run: |
           git clone https://github.com/neos/neos-base-distribution.git -b ${{ matrix.neos-version }} ${FLOW_PATH_ROOT}
           cd ${FLOW_PATH_ROOT}
-          composer require --no-update --no-interaction flowpack/nodetemplates
+          composer config --no-plugins allow-plugins.neos/composer-plugin true
+          composer config repositories.tested-package path ../Flowpack.NodeTemplates
+          composer require --no-update --no-interaction flowpack/nodetemplates:@dev
 
       - name: Install distribution
         run: |
           cd ${FLOW_PATH_ROOT}
-          composer config --no-plugins allow-plugins.neos/composer-plugin true
           composer install --no-interaction --no-progress
-          rm -rf Packages/Application/Flowpack.NodeTemplates
-          cp -r ../Flowpack.NodeTemplates Packages/Application/Flowpack.NodeTemplates
 
       - name: Run Unit tests
         run: |
