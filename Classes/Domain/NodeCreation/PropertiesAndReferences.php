@@ -7,6 +7,9 @@ use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
 use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\ContentRepository\Domain\Service\Context;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Property\Exception as PropertyMappingException;
+use Neos\Flow\Property\PropertyMapper;
+use Neos\Flow\Property\PropertyMappingConfiguration;
 
 /**
  * @Flow\Proxy(false)
@@ -45,14 +48,10 @@ class PropertiesAndReferences
      *
      * 1. It is checked, that only properties will be set, that were declared in the NodeType
      *
-     * 2. In case the property is a select-box, it is checked, that the current value is a valid option of the select-box
-     *
-     * 3. It is made sure is that a property value is not null when there is a default value:
-     *  In case that due to a condition in the nodeTemplate `null` is assigned to a node property, it will override the defaultValue.
-     *  This is a problem, as setting `null` might not be possible via the Neos UI and the Fusion rendering is most likely not going to handle this edge case.
-     *  Related discussion {@link https://github.com/Flowpack/Flowpack.NodeTemplates/issues/41}
+     * 2. It is checked, that the property value is assignable to the property type.
+     *    In case the type is class or an array of classes, the property mapper will be used map the given type to it. If it doesn't succeed, we will log an error.
      */
-    public function requireValidProperties(NodeType $nodeType, CaughtExceptions $caughtExceptions): array
+    public function requireValidProperties(NodeType $nodeType, PropertyMapper $propertyMapper, CaughtExceptions $caughtExceptions): array
     {
         $validProperties = [];
         foreach ($this->properties as $propertyName => $propertyValue) {
@@ -68,6 +67,19 @@ class PropertiesAndReferences
                     );
                 }
                 $propertyType = PropertyType::fromPropertyOfNodeType($propertyName, $nodeType);
+
+                if (!$propertyType->isMatchedBy($propertyValue)
+                    && ($propertyType->isClass() || $propertyType->isArrayOfClass())) {
+                    // we try property mapping only for class types or array of classes
+                    $propertyMappingConfiguration = new PropertyMappingConfiguration();
+                    $propertyMappingConfiguration->allowAllProperties();
+                    $propertyValue = $propertyMapper->convert($propertyValue, $propertyType->getValue(), $propertyMappingConfiguration);
+                    $messages = $propertyMapper->getMessages();
+                    if ($messages->hasErrors()) {
+                        throw new PropertyIgnoredException($propertyMapper->getMessages()->getFirstError()->getMessage(), 1686779371122);
+                    }
+                }
+
                 if (!$propertyType->isMatchedBy($propertyValue)) {
                     throw new PropertyIgnoredException(
                         sprintf(
@@ -79,9 +91,9 @@ class PropertiesAndReferences
                     );
                 }
                 $validProperties[$propertyName] = $propertyValue;
-            } catch (PropertyIgnoredException $propertyNotSetException) {
+            } catch (PropertyIgnoredException|PropertyMappingException $exception) {
                 $caughtExceptions->add(
-                    CaughtException::fromException($propertyNotSetException)->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->getName()))
+                    CaughtException::fromException($exception)->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->getName()))
                 );
             }
         }
