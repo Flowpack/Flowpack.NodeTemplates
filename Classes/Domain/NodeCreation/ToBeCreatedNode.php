@@ -13,55 +13,52 @@ class ToBeCreatedNode
 {
     private NodeType $nodeType;
 
-    /** @var \Closure(NodeType $nodeType): void */
-    private \Closure $requireConstraintsImposedByAncestorsAreMet;
+    private ?NodeName $tetheredNodeName;
 
-    private function __construct(NodeType $nodeType, \Closure $requireConstraintsImposedByAncestorsAreMet)
+    private ?NodeType $tetheredParentNodeType;
+
+    public function __construct(NodeType $nodeType, ?NodeName $tetheredNodeName, ?NodeType $tetheredParentNodeType)
     {
         $this->nodeType = $nodeType;
-        $this->requireConstraintsImposedByAncestorsAreMet = $requireConstraintsImposedByAncestorsAreMet;
+        $this->tetheredNodeName = $tetheredNodeName;
+        $this->tetheredParentNodeType = $tetheredParentNodeType;
+        if ($tetheredNodeName !== null) {
+            assert($tetheredParentNodeType !== null);
+        }
     }
 
     public static function fromRegular(NodeType $nodeType): self
     {
-        $parentNodeType = $nodeType;
-        $requireConstraintsImposedByAncestorsAreMet = function (NodeType $nodeType) use ($parentNodeType) : void {
-            self::requireNodeTypeConstraintsImposedByParentToBeMet($parentNodeType, $nodeType);
-        };
-        return new self($nodeType, $requireConstraintsImposedByAncestorsAreMet);
+        return new self($nodeType, null, null);
     }
 
     public function forTetheredChildNode(NodeName $nodeName): self
     {
-        $parentNodeType = $this->nodeType;
         // `getTypeOfAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
         // https://github.com/neos/neos-ui/issues/3527
-        $parentNodesAutoCreatedChildNodes = $parentNodeType->getAutoCreatedChildNodes();
+        $parentNodesAutoCreatedChildNodes = $this->nodeType->getAutoCreatedChildNodes();
         $childNodeType = $parentNodesAutoCreatedChildNodes[$nodeName->__toString()] ?? null;
         if (!$childNodeType instanceof NodeType) {
             throw new \InvalidArgumentException('forTetheredChildNode only works for tethered nodes.');
         }
-        $requireConstraintsImposedByAncestorsAreMet = function (NodeType $nodeType) use ($parentNodeType, $nodeName) : void {
-            self::requireNodeTypeConstraintsImposedByGrandparentToBeMet($parentNodeType, $nodeName, $nodeType);
-        };
-        return new self($childNodeType, $requireConstraintsImposedByAncestorsAreMet);
+        return new self($childNodeType, $nodeName, $this->nodeType);
     }
 
     public function forRegularChildNode(NodeType $nodeType): self
     {
-        $parentNodeType = $nodeType;
-        $requireConstraintsImposedByAncestorsAreMet = function (NodeType $nodeType) use ($parentNodeType) : void {
-            self::requireNodeTypeConstraintsImposedByParentToBeMet($parentNodeType, $nodeType);
-        };
-        return new self($nodeType, $requireConstraintsImposedByAncestorsAreMet);
+        return new self($nodeType, null, null);
     }
 
     /**
      * @throws NodeConstraintException
      */
-    public function requireConstraintsImposedByAncestorsAreMet(NodeType $nodeType): void
+    public function requireConstraintsImposedByAncestorsAreMet(NodeType $childNodeType): void
     {
-        ($this->requireConstraintsImposedByAncestorsAreMet)($nodeType);
+        if ($this->tetheredNodeName) {
+            self::requireNodeTypeConstraintsImposedByGrandparentToBeMet($this->tetheredParentNodeType, $this->tetheredNodeName, $childNodeType);
+        } else {
+            self::requireNodeTypeConstraintsImposedByParentToBeMet($this->nodeType, $childNodeType);
+        }
     }
 
     public function getNodeType(): NodeType
