@@ -1,0 +1,13 @@
+# We test that `parentNode` is accessible in EEL
+---
+
+'Flowpack.NodeTemplates:Content.Variables':
+  superTypes:
+    'Neos.Neos:Content': true
+  properties:
+    text:
+      type: string
+  options:
+    template:
+      properties:
+        text: "${'ParentNodeType is of type ' + parentNode.nodeType.name + ' with name ' + parentNode.name}"
