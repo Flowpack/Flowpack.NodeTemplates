@@ -14,19 +14,19 @@ use Neos\Flow\Property\PropertyMappingConfiguration;
 /**
  * @Flow\Proxy(false)
  */
-class PropertiesAndReferences
+class PropertiesHandler
 {
-    private array $properties;
+    private Context $subgraph;
 
-    private array $references;
+    private PropertyMapper $propertyMapper;
 
-    private function __construct(array $properties, array $references)
+    public function __construct(Context $subgraph, PropertyMapper $propertyMapper)
     {
-        $this->properties = $properties;
-        $this->references = $references;
+        $this->subgraph = $subgraph;
+        $this->propertyMapper = $propertyMapper;
     }
 
-    public static function createFromArrayAndTypeDeclarations(array $propertiesAndReferences, NodeType $nodeType): self
+    public function createdFromArrayByTypeDeclaration(array $propertiesAndReferences, NodeType $nodeType): Properties
     {
         $references = [];
         $properties = [];
@@ -40,7 +40,7 @@ class PropertiesAndReferences
             }
             $properties[$propertyName] = $propertyValue;
         }
-        return new self($properties, $references);
+        return new Properties($properties, $references, $nodeType);
     }
 
     /**
@@ -51,10 +51,11 @@ class PropertiesAndReferences
      * 2. It is checked, that the property value is assignable to the property type.
      *    In case the type is class or an array of classes, the property mapper will be used map the given type to it. If it doesn't succeed, we will log an error.
      */
-    public function requireValidProperties(NodeType $nodeType, PropertyMapper $propertyMapper, CaughtExceptions $caughtExceptions): array
+    public function requireValidProperties(Properties $properties, CaughtExceptions $caughtExceptions): array
     {
+        $nodeType = $properties->getNodeType();
         $validProperties = [];
-        foreach ($this->properties as $propertyName => $propertyValue) {
+        foreach ($properties->getProperties() as $propertyName => $propertyValue) {
             try {
                 $this->assertValidPropertyName($propertyName);
                 if (!isset($nodeType->getProperties()[$propertyName])) {
@@ -73,10 +74,10 @@ class PropertiesAndReferences
                     // we try property mapping only for class types or array of classes
                     $propertyMappingConfiguration = new PropertyMappingConfiguration();
                     $propertyMappingConfiguration->allowAllProperties();
-                    $propertyValue = $propertyMapper->convert($propertyValue, $propertyType->getValue(), $propertyMappingConfiguration);
-                    $messages = $propertyMapper->getMessages();
+                    $propertyValue = $this->propertyMapper->convert($propertyValue, $propertyType->getValue(), $propertyMappingConfiguration);
+                    $messages = $this->propertyMapper->getMessages();
                     if ($messages->hasErrors()) {
-                        throw new PropertyIgnoredException($propertyMapper->getMessages()->getFirstError()->getMessage(), 1686779371122);
+                        throw new PropertyIgnoredException($this->propertyMapper->getMessages()->getFirstError()->getMessage(), 1686779371122);
                     }
                 }
 
@@ -100,12 +101,13 @@ class PropertiesAndReferences
         return $validProperties;
     }
 
-    public function requireValidReferences(NodeType $nodeType, Context $subgraph, CaughtExceptions $caughtExceptions): array
+    public function requireValidReferences(Properties $properties, CaughtExceptions $caughtExceptions): array
     {
+        $nodeType = $properties->getNodeType();
         $validReferences = [];
-        foreach ($this->references as $referenceName => $referenceValue) {
+        foreach ($properties->getReferences() as $referenceName => $referenceValue) {
             $referenceType = ReferenceType::fromPropertyOfNodeType($referenceName, $nodeType);
-            if (!$referenceType->isMatchedBy($referenceValue, $subgraph)) {
+            if (!$referenceType->isMatchedBy($referenceValue, $this->subgraph)) {
                 $caughtExceptions->add(CaughtException::fromException(new \RuntimeException(
                     sprintf(
                         'Reference could not be set, because node reference(s) %s cannot be resolved.',

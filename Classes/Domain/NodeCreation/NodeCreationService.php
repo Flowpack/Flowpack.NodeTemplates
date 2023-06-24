@@ -28,17 +28,11 @@ class NodeCreationService
      */
     protected $nodeUriPathSegmentGenerator;
 
-    /**
-     * @Flow\Inject
-     * @var PropertyMapper
-     */
-    protected $propertyMapper;
+    private PropertiesHandler $propertiesHandler;
 
-    private Context $subgraph;
-
-    public function __construct(Context $subgraph)
+    public function __construct(Context $subgraph, PropertyMapper $propertyMapper)
     {
-        $this->subgraph = $subgraph;
+        $this->propertiesHandler = new PropertiesHandler($subgraph, $propertyMapper);
     }
 
     /**
@@ -49,11 +43,11 @@ class NodeCreationService
     {
         $nodeType = $node->getNodeType();
 
-        $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
+        $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
         $properties = array_merge(
-            $propertiesAndReferences->requireValidProperties($nodeType, $this->propertyMapper, $caughtExceptions),
-            $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
+            $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
+            $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
         );
 
         $nodeMutators = NodeMutatorCollection::from(
@@ -87,11 +81,11 @@ class NodeCreationService
                 }
 
                 $nodeType = $parentNodesAutoCreatedChildNodes[$template->getName()->__toString()];
-                $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
+                $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
                 $properties = array_merge(
-                    $propertiesAndReferences->requireValidProperties($nodeType, $this->propertyMapper, $caughtExceptions),
-                    $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
+                    $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
+                    $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
                 );
 
                 $nodeMutators = $nodeMutators->withNodeMutators(
@@ -141,11 +135,11 @@ class NodeCreationService
 
             // todo maybe check also explicitly for allowsGrandchildNodeType (we do this currently like below)
 
-            $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
+            $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
             $properties = array_merge(
-                $propertiesAndReferences->requireValidProperties($nodeType, $this->propertyMapper, $caughtExceptions),
-                $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
+                $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
+                $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
             );
 
             $nodeMutators = $nodeMutators->withNodeMutators(
