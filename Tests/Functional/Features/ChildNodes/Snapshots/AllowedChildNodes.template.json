@@ -1,0 +1,20 @@
+{
+    "properties": [],
+    "childNodes": [
+        {
+            "type": null,
+            "name": "content",
+            "properties": [],
+            "childNodes": [
+                {
+                    "type": "Flowpack.NodeTemplates:Content.Text",
+                    "name": null,
+                    "properties": {
+                        "text": "Text"
+                    },
+                    "childNodes": []
+                }
+            ]
+        }
+    ]
+}

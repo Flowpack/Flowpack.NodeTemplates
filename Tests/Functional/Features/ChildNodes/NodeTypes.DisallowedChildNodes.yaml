@@ -1,0 +1,22 @@
+
+'Flowpack.NodeTemplates:Content.DisallowedChildNodes':
+  superTypes:
+    'Neos.Neos:Content': true
+  ui:
+    label: DisallowedChildNodes
+  childNodes:
+    content:
+      type: 'Flowpack.NodeTemplates:Collection.Disallowed'
+  options:
+    template:
+      childNodes:
+        content:
+          name: 'content'
+          childNodes:
+            text:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                text: 'Text'
+        restrictedNode:
+          type: 'Flowpack.NodeTemplates:Document.Page'
+          name: 'illegal-node-1'

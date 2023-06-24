@@ -1,0 +1,39 @@
+{
+    "childNodes": [
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+            "nodeName": "my-node",
+            "properties": {
+                "text": "legalNodeName"
+            }
+        },
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+            "nodeName": "foobar",
+            "properties": {
+                "text": "capitalsInName"
+            }
+        },
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+            "nodeName": "o",
+            "properties": {
+                "text": "\u00f6 - was soll das"
+            }
+        },
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+            "nodeName": "ablabei-jing-ss-ha",
+            "properties": {
+                "text": "everythingMixedTogether"
+            }
+        },
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+            "nodeName": "node-d41d8cd98f00b204e9800998ecf8427e",
+            "properties": {
+                "text": "emptyString"
+            }
+        }
+    ]
+}

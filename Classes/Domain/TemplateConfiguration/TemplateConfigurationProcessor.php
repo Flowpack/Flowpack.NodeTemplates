@@ -119,8 +119,8 @@ class TemplateConfigurationProcessor
         $type = $templatePart->processConfiguration('type');
         $name = $templatePart->processConfiguration('name');
         return new Template(
-            $type ? NodeTypeName::fromString($type) : null,
-            $name ? NodeName::fromString($name) : null,
+            $type !== null ? NodeTypeName::fromString($type) : null,
+            $name !== null ? NodeName::transliterateFromString($name) : null,
             $processedProperties,
             $childNodeTemplates
         );

@@ -1,0 +1,44 @@
+# A valid node name must match this expression /^[a-z0-9\-]+$/
+# But Neos is so kind to still allow invalid configuration, and it transliterates the string
+# We must make sure that the same transliteration is applied to our childNodes to match the original
+---
+
+'Flowpack.NodeTemplates:Content.NodeNames':
+  superTypes:
+    'Neos.Neos:ContentCollection': true
+  childNodes:
+    my-node:
+      type: 'Flowpack.NodeTemplates:Content.Text'
+    fooBar:
+      type: 'Flowpack.NodeTemplates:Content.Text'
+    ö:
+      type: 'Flowpack.NodeTemplates:Content.Text'
+    'äBla北京=.§$Hä':
+      type: 'Flowpack.NodeTemplates:Content.Text'
+    '':
+      type: 'Flowpack.NodeTemplates:Content.Text'
+
+  options:
+    template:
+      childNodes:
+        legalNodeName:
+          name: my-node
+          properties:
+            text: "legalNodeName"
+        capitalsInName:
+          # leave out the type so we would provoke an error if it doesnt match the above childNode
+          name: fooBar
+          properties:
+            text: "capitalsInName"
+        onlyOneIllegalCharacter:
+          name: ö
+          properties:
+            text: "ö - was soll das"
+        everythingMixedTogether:
+          name: 'äBla北京=.§$Hä'
+          properties:
+            text: "everythingMixedTogether"
+        emptyString:
+          name: ''
+          properties:
+            text: "emptyString"

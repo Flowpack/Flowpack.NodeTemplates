@@ -1,0 +1,8 @@
+{
+    "childNodes": [
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Collection.Disallowed",
+            "nodeName": "content"
+        }
+    ]
+}

@@ -23,21 +23,27 @@ use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
 use Neos\ContentRepository\Core\SharedModel\Node\ReferenceName;
 use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\Property\PropertyMapper;
 use Neos\Neos\Ui\NodeCreationHandler\NodeCreationCommands;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
 class NodeCreationService
 {
-    /**
-     * @Flow\Inject
-     * @var NodeUriPathSegmentGenerator
-     */
-    protected $nodeUriPathSegmentGenerator;
+    private readonly NodeTypeManager $nodeTypeManager;
+
+    private readonly NodeUriPathSegmentGenerator $nodeUriPathSegmentGenerator;
+
+    private PropertiesHandler $propertiesHandler;
 
     public function __construct(
-        private readonly ContentSubgraphInterface $subgraph,
-        private readonly NodeTypeManager $nodeTypeManager
+        ContentSubgraphInterface $subgraph,
+        NodeTypeManager $nodeTypeManager,
+        PropertyMapper $propertyMapper,
+        NodeUriPathSegmentGenerator $nodeUriPathSegmentGenerator
     ) {
+        $this->nodeTypeManager = $nodeTypeManager;
+        $this->nodeUriPathSegmentGenerator = $nodeUriPathSegmentGenerator;
+        $this->propertiesHandler = new PropertiesHandler($subgraph, $propertyMapper);
     }
 
     /**
@@ -47,14 +53,14 @@ class NodeCreationService
     public function apply(RootTemplate $template, NodeCreationCommands $commands, CaughtExceptions $caughtExceptions): NodeCreationCommands
     {
         $nodeType = $this->nodeTypeManager->getNodeType($commands->first->nodeTypeName);
-        $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
-
-        // set properties
+        $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
         $initialProperties = $commands->first->initialPropertyValues;
 
         $initialProperties = $initialProperties->merge(
-            PropertyValuesToWrite::fromArray($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions))
+            PropertyValuesToWrite::fromArray(
+                $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions)
+            )
         );
 
         $initialProperties = $this->ensureNodeHasUriPathSegment(
@@ -67,18 +73,18 @@ class NodeCreationService
 
         return $this->applyTemplateRecursively(
             $template->getChildNodes(),
-            new ToBeCreatedNode(
+            ToBeCreatedNode::fromRegular(
                 $commands->first->contentStreamId,
                 $commands->first->originDimensionSpacePoint,
                 $commands->first->nodeAggregateId,
-                $nodeType,
+                $nodeType
             ),
             $commands->withInitialPropertyValues($initialProperties)->withAdditionalCommands(
                 ...$this->createReferencesCommands(
                     $commands->first->contentStreamId,
                     $commands->first->nodeAggregateId,
                     $commands->first->originDimensionSpacePoint,
-                    $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
+                    $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
                 )
             ),
             $caughtExceptions
@@ -87,8 +93,11 @@ class NodeCreationService
 
     private function applyTemplateRecursively(Templates $templates, ToBeCreatedNode $parentNode, NodeCreationCommands $commands, CaughtExceptions $caughtExceptions): NodeCreationCommands
     {
+        // `hasAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
+        // https://github.com/neos/neos-ui/issues/3527
+        $parentNodesAutoCreatedChildNodes = $parentNode->getNodeType()->getAutoCreatedChildNodes();
         foreach ($templates as $template) {
-            if ($template->getName() && $parentNode->nodeType->hasAutoCreatedChildNode($template->getName())) {
+            if ($template->getName() && isset($parentNodesAutoCreatedChildNodes[$template->getName()->value])) {
                 if ($template->getType() !== null) {
                     $caughtExceptions->add(
                         CaughtException::fromException(new \RuntimeException(sprintf('Template cant mutate type of auto created child nodes. Got: "%s"', $template->getType()->value), 1685999829307))
@@ -96,8 +105,8 @@ class NodeCreationService
                     // we continue processing the node
                 }
 
-                $nodeType = $parentNode->nodeType->getTypeOfAutoCreatedChildNode($template->getName());
-                $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
+                $nodeType = $parentNodesAutoCreatedChildNodes[$template->getName()->value];
+                $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
                 $commands = $commands->withAdditionalCommands(
                     new SetNodeProperties(
@@ -107,20 +116,22 @@ class NodeCreationService
                             $template->getName()
                         ),
                         $parentNode->originDimensionSpacePoint,
-                        PropertyValuesToWrite::fromArray($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions))
+                        PropertyValuesToWrite::fromArray(
+                            $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions)
+                        )
                     ),
                     ...$this->createReferencesCommands(
                         $parentNode->contentStreamId,
                         $nodeAggregateId,
                         $parentNode->originDimensionSpacePoint,
-                        $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
+                        $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
                     )
                 );
 
                 $commands = $this->applyTemplateRecursively(
                     $template->getChildNodes(),
-                    $parentNode->withNodeTypeAndNodeAggregateId(
-                        $nodeType,
+                    $parentNode->forTetheredChildNode(
+                        $template->getName(),
                         $nodeAggregateId
                     ),
                     $commands,
@@ -151,20 +162,22 @@ class NodeCreationService
                 continue;
             }
 
-            if (!$parentNode->nodeType->allowsChildNodeType($nodeType)) {
+            try {
+                $parentNode->requireConstraintsImposedByAncestorsAreMet($nodeType);
+            } catch (NodeConstraintException $nodeConstraintException) {
                 $caughtExceptions->add(
-                    CaughtException::fromException(new \RuntimeException(sprintf('Node type "%s" is not allowed for child nodes of type %s', $template->getType()->value, $parentNode->nodeType->name->value), 1686417627173))
+                    CaughtException::fromException($nodeConstraintException)
                 );
                 continue;
             }
 
-            // todo maybe check also allowsGrandchildNodeType
-
-            $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
+            $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
             $nodeName = $template->getName() ?? NodeName::fromString(uniqid('node-', false));
 
-            $initialProperties = PropertyValuesToWrite::fromArray($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions));
+            $initialProperties = PropertyValuesToWrite::fromArray(
+                $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions)
+            );
 
             $initialProperties = $this->ensureNodeHasUriPathSegment(
                 $nodeType,
@@ -188,14 +201,14 @@ class NodeCreationService
                     $parentNode->contentStreamId,
                     $nodeAggregateId,
                     $parentNode->originDimensionSpacePoint,
-                    $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
+                    $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
                 )
             );
 
 
             $commands = $this->applyTemplateRecursively(
                 $template->getChildNodes(),
-                $parentNode->withNodeTypeAndNodeAggregateId(
+                $parentNode->forRegularChildNode(
                     $nodeType,
                     $nodeAggregateId
                 ),
@@ -229,6 +242,8 @@ class NodeCreationService
     /**
      * All document node types get a uri path segmfent; if it is not explicitly set in the properties,
      * it should be built based on the title property
+     *
+     * @param Template|RootTemplate $template
      */
     private function ensureNodeHasUriPathSegment(
         NodeType $nodeType,

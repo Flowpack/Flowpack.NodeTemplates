@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 use Neos\ContentRepository\Core\NodeType\NodeType;
-use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateIds;
@@ -75,47 +74,60 @@ final class ReferenceType
         return $this->value;
     }
 
-    /**
-     * @param mixed $referenceValue
-     * @param ContentSubgraphInterface $subgraphForResolving
-     * @throws \RuntimeException in case the $referenceValue could not be resolved to a node
-     */
-    public function resolveNodeAggregateIds(mixed $referenceValue, ContentSubgraphInterface $subgraphForResolving): NodeAggregateIds
+    public function toNodeAggregateId(mixed $referenceValue): ?NodeAggregateId
+    {
+        if ($referenceValue === null) {
+            return null;
+        }
+        if ($referenceValue instanceof Node) {
+            return $referenceValue->nodeAggregateId;
+        }
+        try {
+            return NodeAggregateId::fromString($referenceValue);
+        } catch (\Throwable $exception) {
+            throw new InvalidReferenceException(
+                sprintf(
+                    'Invalid reference value. Value `%s` is not a valid node or node identifier.',
+                    json_encode($referenceValue)
+                ),
+                1687632177555
+            );
+        }
+    }
+
+    public function toNodeAggregateIds(mixed $referenceValue): NodeAggregateIds
     {
         if ($referenceValue === null) {
             return NodeAggregateIds::createEmpty();
         }
 
-        $becauseOfInvalidValue = fn () => throw new \RuntimeException(
-            sprintf(
-                'Reference could not be set, because node reference(s) %s cannot be resolved.',
-                json_encode($referenceValue)
-            ),
-            1685958176560
-        );
-
-        $nodeAggregatesOrIds = $this->isReference() ? [$referenceValue] : $referenceValue;
-        if (is_array($nodeAggregatesOrIds) === false) {
-            throw $becauseOfInvalidValue();
+        if (is_array($referenceValue) === false) {
+            throw new InvalidReferenceException(
+                sprintf(
+                    'Invalid reference value. Value `%s` is not a valid list of nodes or node identifiers.',
+                    json_encode($referenceValue)
+                ),
+                1685958176560
+            );
         }
 
         $nodeAggregateIds = [];
-
-        foreach ($nodeAggregatesOrIds as $singleNodeAggregateOrId) {
+        foreach ($referenceValue as $singleNodeAggregateOrId) {
             if ($singleNodeAggregateOrId instanceof Node) {
                 $nodeAggregateIds[] = $singleNodeAggregateOrId->nodeAggregateId;
                 continue;
             }
             try {
-                $singleNodeAggregateId = is_string($singleNodeAggregateOrId) ? NodeAggregateId::fromString($singleNodeAggregateOrId) : $singleNodeAggregateOrId;
-            } catch (\Exception) {
-                throw $becauseOfInvalidValue();
+                $nodeAggregateIds[] = NodeAggregateId::fromString($singleNodeAggregateOrId);
+            } catch (\Throwable $exception) {
+                throw new InvalidReferenceException(
+                    sprintf(
+                        'Invalid reference value. Value `%s` is not a valid list of nodes or node identifiers.',
+                        json_encode($referenceValue)
+                    ),
+                    1685958176560
+                );
             }
-            if ($singleNodeAggregateId instanceof NodeAggregateId && $subgraphForResolving->findNodeById($singleNodeAggregateId)) {
-                $nodeAggregateIds[] = $singleNodeAggregateId;
-                continue;
-            }
-            throw $becauseOfInvalidValue();
         }
         return NodeAggregateIds::fromArray($nodeAggregateIds);
     }

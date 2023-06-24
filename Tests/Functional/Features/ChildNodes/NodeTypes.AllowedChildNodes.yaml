@@ -1,0 +1,20 @@
+
+'Flowpack.NodeTemplates:Content.AllowedChildNodes':
+  superTypes:
+    'Neos.Neos:Content': true
+  childNodes:
+    content:
+      type: 'Flowpack.NodeTemplates:Collection.Disallowed'
+      constraints:
+        nodeTypes:
+          'Flowpack.NodeTemplates:Content.Text': true
+  options:
+    template:
+      childNodes:
+        content:
+          name: 'content'
+          childNodes:
+            text:
+              type: 'Flowpack.NodeTemplates:Content.Text'
+              properties:
+                text: 'Text'

@@ -1,0 +1,26 @@
+{
+    "properties": [],
+    "childNodes": [
+        {
+            "type": null,
+            "name": "content",
+            "properties": [],
+            "childNodes": [
+                {
+                    "type": "Flowpack.NodeTemplates:Content.Text",
+                    "name": null,
+                    "properties": {
+                        "text": "Text"
+                    },
+                    "childNodes": []
+                }
+            ]
+        },
+        {
+            "type": "Flowpack.NodeTemplates:Document.Page",
+            "name": "illegal-node-1",
+            "properties": [],
+            "childNodes": []
+        }
+    ]
+}

@@ -1,6 +1,6 @@
 [
     {
-        "message": "Template for \"WithEvaluationExceptions\" only partially applied. Please check the newly created nodes beneath 186b511b-b807-6208-9e1c-593e7c1a63d3.",
+        "message": "Template for \"SomeExceptions\" only partially applied. Please check the newly created nodes beneath Node \/sites\/test-site\/homepage\/main\/new-node@live[Flowpack.NodeTemplates:Content.SomeExceptions].",
         "severity": "ERROR"
     },
     {
@@ -52,31 +52,31 @@
         "severity": "ERROR"
     },
     {
-        "message": "Property \"_hidden\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because internal legacy property \"_hidden\" not implement., 1686149513158)",
+        "message": "Property \"_hidden\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | PropertyIgnoredException(Because internal legacy property \"_hidden\" not implement., 1686149513158)",
         "severity": "ERROR"
     },
     {
-        "message": "Property \"_hiddenAfterDateTime\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because internal legacy property \"_hiddenAfterDateTime\" not implement., 1686149513158)",
+        "message": "Property \"_hiddenAfterDateTime\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | PropertyIgnoredException(Because internal legacy property \"_hiddenAfterDateTime\" not implement., 1686149513158)",
         "severity": "ERROR"
     },
     {
-        "message": "Property \"boolValue\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because value `123` is not assignable to property type \"boolean\"., 1685958105644)",
+        "message": "Property \"boolValue\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | PropertyIgnoredException(Because value `123` is not assignable to property type \"boolean\"., 1685958105644)",
         "severity": "ERROR"
     },
     {
-        "message": "Property \"stringValue\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because value `false` is not assignable to property type \"string\"., 1685958105644)",
+        "message": "Property \"stringValue\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | PropertyIgnoredException(Because value `false` is not assignable to property type \"string\"., 1685958105644)",
         "severity": "ERROR"
     },
     {
-        "message": "Property \"nonDeclaredProperty\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | PropertyIgnoredException(Because property is not declared in NodeType. Got value `\"hi\"`., 1685869035209)",
+        "message": "Property \"nonDeclaredProperty\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | PropertyIgnoredException(Because property is not declared in NodeType. Got value `\"hi\"`., 1685869035209)",
         "severity": "ERROR"
     },
     {
-        "message": "Reference \"reference\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | RuntimeException(Reference could not be set, because node reference(s) \"non-existing-node-id\" cannot be resolved., 1685958176560)",
+        "message": "Reference \"reference\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | InvalidReferenceException(Node with identifier \"non-existing-node-id\" does not exist., 1687632330292)",
         "severity": "ERROR"
     },
     {
-        "message": "Reference \"references\" in NodeType \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\" | RuntimeException(Reference could not be set, because node reference(s) [\"non-existing-node-id\"] cannot be resolved., 1685958176560)",
+        "message": "Reference \"references\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | InvalidReferenceException(Node with identifier \"non-existing-node-id\" does not exist., 1687632330292)",
         "severity": "ERROR"
     },
     {
@@ -84,7 +84,7 @@
         "severity": "ERROR"
     },
     {
-        "message": "RuntimeException(Node type \"Flowpack.NodeTemplates:Document.Page.Static\" is not allowed for child nodes of type Flowpack.NodeTemplates:Content.WithEvaluationExceptions, 1686417627173)",
+        "message": "NodeConstraintException(Node type \"Flowpack.NodeTemplates:Document.Page\" is not allowed for child nodes of type Flowpack.NodeTemplates:Content.SomeExceptions, 1686417627173)",
         "severity": "ERROR"
     },
     {
@@ -96,7 +96,7 @@
         "severity": "ERROR"
     },
     {
-        "message": "RuntimeException(Template cant mutate type of auto created child nodes. Got: \"Flowpack.NodeTemplates:Content.WithEvaluationExceptions\", 1685999829307)",
+        "message": "RuntimeException(Template cant mutate type of auto created child nodes. Got: \"Flowpack.NodeTemplates:Content.SomeExceptions\", 1685999829307)",
         "severity": "ERROR"
     }
 ]

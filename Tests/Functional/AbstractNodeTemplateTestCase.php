@@ -13,9 +13,9 @@ use Neos\ContentRepository\Core\Factory\ContentRepositoryId;
 use Neos\ContentRepository\Core\Feature\NodeCreation\Command\CreateNodeAggregateWithNode;
 use Neos\ContentRepository\Core\Feature\RootNodeCreation\Command\CreateRootNodeAggregateWithNode;
 use Neos\ContentRepository\Core\Feature\WorkspaceCreation\Command\CreateRootWorkspace;
+use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
 use Neos\ContentRepository\Core\NodeType\NodeTypeName;
 use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
-use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindChildNodesFilter;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindSubtreeFilter;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
 use Neos\ContentRepository\Core\Projection\ContentGraph\VisibilityConstraints;
@@ -28,26 +28,29 @@ use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceName;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceTitle;
 use Neos\ContentRepository\Core\Tests\Behavior\Features\Bootstrap\Helpers\FakeUserIdProvider;
 use Neos\ContentRepositoryRegistry\Factory\ProjectionCatchUpTrigger\CatchUpTriggerWithSynchronousOption;
+use Neos\Flow\Configuration\ConfigurationManager;
 use Neos\Flow\Core\Bootstrap;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 use Neos\Neos\FrontendRouting\NodeAddressFactory;
 use Neos\Neos\Ui\Domain\Model\ChangeCollection;
 use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
 use Neos\Neos\Ui\TypeConverter\ChangeCollectionConverter;
+use Neos\Utility\Arrays;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Yaml\Yaml;
 
-class NodeTemplateTest extends TestCase // we don't use Flows functional test case as it would reset the database afterwards
+abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flows functional test case as it would reset the database afterwards
 {
     use SnapshotTrait;
     use FeedbackCollectionMessagesTrait;
-    use WithConfigurationTrait;
     use JsonSerializeNodeTreeTrait;
+    use WithConfigurationTrait;
 
     use ContentRepositoryTestTrait;
 
-    private Node $homePageNode;
+    protected Node $homePageNode;
 
-    private Node $homePageMainContentCollectionNode;
+    protected Node $homePageMainContentCollectionNode;
 
     private ContentSubgraphInterface $subgraph;
 
@@ -55,9 +58,11 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
 
     private RootTemplate $lastCreatedRootTemplate;
 
-    protected static $testablePersistenceEnabled = false;
+    private NodeTypeManager $nodeTypeManager;
 
-    private ObjectManagerInterface $objectManager;
+    private string $fixturesDir;
+
+    protected ObjectManagerInterface $objectManager;
 
     public function setUp(): void
     {
@@ -75,11 +80,34 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
             return $rootTemplate;
         });
         $this->objectManager->setInstance(TemplateConfigurationProcessor::class, $templateFactoryMock);
+
+        $ref = new \ReflectionClass($this);
+        $this->fixturesDir = dirname($ref->getFileName()) . '/Snapshots';
+    }
+
+    private function loadFakeNodeTypes(): void
+    {
+        $configuration = $this->objectManager->get(ConfigurationManager::class)->getConfiguration('NodeTypes');
+
+        $fileIterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(__DIR__ . '/Features'));
+
+        /** @var \SplFileInfo $fileInfo */
+        foreach ($fileIterator as $fileInfo) {
+            if (!$fileInfo->isFile() || $fileInfo->getExtension() !== 'yaml' || strpos($fileInfo->getBasename(), 'NodeTypes.') !== 0) {
+                continue;
+            }
+
+            $configuration = Arrays::arrayMergeRecursiveOverrule(
+                $configuration,
+                Yaml::parseFile($fileInfo->getRealPath()) ?? []
+            );
+        }
+
+        $this->nodeTypeManager->overrideNodeTypes($configuration);
     }
 
     public function tearDown(): void
     {
-        parent::tearDown();
         $this->objectManager->get(FeedbackCollection::class)->reset();
         $this->objectManager->forgetInstance(TemplateConfigurationProcessor::class);
     }
@@ -89,6 +117,9 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
         CatchUpTriggerWithSynchronousOption::enableSynchonityForSpeedingUpTesting();
 
         $this->initCleanContentRepository(ContentRepositoryId::fromString('node_templates'));
+
+        $this->nodeTypeManager = $this->contentRepository->getNodeTypeManager();
+        $this->loadFakeNodeTypes();
 
         $liveWorkspaceCommand = new CreateRootWorkspace(
             WorkspaceName::fromString('live'),
@@ -153,7 +184,7 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
     /**
      * @param array<string, mixed> $nodeCreationDialogValues
      */
-    private function createNodeInto(Node $targetNode, NodeTypeName $nodeTypeName, array $nodeCreationDialogValues): Node
+    protected function createNodeInto(Node $targetNode, string $nodeTypeName, array $nodeCreationDialogValues): Node
     {
         $targetNodeAddress = NodeAddressFactory::create($this->contentRepository)->createFromNode($targetNode);
         $serializedTargetNodeAddress = $targetNodeAddress->serializeForUri();
@@ -166,7 +197,7 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
                 'parentDomAddress' => [
                     'contextPath' => $serializedTargetNodeAddress,
                 ],
-                'nodeType' => $nodeTypeName->value,
+                'nodeType' => $nodeTypeName,
                 'name' => 'new-node',
                 'data' => $nodeCreationDialogValues,
                 'baseNodeType' => '',
@@ -183,173 +214,41 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
         );
     }
 
-
-    /** @test */
-    public function testNodeCreationMatchesSnapshot1(): void
-    {
-        $createdNode = $this->createNodeInto(
-            $this->homePageMainContentCollectionNode,
-            NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Columns.Two'),
-            []
-        );
-
-        $this->assertLastCreatedTemplateMatchesSnapshot('TwoColumnPreset');
-
-        self::assertSame([], $this->getMessagesOfFeedbackCollection());
-
-        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('TwoColumnPreset', $createdNode);
-    }
-
-    /** @test */
-    public function testNodeCreationMatchesSnapshot2(): void
-    {
-        $createdNode = $this->createNodeInto(
-            $this->homePageMainContentCollectionNode,
-            NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Columns.Two.CreationDialogAndWithItems'),            [
-                'text' => '<p>bar</p>'
-            ]
-        );
-
-        $this->assertLastCreatedTemplateMatchesSnapshot('TwoColumnPreset');
-
-        self::assertSame([], $this->getMessagesOfFeedbackCollection());
-        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('TwoColumnPreset', $createdNode);
-    }
-
-    /** @test */
-    public function testNodeCreationMatchesSnapshot3(): void
-    {
-        $createdNode = $this->createNodeInto(
-            $this->homePageMainContentCollectionNode,
-            NodeTypeName::fromString('Flowpack.NodeTemplates:Content.Columns.Two.WithContext'),
-            []
-        );
-
-        $this->assertLastCreatedTemplateMatchesSnapshot('TwoColumnPreset');
-
-        self::assertSame([], $this->getMessagesOfFeedbackCollection());
-        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('TwoColumnPreset', $createdNode);
-    }
-
-    /** @test */
-    public function testNodeCreationWithDifferentPropertyTypes(): void
+    protected function createFakeNode(string $nodeAggregateId): Node
     {
         $this->contentRepository->handle(
             new CreateNodeAggregateWithNode(
                 $this->homePageNode->subgraphIdentity->contentStreamId,
-                $someNodeId = NodeAggregateId::fromString('7f7bac1c-9400-4db5-bbaa-2b8251d127c5'),
+                $someNodeId = NodeAggregateId::fromString($nodeAggregateId),
                 NodeTypeName::fromString('unstructured'),
                 $this->homePageNode->originDimensionSpacePoint,
-                $this->homePageNode->nodeAggregateId
+                $this->homePageNode->nodeAggregateId,
+                nodeName: NodeName::fromString(uniqid('node-'))
             )
         )->block();
 
-        $createdNode = $this->createNodeInto(
-            $this->homePageMainContentCollectionNode,
-            NodeTypeName::fromString('Flowpack.NodeTemplates:Content.DifferentPropertyTypes'),
-            [
-                'someNode' => $this->subgraph->findNodeById($someNodeId)
-            ]
-        );
-
-        $this->assertLastCreatedTemplateMatchesSnapshot('DifferentPropertyTypes');
-
-        self::assertSame([], $this->getMessagesOfFeedbackCollection());
-        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('DifferentPropertyTypes', $createdNode);
+        return $this->subgraph->findNodeById($someNodeId);
     }
 
-    /** @test */
-    public function exceptionsAreCaughtAndPartialTemplateIsBuild(): void
-    {
-        $createdNode = $this->createNodeInto(
-            $this->homePageMainContentCollectionNode,
-            NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithEvaluationExceptions'),
-            []
-        );
-
-        $this->assertLastCreatedTemplateMatchesSnapshot('WithEvaluationExceptions');
-
-        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/WithEvaluationExceptions.messages.json', json_encode($this->getMessagesOfFeedbackCollection(), JSON_PRETTY_PRINT));
-
-        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('WithEvaluationExceptions', $createdNode);
-    }
-
-    /** @test */
-    public function exceptionsAreCaughtAndPartialTemplateNotBuild(): void
-    {
-        $this->withMockedConfigurationSettings([
-            'Flowpack' => [
-                'NodeTemplates' => [
-                    'exceptionHandling' => [
-                        'templateConfigurationProcessing' => [
-                            'stopOnException' => true
-                        ]
-                    ]
-                ]
-            ]
-        ], function () {
-            $createdNode = $this->createNodeInto(
-                $this->homePageMainContentCollectionNode,
-                NodeTypeName::fromString('Flowpack.NodeTemplates:Content.WithOneEvaluationException'),
-                []
-            );
-
-            $this->assertLastCreatedTemplateMatchesSnapshot('WithOneEvaluationException');
-
-            self::assertSame([
-                [
-                    'message' => 'Template for "WithOneEvaluationException" was not applied. Only 186b511b-b807-6208-9e1c-593e7c1a63d3 was created.',
-                    'severity' => 'ERROR'
-                ],
-                [
-                    'message' => 'Expression "${\'left open" in "childNodes.abort.when" | EelException(The EEL expression "${\'left open" was not a valid EEL expression. Perhaps you forgot to wrap it in ${...}?, 1410441849)',
-                    'severity' => 'ERROR'
-                ]
-            ], $this->getMessagesOfFeedbackCollection());
-
-            self::assertCount(0, $this->subgraph->findChildNodes($createdNode->nodeAggregateId, FindChildNodesFilter::create()));
-        });
-    }
-
-    /** @test */
-    public function testPageNodeCreationMatchesSnapshot1(): void
-    {
-        $createdNode = $this->createNodeInto(
-            $this->homePageNode,
-            NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page.Static'),
-            []
-        );
-
-        $this->assertLastCreatedTemplateMatchesSnapshot('PagePreset');
-
-        self::assertSame([], $this->getMessagesOfFeedbackCollection());
-        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('PagePreset', $createdNode);
-    }
-
-    /** @test */
-    public function testPageNodeCreationMatchesSnapshot2(): void
-    {
-        $createdNode = $this->createNodeInto(
-            $this->homePageNode,
-            NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page.Dynamic'),
-            [
-                'title' => 'Page1'
-            ]
-        );
-
-        self::assertSame([], $this->getMessagesOfFeedbackCollection());
-        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('PagePreset', $createdNode);
-    }
-
-    private function assertLastCreatedTemplateMatchesSnapshot(string $snapShotName): void
+    protected function assertLastCreatedTemplateMatchesSnapshot(string $snapShotName): void
     {
         $lastCreatedTemplate = $this->serializeValuesInArray(
             $this->lastCreatedRootTemplate->jsonSerialize()
         );
-        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.template.json', json_encode($lastCreatedTemplate, JSON_PRETTY_PRINT));
+        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot($this->fixturesDir . '/' . $snapShotName . '.template.json', json_encode($lastCreatedTemplate, JSON_PRETTY_PRINT));
     }
 
-    private function assertNodeDumpAndTemplateDumpMatchSnapshot(string $snapShotName, Node $node): void
+    protected function assertCaughtExceptionsMatchesSnapshot(string $snapShotName): void
+    {
+        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot($this->fixturesDir . '/' . $snapShotName . '.messages.json', json_encode($this->getMessagesOfFeedbackCollection(), JSON_PRETTY_PRINT));
+    }
+
+    protected function assertNoExceptionsWereCaught(): void
+    {
+        self::assertSame([], $this->getMessagesOfFeedbackCollection());
+    }
+
+    protected function assertNodeDumpAndTemplateDumpMatchSnapshot(string $snapShotName, Node $node): void
     {
         $serializedNodes = $this->jsonSerializeNodeAndDescendents(
             $this->subgraph->findSubtree(
@@ -360,7 +259,7 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
             )
         );
         unset($serializedNodes['nodeTypeName']);
-        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.nodes.json', json_encode($serializedNodes, JSON_PRETTY_PRINT));
+        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot($this->fixturesDir . '/' . $snapShotName . '.nodes.json', json_encode($serializedNodes, JSON_PRETTY_PRINT));
 
         // todo test dumper
         return;
@@ -369,6 +268,6 @@ class NodeTemplateTest extends TestCase // we don't use Flows functional test ca
 
         $yamlTemplateWithoutOriginNodeTypeName = '\'{nodeTypeName}\'' . substr($dumpedYamlTemplate, strlen($node->getNodeType()->getName()) + 2);
 
-        $this->assertStringEqualsFileOrCreateSnapshot(__DIR__ . '/Fixtures/' . $snapShotName . '.yaml', $yamlTemplateWithoutOriginNodeTypeName);
+        $this->assertStringEqualsFileOrCreateSnapshot($this->fixturesDir . '/' . $snapShotName . '.yaml', $yamlTemplateWithoutOriginNodeTypeName);
     }
 }

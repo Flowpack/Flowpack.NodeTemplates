@@ -1,0 +1,29 @@
+'{nodeTypeName}':
+  options:
+    template:
+      childNodes:
+        legalNodeName:
+          name: my-node
+          properties:
+            # Text
+            text: legalNodeName
+        capitalsInName:
+          name: foobar
+          properties:
+            # Text
+            text: capitalsInName
+        'ö - was soll das':
+          name: o
+          properties:
+            # Text
+            text: 'ö - was soll das'
+        everythingMixedTogether:
+          name: ablabei-jing-ss-ha
+          properties:
+            # Text
+            text: everythingMixedTogether
+        emptyString:
+          name: node-d41d8cd98f00b204e9800998ecf8427e
+          properties:
+            # Text
+            text: emptyString

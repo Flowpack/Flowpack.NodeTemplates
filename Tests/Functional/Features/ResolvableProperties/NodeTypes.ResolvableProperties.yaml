@@ -1,0 +1,23 @@
+# Test, that asset ids are correctly resolved to asset objects (via the property mapper)
+# Also reference node id's should be correctly resolved
+---
+
+'Flowpack.NodeTemplates:Content.ResolvableProperties':
+  superTypes:
+    'Neos.Neos:Content': true
+  properties:
+    asset:
+      type: Neos\Media\Domain\Model\Asset
+    images:
+      type: array<Neos\Media\Domain\Model\ImageInterface>
+    reference:
+      type: reference
+    references:
+      type: references
+  options:
+    template:
+      properties:
+        asset: 'c228200e-7472-4290-9936-4454a5b5692a'
+        reference: 'some-node-id'
+        references: "${['some-node-id', 'other-node-id', data.realNode]}"
+        images: "${['c8ae9f9f-dd11-4373-bf42-4bf31ec5bd19']}"

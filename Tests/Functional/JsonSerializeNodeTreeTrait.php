@@ -7,6 +7,7 @@ use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindReferencesFil
 use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Subtree;
 use Neos\ContentRepository\Core\Projection\NodeHiddenState\NodeHiddenStateFinder;
+use Neos\Utility\ObjectAccess;
 
 trait JsonSerializeNodeTreeTrait
 {
@@ -67,7 +68,8 @@ trait JsonSerializeNodeTreeTrait
                     $value = $this->serializeValuesInArray($value);
                 }
             } elseif (is_object($value)) {
-                $value = sprintf('object(%s)', get_class($value));
+                $id = ObjectAccess::getProperty($value, 'Persistence_Object_Identifier', true);
+                $value = sprintf('object(%s%s)', get_class($value), $id ? (sprintf(', %s', $id)) : '');
             } else {
                 continue;
             }
