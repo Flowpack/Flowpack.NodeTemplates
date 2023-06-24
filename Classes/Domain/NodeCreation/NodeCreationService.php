@@ -8,13 +8,10 @@ use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\ContentRepository\Domain\Service\Context;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Property\Exception as PropertyWasNotMappedException;
 use Neos\Flow\Property\PropertyMapper;
-use Neos\Flow\Property\PropertyMappingConfiguration;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
 class NodeCreationService
@@ -31,17 +28,11 @@ class NodeCreationService
      */
     protected $nodeUriPathSegmentGenerator;
 
-    /**
-     * @Flow\Inject
-     * @var PropertyMapper
-     */
-    protected $propertyMapper;
+    private PropertiesHandler $propertiesHandler;
 
-    private Context $subgraph;
-
-    public function __construct(Context $subgraph)
+    public function __construct(Context $subgraph, PropertyMapper $propertyMapper)
     {
-        $this->subgraph = $subgraph;
+        $this->propertiesHandler = new PropertiesHandler($subgraph, $propertyMapper);
     }
 
     /**
@@ -52,16 +43,16 @@ class NodeCreationService
     {
         $nodeType = $node->getNodeType();
 
-        $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties(), $caughtExceptions), $nodeType);
+        $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
-        $properties = array_merge(
-            $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions),
-            $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
+        $validProperties = array_merge(
+            $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
+            $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
         );
 
         $nodeMutators = NodeMutatorCollection::from(
-            NodeMutator::setProperties($properties),
-            $this->createMutatorForUriPathSegment($template),
+            NodeMutator::setProperties($validProperties),
+            $this->createMutatorForUriPathSegment($template->getProperties()),
         )->merge(
             $this->createMutatorCollectionFromTemplate(
                 $template->getChildNodes(),
@@ -90,18 +81,18 @@ class NodeCreationService
                 }
 
                 $nodeType = $parentNodesAutoCreatedChildNodes[$template->getName()->__toString()];
-                $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties(), $caughtExceptions), $nodeType);
+                $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
-                $properties = array_merge(
-                    $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions),
-                    $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
+                $validProperties = array_merge(
+                    $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
+                    $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
                 );
 
                 $nodeMutators = $nodeMutators->withNodeMutators(
                     NodeMutator::isolated(
                         NodeMutatorCollection::from(
                             NodeMutator::selectChildNode($template->getName()),
-                            NodeMutator::setProperties($properties)
+                            NodeMutator::setProperties($validProperties)
                         )->merge($this->createMutatorCollectionFromTemplate(
                             $template->getChildNodes(),
                             $parentNode->forTetheredChildNode($template->getName()),
@@ -144,19 +135,19 @@ class NodeCreationService
                 continue;
             }
 
-            $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties(), $caughtExceptions), $nodeType);
+            $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
-            $properties = array_merge(
-                $propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions),
-                $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
+            $validProperties = array_merge(
+                $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
+                $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
             );
 
             $nodeMutators = $nodeMutators->withNodeMutators(
                 NodeMutator::isolated(
                     NodeMutatorCollection::from(
                         NodeMutator::createAndSelectNode($template->getType(), $template->getName()),
-                        NodeMutator::setProperties($properties),
-                        $this->createMutatorForUriPathSegment($template)
+                        NodeMutator::setProperties($validProperties),
+                        $this->createMutatorForUriPathSegment($template->getProperties())
                     )->merge($this->createMutatorCollectionFromTemplate(
                         $template->getChildNodes(),
                         $parentNode->forRegularChildNode($nodeType),
@@ -173,12 +164,9 @@ class NodeCreationService
     /**
      * All document node types get a uri path segment; if it is not explicitly set in the properties,
      * it should be built based on the title property
-     *
-     * @param Template|RootTemplate $template
      */
-    private function createMutatorForUriPathSegment($template): NodeMutator
+    private function createMutatorForUriPathSegment(array $properties): NodeMutator
     {
-        $properties = $template->getProperties();
         return NodeMutator::unsafeFromClosure(function (NodeInterface $previousNode) use ($properties) {
             if (!$previousNode->getNodeType()->isOfType('Neos.Neos:Document')) {
                 return;
@@ -188,41 +176,5 @@ class NodeCreationService
             }
             $previousNode->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($previousNode, $properties['title'] ?? null));
         });
-    }
-
-    private function convertProperties(NodeType $nodeType, array $properties, CaughtExceptions $caughtExceptions): array
-    {
-        // TODO combine with PropertiesAndReferences::requireValidProperties
-        foreach ($nodeType->getConfiguration('properties') as $propertyName => $propertyConfiguration) {
-            if (!isset($properties[$propertyName])) {
-                continue;
-            }
-            $propertyType = $nodeType->getPropertyType($propertyName);
-            if ($propertyType === 'references' || $propertyType === 'reference') {
-                continue;
-            }
-            $propertyType = PropertyType::fromPropertyOfNodeType($propertyName, $nodeType);
-            $propertyValue = $properties[$propertyName];
-            if (!$propertyType->isClass() && !$propertyType->isArrayOfClass()) {
-                // property mapping only for class types or array of classes!
-                continue;
-            }
-            try {
-                $propertyMappingConfiguration = new PropertyMappingConfiguration();
-                $propertyMappingConfiguration->allowAllProperties();
-
-                $properties[$propertyName] = $this->propertyMapper->convert($propertyValue, $propertyType->getValue(), $propertyMappingConfiguration);
-                $messages = $this->propertyMapper->getMessages();
-                if ($messages->hasErrors()) {
-                    throw new PropertyWasNotMappedException($this->propertyMapper->getMessages()->getFirstError()->getMessage(), 1686779371122);
-                }
-            } catch (PropertyWasNotMappedException $exception) {
-                $caughtExceptions->add(CaughtException::fromException(
-                    $exception
-                )->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->getName())));
-                unset($properties[$propertyName]);
-            }
-        }
-        return $properties;
     }
 }
