@@ -24,45 +24,32 @@ jobs:
             neos-version: 8.3
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
           extensions: mbstring, xml, json, zlib, iconv, intl, pdo_sqlite, mysql
-          coverage: xdebug #optional
-          ini-values: opcache.fast_shutdown=0
 
       - name: Update Composer
         run: |
-          sudo composer self-update
+          composer self-update
           composer --version
-
-      # Directory permissions for .composer are wrong, so we remove the complete directory
-      # https://github.com/actions/virtual-environments/issues/824
-      - name: Delete .composer directory
-        run: |
-          sudo rm -rf ~/.composer
-
-      - name: Cache dependencies
-        uses: actions/cache@v1
-        with:
-          path: ~/.composer/cache
-          key: dependencies-composer-${{ hashFiles('composer.json') }}
 
       - name: Prepare Neos distribution
         run: |
-          git clone https://github.com/neos/neos-base-distribution.git -b ${{ matrix.neos-version }} ${FLOW_PATH_ROOT}
+          git clone --depth 1 --branch ${{ matrix.neos-version }} https://github.com/neos/neos-base-distribution.git ${FLOW_PATH_ROOT}
           cd ${FLOW_PATH_ROOT}
           composer config --no-plugins allow-plugins.neos/composer-plugin true
           composer config repositories.tested-package path ../Flowpack.NodeTemplates
           composer require --no-update --no-interaction flowpack/nodetemplates:@dev
 
-      - name: Install distribution
+      - name: Install dependencies
         run: |
           cd ${FLOW_PATH_ROOT}
-          composer install --no-interaction --no-progress
+          composer install --no-interaction --no-progress --prefer-dist
 
       - name: Run Unit tests
         run: |
