@@ -9,7 +9,6 @@ on:
 jobs:
   build:
     env:
-      NEOS_TARGET_VERSION: 7.3
       FLOW_CONTEXT: Testing
       FLOW_PATH_ROOT: ../neos-base-distribution
 
@@ -18,49 +17,44 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-versions: ['7.4']
+        include:
+          - php-version: 7.4
+            neos-version: 7.3
+          - php-version: 8.1
+            neos-version: 8.3
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-versions }}
+          php-version: ${{ matrix.php-version }}
           extensions: mbstring, xml, json, zlib, iconv, intl, pdo_sqlite, mysql
-          coverage: xdebug #optional
-          ini-values: opcache.fast_shutdown=0
 
-      - name: Update Composer
-        run: |
-          sudo composer self-update
-          composer --version
+      - id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+        shell: bash
 
-      # Directory permissions for .composer are wrong, so we remove the complete directory
-      # https://github.com/actions/virtual-environments/issues/824
-      - name: Delete .composer directory
-        run: |
-          sudo rm -rf ~/.composer
-
-      - name: Cache dependencies
-        uses: actions/cache@v1
+      - uses: actions/cache@v2
         with:
-          path: ~/.composer/cache
-          key: dependencies-composer-${{ hashFiles('composer.json') }}
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
 
       - name: Prepare Neos distribution
         run: |
-          git clone https://github.com/neos/neos-base-distribution.git -b ${NEOS_TARGET_VERSION} ${FLOW_PATH_ROOT}
-          cd ${FLOW_PATH_ROOT}
-          composer require --no-update --no-interaction flowpack/nodetemplates
-
-      - name: Install distribution
-        run: |
+          git clone --depth 1 --branch ${{ matrix.neos-version }} https://github.com/neos/neos-base-distribution.git ${FLOW_PATH_ROOT}
           cd ${FLOW_PATH_ROOT}
           composer config --no-plugins allow-plugins.neos/composer-plugin true
-          composer install --no-interaction --no-progress
-          rm -rf Packages/Application/Flowpack.NodeTemplates
-          cp -r ../Flowpack.NodeTemplates Packages/Application/Flowpack.NodeTemplates
+          composer config repositories.tested-package path ../Flowpack.NodeTemplates
+          composer require --no-update --no-interaction flowpack/nodetemplates:@dev
+
+      - name: Install dependencies
+        run: |
+          cd ${FLOW_PATH_ROOT}
+          composer install --no-interaction --no-progress --prefer-dist
 
       - name: Run Unit tests
         run: |
