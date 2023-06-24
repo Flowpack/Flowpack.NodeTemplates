@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Tests\Functional\Features\ResolvableProperties;
 
-use Flowpack\NodeTemplates\Tests\Functional\AbstractNodeTemplateTest;
+use Flowpack\NodeTemplates\Tests\Functional\AbstractNodeTemplateTestCase;
 use Neos\Flow\ResourceManagement\ResourceManager;
 use Neos\Media\Domain\Model\Asset;
 use Neos\Media\Domain\Model\Image;
@@ -12,7 +12,7 @@ use Neos\Media\Domain\Repository\AssetRepository;
 use Neos\Media\Domain\Repository\ImageRepository;
 use Neos\Utility\ObjectAccess;
 
-class ResolvablePropertiesTest extends AbstractNodeTemplateTest
+class ResolvablePropertiesTest extends AbstractNodeTemplateTestCase
 {
     /** @test */
     public function itMatchesSnapshot1(): void
