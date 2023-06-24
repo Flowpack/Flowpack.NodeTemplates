@@ -30,7 +30,7 @@ class DelegatingDocumentTitleNodeCreationHandler implements NodeCreationHandlerI
         ContentRepository $contentRepository
     ): NodeCreationCommands {
         $nodeType = $contentRepository->getNodeTypeManager()
-            ->getNodeType($commands->initialCreateCommand->nodeTypeName);
+            ->getNodeType($commands->first->nodeTypeName);
         $template = $nodeType->getOptions()['template'] ?? null;
         if (
             !$template

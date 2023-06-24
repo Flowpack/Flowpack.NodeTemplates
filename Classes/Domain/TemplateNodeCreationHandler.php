@@ -39,29 +39,32 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
         ContentRepository $contentRepository
     ): NodeCreationCommands {
         $nodeType = $contentRepository->getNodeTypeManager()
-            ->getNodeType($commands->initialCreateCommand->nodeTypeName);
+            ->getNodeType($commands->first->nodeTypeName);
         $templateConfiguration = $nodeType->getOptions()['template'] ?? null;
         if (!$templateConfiguration) {
             return $commands;
         }
 
+        $subgraph = $contentRepository->getContentGraph()->getSubgraph(
+            $commands->first->contentStreamId,
+            $commands->first->originDimensionSpacePoint->toDimensionSpacePoint(),
+            VisibilityConstraints::frontend()
+        );
+
         $evaluationContext = [
             'data' => $data,
             // todo evaluate which context variables
-            'subgraph' => $subgraph = $contentRepository->getContentGraph()->getSubgraph(
-                $commands->initialCreateCommand->contentStreamId,
-                $commands->initialCreateCommand->originDimensionSpacePoint->toDimensionSpacePoint(),
-                VisibilityConstraints::frontend()
-            ),
+            'parentNode' => $subgraph->findNodeById($commands->first->parentNodeAggregateId),
+            'subgraph' => $subgraph
         ];
 
         $caughtExceptions = CaughtExceptions::create();
         try {
             $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
-            $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $nodeType, $commands->initialCreateCommand->nodeAggregateId);
+            $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $nodeType, $commands->first->nodeAggregateId);
 
             $commands = (new NodeCreationService($subgraph, $contentRepository->getNodeTypeManager()))->apply($template, $commands, $caughtExceptions);
-            $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $nodeType, $commands->initialCreateCommand->nodeAggregateId);
+            $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $nodeType, $commands->first->nodeAggregateId);
 
         } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
         }

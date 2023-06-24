@@ -46,12 +46,12 @@ class NodeCreationService
      */
     public function apply(RootTemplate $template, NodeCreationCommands $commands, CaughtExceptions $caughtExceptions): NodeCreationCommands
     {
-        $nodeType = $this->nodeTypeManager->getNodeType($commands->initialCreateCommand->nodeTypeName);
+        $nodeType = $this->nodeTypeManager->getNodeType($commands->first->nodeTypeName);
         $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
 
         // set properties
 
-        $initialProperties = $commands->initialCreateCommand->initialPropertyValues;
+        $initialProperties = $commands->first->initialPropertyValues;
 
         $initialProperties = $initialProperties->merge(
             PropertyValuesToWrite::fromArray($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions))
@@ -59,8 +59,8 @@ class NodeCreationService
 
         $initialProperties = $this->ensureNodeHasUriPathSegment(
             $nodeType,
-            $commands->initialCreateCommand->nodeName,
-            $commands->initialCreateCommand->originDimensionSpacePoint->toDimensionSpacePoint(),
+            $commands->first->nodeName,
+            $commands->first->originDimensionSpacePoint->toDimensionSpacePoint(),
             $initialProperties,
             $template
         );
@@ -68,16 +68,16 @@ class NodeCreationService
         return $this->applyTemplateRecursively(
             $template->getChildNodes(),
             new ToBeCreatedNode(
-                $commands->initialCreateCommand->contentStreamId,
-                $commands->initialCreateCommand->originDimensionSpacePoint,
-                $commands->initialCreateCommand->nodeAggregateId,
+                $commands->first->contentStreamId,
+                $commands->first->originDimensionSpacePoint,
+                $commands->first->nodeAggregateId,
                 $nodeType,
             ),
             $commands->withInitialPropertyValues($initialProperties)->withAdditionalCommands(
                 ...$this->createReferencesCommands(
-                    $commands->initialCreateCommand->contentStreamId,
-                    $commands->initialCreateCommand->nodeAggregateId,
-                    $commands->initialCreateCommand->originDimensionSpacePoint,
+                    $commands->first->contentStreamId,
+                    $commands->first->nodeAggregateId,
+                    $commands->first->originDimensionSpacePoint,
                     $propertiesAndReferences->requireValidReferences($nodeType, $this->subgraph, $caughtExceptions)
                 )
             ),
@@ -162,7 +162,7 @@ class NodeCreationService
 
             $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($template->getProperties(), $nodeType);
 
-            $nodeName = NodeName::fromString(uniqid('node-', false));
+            $nodeName = $template->getName() ?? NodeName::fromString(uniqid('node-', false));
 
             $initialProperties = PropertyValuesToWrite::fromArray($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions));
 
@@ -247,7 +247,7 @@ class NodeCreationService
 
         return $propertiesToWrite->withValue(
             'uriPathSegment',
-            $this->nodeUriPathSegmentGenerator->generateUriPathSegmentFromText(
+            $this->nodeUriPathSegmentGenerator->generateUriPathSegmentFromTextForDimension(
                 $properties['title'] ?? $nodeName?->value ?? uniqid('', true),
                 $dimensionSpacePoint
             )
