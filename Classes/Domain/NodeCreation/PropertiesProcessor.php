@@ -15,7 +15,7 @@ use Neos\Flow\Property\PropertyMappingConfiguration;
 /**
  * @Flow\Proxy(false)
  */
-class PropertiesHandler
+class PropertiesProcessor
 {
     private Context $subgraph;
 
@@ -27,7 +27,7 @@ class PropertiesHandler
         $this->propertyMapper = $propertyMapper;
     }
 
-    public function createdFromArrayByTypeDeclaration(array $propertiesAndReferences, NodeType $nodeType): Properties
+    public function createFromArrayByTypeDeclaration(array $propertiesAndReferences, NodeType $nodeType): Properties
     {
         $references = [];
         $properties = [];
@@ -45,14 +45,15 @@ class PropertiesHandler
     }
 
     /**
-     * A few checks are run against the properties before they are applied on the node.
+     * We run a few checks and convert the properties.
+     * If any of the checks fails we append an exception to the $caughtExceptions.
      *
-     * 1. It is checked, that only properties will be set, that were declared in the NodeType
+     * 1. Check if the NodeType schema has the property declared.
      *
      * 2. It is checked, that the property value is assignable to the property type.
-     *    In case the type is class or an array of classes, the property mapper will be used map the given type to it. If it doesn't succeed, we will log an error.
+     *   In case the type is class or an array of classes, the property mapper will be used map the given type to it. If it doesn't succeed, we will log an error.
      */
-    public function requireValidProperties(Properties $properties, CaughtExceptions $caughtExceptions): array
+    public function processAndValidateProperties(Properties $properties, CaughtExceptions $caughtExceptions): array
     {
         $nodeType = $properties->getNodeType();
         $validProperties = [];
@@ -102,7 +103,7 @@ class PropertiesHandler
         return $validProperties;
     }
 
-    public function requireValidReferences(Properties $properties, CaughtExceptions $caughtExceptions): array
+    public function processAndValidateReferences(Properties $properties, CaughtExceptions $caughtExceptions): array
     {
         $nodeType = $properties->getNodeType();
         $validReferences = [];

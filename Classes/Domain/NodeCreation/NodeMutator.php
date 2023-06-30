@@ -36,7 +36,7 @@ class NodeMutator
     /**
      * Queues to execute this mutator on the current node
      *
-     * @param \Closure(NodeInterface $currentNode): ?NodeInterface $mutator
+     * @param \Closure(NodeInterface $currentNode): void $mutator
      */
     public static function unsafeFromClosure(\Closure $mutator): self
     {
@@ -44,7 +44,7 @@ class NodeMutator
     }
 
     /**
-     * Queues to execute the {@see NodeMutatorCollection} on the current node but the operations wont change the current node.
+     * Queues to execute the collection {@see NodeMutatorCollection} on the current node but any selections made in the collection won't change the pointer to $this current node.
      */
     public static function isolated(NodeMutatorCollection $nodeMutators): self
     {

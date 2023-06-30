@@ -28,11 +28,11 @@ class NodeCreationService
      */
     protected $nodeUriPathSegmentGenerator;
 
-    private PropertiesHandler $propertiesHandler;
+    private PropertiesProcessor $propertiesProcessor;
 
     public function __construct(Context $subgraph, PropertyMapper $propertyMapper)
     {
-        $this->propertiesHandler = new PropertiesHandler($subgraph, $propertyMapper);
+        $this->propertiesProcessor = new PropertiesProcessor($subgraph, $propertyMapper);
     }
 
     /**
@@ -43,11 +43,11 @@ class NodeCreationService
     {
         $nodeType = $node->getNodeType();
 
-        $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
+        $properties = $this->propertiesProcessor->createFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
         $validProperties = array_merge(
-            $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
-            $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
+            $this->propertiesProcessor->processAndValidateProperties($properties, $caughtExceptions),
+            $this->propertiesProcessor->processAndValidateReferences($properties, $caughtExceptions)
         );
 
         $nodeMutators = NodeMutatorCollection::from(
@@ -81,11 +81,11 @@ class NodeCreationService
                 }
 
                 $nodeType = $parentNodesAutoCreatedChildNodes[$template->getName()->__toString()];
-                $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
+                $properties = $this->propertiesProcessor->createFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
                 $validProperties = array_merge(
-                    $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
-                    $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
+                    $this->propertiesProcessor->processAndValidateProperties($properties, $caughtExceptions),
+                    $this->propertiesProcessor->processAndValidateReferences($properties, $caughtExceptions)
                 );
 
                 $nodeMutators = $nodeMutators->withNodeMutators(
@@ -135,11 +135,11 @@ class NodeCreationService
                 continue;
             }
 
-            $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
+            $properties = $this->propertiesProcessor->createFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
             $validProperties = array_merge(
-                $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions),
-                $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
+                $this->propertiesProcessor->processAndValidateProperties($properties, $caughtExceptions),
+                $this->propertiesProcessor->processAndValidateReferences($properties, $caughtExceptions)
             );
 
             $nodeMutators = $nodeMutators->withNodeMutators(
