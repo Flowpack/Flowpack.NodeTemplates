@@ -2,10 +2,7 @@
   options:
     nodeCreationHandlers:
       templateNodeCreationHandler:
+        # after the default Neos.Neos.Ui creationHandler
+        # https://github.com/Flowpack/Flowpack.NodeTemplates/pull/21
+        position: end
         nodeCreationHandler: 'Flowpack\NodeTemplates\Domain\TemplateNodeCreationHandler'
-
-'Neos.Neos:Document':
-  options:
-    nodeCreationHandlers:
-      documentTitle:
-        nodeCreationHandler: 'Flowpack\NodeTemplates\Domain\DelegatingDocumentTitleNodeCreationHandler'
