@@ -84,7 +84,7 @@
         "severity": "ERROR"
     },
     {
-        "message": "RuntimeException(Node type \"Flowpack.NodeTemplates:Document.Page\" is not allowed for child nodes of type Flowpack.NodeTemplates:Content.SomeExceptions, 1686417627173)",
+        "message": "NodeConstraintException(Node type \"Flowpack.NodeTemplates:Document.Page\" is not allowed for child nodes of type Flowpack.NodeTemplates:Content.SomeExceptions, 1686417627173)",
         "severity": "ERROR"
     },
     {

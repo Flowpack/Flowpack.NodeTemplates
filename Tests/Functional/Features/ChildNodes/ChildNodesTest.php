@@ -25,7 +25,7 @@ class ChildNodesTest extends AbstractNodeTemplateTestCase
 
 
     /** @test */
-    public function testNodeCreationMatchesSnapshot2(): void
+    public function itMatchesSnapshot2(): void
     {
         $createdNode = $this->createNodeInto(
             $this->homePageMainContentCollectionNode,
@@ -42,7 +42,7 @@ class ChildNodesTest extends AbstractNodeTemplateTestCase
     }
 
     /** @test */
-    public function testNodeCreationMatchesSnapshot3(): void
+    public function itMatchesSnapshot3(): void
     {
         $createdNode = $this->createNodeInto(
             $this->homePageMainContentCollectionNode,
@@ -54,5 +54,35 @@ class ChildNodesTest extends AbstractNodeTemplateTestCase
 
         $this->assertNoExceptionsWereCaught();
         $this->assertNodeDumpAndTemplateDumpMatchSnapshot('ChildNodes', $createdNode);
+    }
+
+    /** @test */
+    public function itMatchesSnapshot4(): void
+    {
+        $createdNode = $this->createNodeInto(
+            $this->homePageMainContentCollectionNode,
+            'Flowpack.NodeTemplates:Content.AllowedChildNodes',
+            []
+        );
+
+        $this->assertLastCreatedTemplateMatchesSnapshot('AllowedChildNodes');
+
+        $this->assertNoExceptionsWereCaught();
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('AllowedChildNodes', $createdNode);
+    }
+
+    /** @test */
+    public function itMatchesSnapshot5(): void
+    {
+        $createdNode = $this->createNodeInto(
+            $this->homePageMainContentCollectionNode,
+            'Flowpack.NodeTemplates:Content.DisallowedChildNodes',
+            []
+        );
+
+        $this->assertLastCreatedTemplateMatchesSnapshot('DisallowedChildNodes');
+
+        $this->assertCaughtExceptionsMatchesSnapshot('DisallowedChildNodes');
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('DisallowedChildNodes', $createdNode);
     }
 }

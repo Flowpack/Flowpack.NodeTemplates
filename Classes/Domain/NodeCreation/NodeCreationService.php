@@ -56,7 +56,7 @@ class NodeCreationService
         )->merge(
             $this->createMutatorCollectionFromTemplate(
                 $template->getChildNodes(),
-                new ToBeCreatedNode($nodeType),
+                $node,
                 $caughtExceptions
             )
         );
@@ -95,7 +95,7 @@ class NodeCreationService
                             NodeMutator::setProperties($validProperties)
                         )->merge($this->createMutatorCollectionFromTemplate(
                             $template->getChildNodes(),
-                            new ToBeCreatedNode($nodeType),
+                            $parentNode->forTetheredChildNode($template->getName()),
                             $caughtExceptions
                         ))
                     )
@@ -126,14 +126,14 @@ class NodeCreationService
                 continue;
             }
 
-            if (!$parentNode->getNodeType()->allowsChildNodeType($nodeType)) {
+            try {
+                $parentNode->requireConstraintsImposedByAncestorsAreMet($nodeType);
+            } catch (NodeConstraintException $nodeConstraintException) {
                 $caughtExceptions->add(
-                    CaughtException::fromException(new \RuntimeException(sprintf('Node type "%s" is not allowed for child nodes of type %s', $template->getType()->getValue(), $parentNode->getNodeType()->getName()), 1686417627173))
+                    CaughtException::fromException($nodeConstraintException)
                 );
                 continue;
             }
-
-            // todo maybe check also explicitly for allowsGrandchildNodeType (we do this currently like below)
 
             $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
 
@@ -150,7 +150,7 @@ class NodeCreationService
                         $this->createMutatorForUriPathSegment($template->getProperties())
                     )->merge($this->createMutatorCollectionFromTemplate(
                         $template->getChildNodes(),
-                        new ToBeCreatedNode($nodeType),
+                        $parentNode->forRegularChildNode($nodeType),
                         $caughtExceptions
                     ))
                 )

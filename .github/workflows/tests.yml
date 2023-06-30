@@ -2,9 +2,10 @@ name: Tests
 
 on:
   push:
-    branches: [ master, '[0-9]+.[0-9]' ]
+    branches: [ main, '[0-9]+.[0-9]' ]
   pull_request:
-    branches: [ master, '[0-9]+.[0-9]' ]
+    branches: [ main, '[0-9]+.[0-9]' ]
+  workflow_dispatch: # Allow manual triggering on any branch via `gh workflow run tests.yml -r branch-name`
 
 jobs:
   build:
