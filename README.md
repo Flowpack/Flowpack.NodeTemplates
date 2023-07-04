@@ -159,19 +159,23 @@ because it inspires a more declarative mood. The naming is inspired by Ansible.
 
 There are several variables available in the EEL context for example.
 
-| Variable name  | Type                 | Description                                                | Availability          |
-|----------------|----------------------|------------------------------------------------------------|-----------------------|
-| data           | array<string, mixed> | Data from the node creation dialog                         | Global                |
-| triggeringNode | NodeInterface        | The main node whose creation triggered template processing | Global                |
-| item           | mixed                | The current item inside a withItems loop                   | Inside withItems loop |
-| key            | string               | The current key inside a withItems loop                    | Inside withItems loop |
+| Variable name                | Type                   | Description                                                 | Availability            |
+|------------------------------|------------------------|-------------------------------------------------------------|-------------------------|
+| data                         | `array<string, mixed>` | Data from the node creation dialog                          | Global                  |
+| triggeringNode _@deprecated_ | `Node`                 | The main node whose creation triggered template processing  | Global                  |
+| parentNode                   | `Node`                 | The parent of the node the template is initially applied on | Global                  |
+| item                         | `mixed`                | The current item value inside a loop                        | Inside `withItems` loop |
+| key                          | `string`               | The current item key inside a loop                          | Inside `withItems` loop |
+
+> **Warning**
+> The behaviour of `parentNode` changed from version 1.x to 2.x
 
 ### Additional context
 
 You can add more context variables to a template via the ``withContext`` setting. ``withContext``
 takes an arbitrary array of items whose values might also contain EEL expressions:
 
-```
+```yaml
 template:
   withContext:
     someText: '<p>foo</p>'
