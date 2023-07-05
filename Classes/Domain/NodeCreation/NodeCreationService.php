@@ -8,10 +8,8 @@ use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;
-use Neos\ContentRepository\Domain\Service\Context;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Property\PropertyMapper;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
 class NodeCreationService
@@ -30,9 +28,12 @@ class NodeCreationService
 
     private PropertiesProcessor $propertiesProcessor;
 
-    public function __construct(Context $subgraph, PropertyMapper $propertyMapper)
+    private ReferencesProcessor $referencesProcessor;
+
+    public function __construct(PropertiesProcessor $propertiesProcessor, ReferencesProcessor $referencesProcessor)
     {
-        $this->propertiesProcessor = new PropertiesProcessor($subgraph, $propertyMapper);
+        $this->propertiesProcessor = $propertiesProcessor;
+        $this->referencesProcessor = $referencesProcessor;
     }
 
     /**
@@ -45,7 +46,7 @@ class NodeCreationService
 
         $validProperties = array_merge(
             $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
-            $this->propertiesProcessor->processAndValidateReferences($node, $caughtExceptions)
+            $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
         );
 
         $nodeMutators = NodeMutatorCollection::from(
@@ -82,7 +83,7 @@ class NodeCreationService
 
                 $validProperties = array_merge(
                     $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
-                    $this->propertiesProcessor->processAndValidateReferences($node, $caughtExceptions)
+                    $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
                 );
 
                 $nodeMutators = $nodeMutators->withNodeMutators(
@@ -136,7 +137,7 @@ class NodeCreationService
 
             $validProperties = array_merge(
                 $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
-                $this->propertiesProcessor->processAndValidateReferences($node, $caughtExceptions)
+                $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
             );
 
             $nodeMutators = $nodeMutators->withNodeMutators(
