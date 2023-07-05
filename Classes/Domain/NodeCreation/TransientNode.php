@@ -9,7 +9,7 @@ use Neos\Flow\Annotations as Flow;
 /**
  * @Flow\Proxy(false)
  */
-class ToBeCreatedNode
+class TransientNode
 {
     private NodeType $nodeType;
 
@@ -17,7 +17,7 @@ class ToBeCreatedNode
 
     private ?NodeType $tetheredParentNodeType;
 
-    public function __construct(NodeType $nodeType, ?NodeName $tetheredNodeName, ?NodeType $tetheredParentNodeType)
+    private function __construct(NodeType $nodeType, ?NodeName $tetheredNodeName, ?NodeType $tetheredParentNodeType)
     {
         $this->nodeType = $nodeType;
         $this->tetheredNodeName = $tetheredNodeName;
@@ -27,7 +27,7 @@ class ToBeCreatedNode
         }
     }
 
-    public static function fromRegular(NodeType $nodeType): self
+    public static function forRegular(NodeType $nodeType): self
     {
         return new self($nodeType, null, null);
     }

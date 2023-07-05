@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation;
 
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeConstraintException;
-use Flowpack\NodeTemplates\Domain\NodeCreation\ToBeCreatedNode;
+use Flowpack\NodeTemplates\Domain\NodeCreation\TransientNode;
 use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
@@ -67,7 +67,7 @@ class ToBeCreatedNodeTest extends TestCase
     /** @test */
     public function fromRegularAllowedChildNode(): void
     {
-        $parentNode = ToBeCreatedNode::fromRegular($this->getNodeType('A:Content1'));
+        $parentNode = TransientNode::forRegular($this->getNodeType('A:Content1'));
         self::assertSame($this->getNodeType('A:Content1'), $parentNode->getNodeType());
         $parentNode->requireConstraintsImposedByAncestorsAreMet($this->getNodeType('A:Content2'));
     }
@@ -75,7 +75,7 @@ class ToBeCreatedNodeTest extends TestCase
     /** @test */
     public function forTetheredChildNodeAllowedChildNode(): void
     {
-        $grandParentNode = ToBeCreatedNode::fromRegular($this->getNodeType('A:WithContent1AllowedCollectionAsChildNode'));
+        $grandParentNode = TransientNode::forRegular($this->getNodeType('A:WithContent1AllowedCollectionAsChildNode'));
 
         $parentNode = $grandParentNode->forTetheredChildNode(NodeName::fromString('collection'));
         self::assertSame($this->getNodeType('A:Collection.Allowed'), $parentNode->getNodeType());
@@ -86,7 +86,7 @@ class ToBeCreatedNodeTest extends TestCase
     /** @test */
     public function forTetheredChildNodeAllowedChildNodeBecauseConstraintOverride(): void
     {
-        $grandParentNode = ToBeCreatedNode::fromRegular($this->getNodeType('A:WithContent1AllowedCollectionAsChildNodeViaOverride'));
+        $grandParentNode = TransientNode::forRegular($this->getNodeType('A:WithContent1AllowedCollectionAsChildNodeViaOverride'));
 
         $parentNode = $grandParentNode->forTetheredChildNode(NodeName::fromString('collection'));
         self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());
@@ -97,7 +97,7 @@ class ToBeCreatedNodeTest extends TestCase
     /** @test */
     public function forRegularChildNodeAllowedChildNode(): void
     {
-        $grandParentNode = ToBeCreatedNode::fromRegular($this->getNodeType('A:Content1'));
+        $grandParentNode = TransientNode::forRegular($this->getNodeType('A:Content1'));
 
         $parentNode = $grandParentNode->forRegularChildNode($this->getNodeType('A:Content2'));
         self::assertSame($this->getNodeType('A:Content2'), $parentNode->getNodeType());
@@ -111,7 +111,7 @@ class ToBeCreatedNodeTest extends TestCase
         $this->expectException(NodeConstraintException::class);
         $this->expectExceptionMessage('Node type "A:Content1" is not allowed for child nodes of type A:Collection.Disallowed');
 
-        $parentNode = ToBeCreatedNode::fromRegular($this->getNodeType('A:Collection.Disallowed'));
+        $parentNode = TransientNode::forRegular($this->getNodeType('A:Collection.Disallowed'));
         self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());
 
         $parentNode->requireConstraintsImposedByAncestorsAreMet($this->getNodeType('A:Content1'));
@@ -123,7 +123,7 @@ class ToBeCreatedNodeTest extends TestCase
         $this->expectException(NodeConstraintException::class);
         $this->expectExceptionMessage('Node type "A:Content1" is not allowed below tethered child nodes "collection" of nodes of type "A:WithDisallowedCollectionAsChildNode"');
 
-        $grandParentNode = ToBeCreatedNode::fromRegular($this->getNodeType('A:WithDisallowedCollectionAsChildNode'));
+        $grandParentNode = TransientNode::forRegular($this->getNodeType('A:WithDisallowedCollectionAsChildNode'));
 
         $parentNode = $grandParentNode->forTetheredChildNode(NodeName::fromString('collection'));
         self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());
@@ -137,7 +137,7 @@ class ToBeCreatedNodeTest extends TestCase
         $this->expectException(NodeConstraintException::class);
         $this->expectExceptionMessage('Node type "A:Content1" is not allowed for child nodes of type A:Collection.Disallowed');
 
-        $grandParentNode = ToBeCreatedNode::fromRegular($this->getNodeType('A:Content2'));
+        $grandParentNode = TransientNode::forRegular($this->getNodeType('A:Content2'));
 
         $parentNode = $grandParentNode->forRegularChildNode($this->getNodeType('A:Collection.Disallowed'));
         self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());

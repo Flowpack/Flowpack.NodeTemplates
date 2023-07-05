@@ -39,7 +39,7 @@ class NodeCreationService
      * Applies the root template and its descending configured child node templates on the given node.
      * @throws \InvalidArgumentException
      */
-    public function createMutatorCollection(RootTemplate $template, ToBeCreatedNode $node, CaughtExceptions $caughtExceptions): NodeMutatorCollection
+    public function createMutatorCollection(RootTemplate $template, TransientNode $node, CaughtExceptions $caughtExceptions): NodeMutatorCollection
     {
         $nodeType = $node->getNodeType();
 
@@ -64,7 +64,7 @@ class NodeCreationService
         return $nodeMutators;
     }
 
-    private function createMutatorCollectionFromTemplate(Templates $templates, ToBeCreatedNode $parentNode, CaughtExceptions $caughtExceptions): NodeMutatorCollection
+    private function createMutatorCollectionFromTemplate(Templates $templates, TransientNode $parentNode, CaughtExceptions $caughtExceptions): NodeMutatorCollection
     {
         $nodeMutators = NodeMutatorCollection::empty();
 
