@@ -17,6 +17,12 @@ use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
 class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 {
     /**
+     * @var NodeCreationService
+     * @Flow\Inject
+     */
+    protected $nodeCreationService;
+
+    /**
      * @var TemplateConfigurationProcessor
      * @Flow\Inject
      */
@@ -63,7 +69,7 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
             $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
             $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $nodeType, $commands->first->nodeAggregateId);
 
-            $commands = (new NodeCreationService($subgraph, $contentRepository->getNodeTypeManager()))->apply($template, $commands, $caughtExceptions);
+            $commands = $this->nodeCreationService->apply($template, $commands, $contentRepository->getNodeTypeManager(), $subgraph, $caughtExceptions);
             $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $nodeType, $commands->first->nodeAggregateId);
 
         } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {

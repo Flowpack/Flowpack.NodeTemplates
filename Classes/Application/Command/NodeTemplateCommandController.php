@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Flowpack\NodeTemplates\Application\Command;
 
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
-use Flowpack\NodeTemplates\Domain\NodeCreation\ToBeCreatedNode;
+use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\NodeTemplateDumper\NodeTemplateDumper;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
 use Neos\Flow\Annotations as Flow;
@@ -13,6 +13,12 @@ use Neos\Flow\Cli\CommandController;
 
 class NodeTemplateCommandController extends CommandController
 {
+    /**
+     * @var NodeCreationService
+     * @Flow\Inject
+     */
+    protected $nodeCreationService;
+
     /**
      * @Flow\Inject
      * @var NodeTemplateDumper
@@ -94,8 +100,7 @@ class NodeTemplateCommandController extends CommandController
                 $caughtExceptions
             );
 
-            $nodeCreation = new NodeCreationService($subgraph);
-            $nodeCreation->createMutatorCollection($template, ToBeCreatedNode::fromRegular($nodeType), $caughtExceptions);
+            $this->nodeCreationService->createMutatorCollection($template, $nodeType, $this->nodeTypeManager, $subgraph, $caughtExceptions);
 
             if ($caughtExceptions->hasExceptions()) {
                 $faultyNodeTypeTemplates[$nodeType->getName()] = ['caughtExceptions' => $caughtExceptions, 'dataWasAccessed' => $observableEmptyData->dataWasAccessed];

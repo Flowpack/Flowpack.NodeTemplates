@@ -4,6 +4,8 @@ namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
 use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
+use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
 use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
@@ -12,38 +14,67 @@ use Neos\Flow\Annotations as Flow;
 /**
  * @Flow\Proxy(false)
  */
-final readonly class ToBeCreatedNode
+final readonly class TransientNode
 {
+    public array $properties;
+
+    public array $references;
+
     private function __construct(
+        public NodeAggregateId $nodeAggregateId,
         public ContentStreamId $contentStreamId,
         public OriginDimensionSpacePoint $originDimensionSpacePoint,
-        public NodeAggregateId $nodeAggregateId,
         public NodeType $nodeType,
         private ?NodeName $tetheredNodeName,
         private ?NodeType $tetheredParentNodeType,
+        public NodeTypeManager $nodeTypeManager,
+        public ContentSubgraphInterface $subgraph,
+        array $rawProperties
     ) {
         if ($this->tetheredNodeName !== null) {
             assert($this->tetheredParentNodeType !== null);
         }
+
+        // split properties and references by type declaration
+        $properties = [];
+        $references = [];
+        foreach ($rawProperties as $propertyName => $propertyValue) {
+            // TODO: remove the next line to initialise the nodeType, once https://github.com/neos/neos-development-collection/issues/4333 is fixed
+            $this->nodeType->getFullConfiguration();
+            $declaration = $this->nodeType->getPropertyType($propertyName);
+            if ($declaration === 'reference' || $declaration === 'references') {
+                $references[$propertyName] = $propertyValue;
+                continue;
+            }
+            $properties[$propertyName] = $propertyValue;
+        }
+        $this->properties = $properties;
+        $this->references = $references;
     }
 
-    public static function fromRegular(
+    public static function forRegular(
+        NodeAggregateId $nodeAggregateId,
         ContentStreamId $contentStreamId,
         OriginDimensionSpacePoint $originDimensionSpacePoint,
-        NodeAggregateId $nodeAggregateId,
-        NodeType $nodeType
+        NodeType $nodeType,
+        NodeTypeManager $nodeTypeManager,
+        ContentSubgraphInterface $subgraph,
+        array $rawProperties
     ): self {
         return new self(
+            $nodeAggregateId,
             $contentStreamId,
             $originDimensionSpacePoint,
-            $nodeAggregateId,
             $nodeType,
             null,
-            null
+            null,
+            $nodeTypeManager,
+            $subgraph,
+            $rawProperties
         );
     }
 
-    public function forTetheredChildNode(NodeName $nodeName, NodeAggregateId $nodeAggregateId): self
+    public function forTetheredChildNode(NodeName $nodeName, array $rawProperties): self
     {
         // `getTypeOfAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
         // https://github.com/neos/neos-ui/issues/3527
@@ -52,25 +83,37 @@ final readonly class ToBeCreatedNode
         if (!$childNodeType instanceof NodeType) {
             throw new \InvalidArgumentException('forTetheredChildNode only works for tethered nodes.');
         }
+
+        $nodeAggregateId = NodeAggregateId::fromParentNodeAggregateIdAndNodeName(
+            $this->nodeAggregateId,
+            $nodeName
+        );
+
         return new self(
+            $nodeAggregateId,
             $this->contentStreamId,
             $this->originDimensionSpacePoint,
-            $nodeAggregateId,
             $childNodeType,
             $nodeName,
-            $this->nodeType
+            $this->nodeType,
+            $this->nodeTypeManager,
+            $this->subgraph,
+            $rawProperties
         );
     }
 
-    public function forRegularChildNode(NodeType $nodeType, NodeAggregateId $nodeAggregateId): self
+    public function forRegularChildNode(NodeAggregateId $nodeAggregateId, NodeType $nodeType, array $rawProperties): self
     {
         return new self(
+            $nodeAggregateId,
             $this->contentStreamId,
             $this->originDimensionSpacePoint,
-            $nodeAggregateId,
             $nodeType,
             null,
-            null
+            null,
+            $this->nodeTypeManager,
+            $this->subgraph,
+            $rawProperties
         );
     }
 
@@ -84,11 +127,6 @@ final readonly class ToBeCreatedNode
         } else {
             self::requireNodeTypeConstraintsImposedByParentToBeMet($this->nodeType, $childNodeType);
         }
-    }
-
-    public function getNodeType(): NodeType
-    {
-        return $this->nodeType;
     }
 
     private static function requireNodeTypeConstraintsImposedByParentToBeMet(NodeType $parentNodeType, NodeType $nodeType): void

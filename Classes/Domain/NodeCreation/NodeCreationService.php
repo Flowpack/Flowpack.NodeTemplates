@@ -23,43 +23,54 @@ use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
 use Neos\ContentRepository\Core\SharedModel\Node\ReferenceName;
 use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
 use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Property\PropertyMapper;
 use Neos\Neos\Ui\NodeCreationHandler\NodeCreationCommands;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
+/**
+ * @Flow\Scope("singleton")
+ */
 class NodeCreationService
 {
-    private readonly NodeTypeManager $nodeTypeManager;
+    /**
+     * @Flow\Inject
+     * @var NodeUriPathSegmentGenerator
+     */
+    protected $nodeUriPathSegmentGenerator;
 
-    private readonly NodeUriPathSegmentGenerator $nodeUriPathSegmentGenerator;
+    /**
+     * @Flow\Inject
+     * @var PropertiesProcessor
+     */
+    protected $propertiesProcessor;
 
-    private PropertiesHandler $propertiesHandler;
-
-    public function __construct(
-        ContentSubgraphInterface $subgraph,
-        NodeTypeManager $nodeTypeManager,
-        PropertyMapper $propertyMapper,
-        NodeUriPathSegmentGenerator $nodeUriPathSegmentGenerator
-    ) {
-        $this->nodeTypeManager = $nodeTypeManager;
-        $this->nodeUriPathSegmentGenerator = $nodeUriPathSegmentGenerator;
-        $this->propertiesHandler = new PropertiesHandler($subgraph, $propertyMapper);
-    }
+    /**
+     * @Flow\Inject
+     * @var ReferencesProcessor
+     */
+    protected $referencesProcessor;
 
     /**
      * Applies the root template and its descending configured child node templates on the given node.
      * @throws \InvalidArgumentException
      */
-    public function apply(RootTemplate $template, NodeCreationCommands $commands, CaughtExceptions $caughtExceptions): NodeCreationCommands
+    public function apply(RootTemplate $template, NodeCreationCommands $commands, NodeTypeManager $nodeTypeManager, ContentSubgraphInterface $subgraph, CaughtExceptions $caughtExceptions): NodeCreationCommands
     {
-        $nodeType = $this->nodeTypeManager->getNodeType($commands->first->nodeTypeName);
-        $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
+        $nodeType = $nodeTypeManager->getNodeType($commands->first->nodeTypeName);
+        $node = TransientNode::forRegular(
+            $commands->first->nodeAggregateId,
+            $commands->first->contentStreamId,
+            $commands->first->originDimensionSpacePoint,
+            $nodeType,
+            $nodeTypeManager,
+            $subgraph,
+            $template->getProperties()
+        );
 
         $initialProperties = $commands->first->initialPropertyValues;
 
         $initialProperties = $initialProperties->merge(
             PropertyValuesToWrite::fromArray(
-                $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions)
+                $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions)
             )
         );
 
@@ -73,29 +84,24 @@ class NodeCreationService
 
         return $this->applyTemplateRecursively(
             $template->getChildNodes(),
-            ToBeCreatedNode::fromRegular(
-                $commands->first->contentStreamId,
-                $commands->first->originDimensionSpacePoint,
-                $commands->first->nodeAggregateId,
-                $nodeType
-            ),
+            $node,
             $commands->withInitialPropertyValues($initialProperties)->withAdditionalCommands(
                 ...$this->createReferencesCommands(
                     $commands->first->contentStreamId,
                     $commands->first->nodeAggregateId,
                     $commands->first->originDimensionSpacePoint,
-                    $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
+                    $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
                 )
             ),
             $caughtExceptions
         );
     }
 
-    private function applyTemplateRecursively(Templates $templates, ToBeCreatedNode $parentNode, NodeCreationCommands $commands, CaughtExceptions $caughtExceptions): NodeCreationCommands
+    private function applyTemplateRecursively(Templates $templates, TransientNode $parentNode, NodeCreationCommands $commands, CaughtExceptions $caughtExceptions): NodeCreationCommands
     {
         // `hasAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
         // https://github.com/neos/neos-ui/issues/3527
-        $parentNodesAutoCreatedChildNodes = $parentNode->getNodeType()->getAutoCreatedChildNodes();
+        $parentNodesAutoCreatedChildNodes = $parentNode->nodeType->getAutoCreatedChildNodes();
         foreach ($templates as $template) {
             if ($template->getName() && isset($parentNodesAutoCreatedChildNodes[$template->getName()->value])) {
                 if ($template->getType() !== null) {
@@ -105,35 +111,31 @@ class NodeCreationService
                     // we continue processing the node
                 }
 
-                $nodeType = $parentNodesAutoCreatedChildNodes[$template->getName()->value];
-                $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
+                $node = $parentNode->forTetheredChildNode(
+                    $template->getName(),
+                    $template->getProperties()
+                );
 
                 $commands = $commands->withAdditionalCommands(
                     new SetNodeProperties(
                         $parentNode->contentStreamId,
-                        $nodeAggregateId = NodeAggregateId::fromParentNodeAggregateIdAndNodeName(
-                            $parentNode->nodeAggregateId,
-                            $template->getName()
-                        ),
+                        $node->nodeAggregateId,
                         $parentNode->originDimensionSpacePoint,
                         PropertyValuesToWrite::fromArray(
-                            $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions)
+                            $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions)
                         )
                     ),
                     ...$this->createReferencesCommands(
                         $parentNode->contentStreamId,
-                        $nodeAggregateId,
+                        $node->nodeAggregateId,
                         $parentNode->originDimensionSpacePoint,
-                        $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
+                        $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
                     )
                 );
 
                 $commands = $this->applyTemplateRecursively(
                     $template->getChildNodes(),
-                    $parentNode->forTetheredChildNode(
-                        $template->getName(),
-                        $nodeAggregateId
-                    ),
+                    $node,
                     $commands,
                     $caughtExceptions
                 );
@@ -146,14 +148,14 @@ class NodeCreationService
                 );
                 continue;
             }
-            if (!$this->nodeTypeManager->hasNodeType($template->getType())) {
+            if (!$parentNode->nodeTypeManager->hasNodeType($template->getType())) {
                 $caughtExceptions->add(
                     CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a valid NodeType. Got: "%s".', $template->getType()->value), 1685999795564))
                 );
                 continue;
             }
 
-            $nodeType = $this->nodeTypeManager->getNodeType($template->getType());
+            $nodeType = $parentNode->nodeTypeManager->getNodeType($template->getType());
 
             if ($nodeType->isAbstract()) {
                 $caughtExceptions->add(
@@ -171,12 +173,12 @@ class NodeCreationService
                 continue;
             }
 
-            $properties = $this->propertiesHandler->createdFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
+            $node = $parentNode->forRegularChildNode(NodeAggregateId::create(), $nodeType, $template->getProperties());
 
             $nodeName = $template->getName() ?? NodeName::fromString(uniqid('node-', false));
 
             $initialProperties = PropertyValuesToWrite::fromArray(
-                $this->propertiesHandler->requireValidProperties($properties, $caughtExceptions)
+                $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions)
             );
 
             $initialProperties = $this->ensureNodeHasUriPathSegment(
@@ -190,7 +192,7 @@ class NodeCreationService
             $commands = $commands->withAdditionalCommands(
                 new CreateNodeAggregateWithNode(
                     $parentNode->contentStreamId,
-                    $nodeAggregateId = NodeAggregateId::create(),
+                    $node->nodeAggregateId,
                     $template->getType(),
                     $parentNode->originDimensionSpacePoint,
                     $parentNode->nodeAggregateId,
@@ -199,19 +201,16 @@ class NodeCreationService
                 ),
                 ...$this->createReferencesCommands(
                     $parentNode->contentStreamId,
-                    $nodeAggregateId,
+                    $node->nodeAggregateId,
                     $parentNode->originDimensionSpacePoint,
-                    $this->propertiesHandler->requireValidReferences($properties, $caughtExceptions)
+                    $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
                 )
             );
 
 
             $commands = $this->applyTemplateRecursively(
                 $template->getChildNodes(),
-                $parentNode->forRegularChildNode(
-                    $nodeType,
-                    $nodeAggregateId
-                ),
+                $node,
                 $commands,
                 $caughtExceptions
             );
