@@ -53,11 +53,11 @@ class PropertiesProcessor
      * 2. It is checked, that the property value is assignable to the property type.
      *   In case the type is class or an array of classes, the property mapper will be used map the given type to it. If it doesn't succeed, we will log an error.
      */
-    public function processAndValidateProperties(Properties $properties, CaughtExceptions $caughtExceptions): array
+    public function processAndValidateProperties(TransientNode $node, CaughtExceptions $caughtExceptions): array
     {
-        $nodeType = $properties->getNodeType();
+        $nodeType = $node->getNodeType();
         $validProperties = [];
-        foreach ($properties->getProperties() as $propertyName => $propertyValue) {
+        foreach ($node->getProperties() as $propertyName => $propertyValue) {
             try {
                 $this->assertValidPropertyName($propertyName);
                 if (!isset($nodeType->getProperties()[$propertyName])) {
@@ -103,11 +103,11 @@ class PropertiesProcessor
         return $validProperties;
     }
 
-    public function processAndValidateReferences(Properties $properties, CaughtExceptions $caughtExceptions): array
+    public function processAndValidateReferences(TransientNode $node, CaughtExceptions $caughtExceptions): array
     {
-        $nodeType = $properties->getNodeType();
+        $nodeType = $node->getNodeType();
         $validReferences = [];
-        foreach ($properties->getReferences() as $referenceName => $referenceValue) {
+        foreach ($node->getReferences() as $referenceName => $referenceValue) {
             $referenceType = ReferenceType::fromPropertyOfNodeType($referenceName, $nodeType);
 
             try {
@@ -116,13 +116,13 @@ class PropertiesProcessor
                     if ($nodeAggregateIdentifier === null) {
                         continue;
                     }
-                    if (!($node = $this->subgraph->getNodeByIdentifier($nodeAggregateIdentifier->__toString())) instanceof NodeInterface) {
+                    if (!($resolvedNode = $this->subgraph->getNodeByIdentifier($nodeAggregateIdentifier->__toString())) instanceof NodeInterface) {
                         throw new InvalidReferenceException(sprintf(
                             'Node with identifier "%s" does not exist.',
                             $nodeAggregateIdentifier->__toString()
                         ), 1687632330292);
                     }
-                    $validReferences[$referenceName] = $node;
+                    $validReferences[$referenceName] = $resolvedNode;
                     continue;
                 }
 

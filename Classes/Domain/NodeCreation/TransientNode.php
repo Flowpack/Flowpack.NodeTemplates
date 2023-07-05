@@ -17,7 +17,11 @@ class TransientNode
 
     private ?NodeType $tetheredParentNodeType;
 
-    private function __construct(NodeType $nodeType, ?NodeName $tetheredNodeName, ?NodeType $tetheredParentNodeType)
+    private array $properties;
+
+    private array $references;
+
+    private function __construct(NodeType $nodeType, ?NodeName $tetheredNodeName, ?NodeType $tetheredParentNodeType, array $rawProperties)
     {
         $this->nodeType = $nodeType;
         $this->tetheredNodeName = $tetheredNodeName;
@@ -25,14 +29,30 @@ class TransientNode
         if ($tetheredNodeName !== null) {
             assert($tetheredParentNodeType !== null);
         }
+
+        // split properties and references by type declaration
+        $properties = [];
+        $references = [];
+        foreach ($rawProperties as $propertyName => $propertyValue) {
+            // TODO: remove the next line to initialise the nodeType, once https://github.com/neos/neos-development-collection/issues/4333 is fixed
+            $this->nodeType->getFullConfiguration();
+            $declaration = $this->nodeType->getPropertyType($propertyName);
+            if ($declaration === 'reference' || $declaration === 'references') {
+                $references[$propertyName] = $propertyValue;
+                continue;
+            }
+            $properties[$propertyName] = $propertyValue;
+        }
+        $this->properties = $properties;
+        $this->references = $references;
     }
 
-    public static function forRegular(NodeType $nodeType): self
+    public static function forRegular(NodeType $nodeType, array $rawProperties): self
     {
-        return new self($nodeType, null, null);
+        return new self($nodeType, null, null, $rawProperties);
     }
 
-    public function forTetheredChildNode(NodeName $nodeName): self
+    public function forTetheredChildNode(NodeName $nodeName, array $rawProperties): self
     {
         // `getTypeOfAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
         // https://github.com/neos/neos-ui/issues/3527
@@ -41,12 +61,12 @@ class TransientNode
         if (!$childNodeType instanceof NodeType) {
             throw new \InvalidArgumentException('forTetheredChildNode only works for tethered nodes.');
         }
-        return new self($childNodeType, $nodeName, $this->nodeType);
+        return new self($childNodeType, $nodeName, $this->nodeType, $rawProperties);
     }
 
-    public function forRegularChildNode(NodeType $nodeType): self
+    public function forRegularChildNode(NodeType $nodeType, array $rawProperties): self
     {
-        return new self($nodeType, null, null);
+        return new self($nodeType, null, null, $rawProperties);
     }
 
     /**
@@ -64,6 +84,16 @@ class TransientNode
     public function getNodeType(): NodeType
     {
         return $this->nodeType;
+    }
+
+    public function getProperties(): array
+    {
+        return $this->properties;
+    }
+
+    public function getReferences(): array
+    {
+        return $this->references;
     }
 
     private static function requireNodeTypeConstraintsImposedByParentToBeMet(NodeType $parentNodeType, NodeType $nodeType): void

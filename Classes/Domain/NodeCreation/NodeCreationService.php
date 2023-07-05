@@ -5,9 +5,9 @@ namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
-use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\ContentRepository\Domain\Service\Context;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\Flow\Annotations as Flow;
@@ -39,15 +39,13 @@ class NodeCreationService
      * Applies the root template and its descending configured child node templates on the given node.
      * @throws \InvalidArgumentException
      */
-    public function createMutatorCollection(RootTemplate $template, TransientNode $node, CaughtExceptions $caughtExceptions): NodeMutatorCollection
+    public function createMutatorCollection(RootTemplate $template, NodeType $nodeType, CaughtExceptions $caughtExceptions): NodeMutatorCollection
     {
-        $nodeType = $node->getNodeType();
-
-        $properties = $this->propertiesProcessor->createFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
+        $node = TransientNode::forRegular($nodeType, $template->getProperties());
 
         $validProperties = array_merge(
-            $this->propertiesProcessor->processAndValidateProperties($properties, $caughtExceptions),
-            $this->propertiesProcessor->processAndValidateReferences($properties, $caughtExceptions)
+            $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
+            $this->propertiesProcessor->processAndValidateReferences($node, $caughtExceptions)
         );
 
         $nodeMutators = NodeMutatorCollection::from(
@@ -80,12 +78,11 @@ class NodeCreationService
                     // we continue processing the node
                 }
 
-                $nodeType = $parentNodesAutoCreatedChildNodes[$template->getName()->__toString()];
-                $properties = $this->propertiesProcessor->createFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
+                $node = $parentNode->forTetheredChildNode($template->getName(), $template->getProperties());
 
                 $validProperties = array_merge(
-                    $this->propertiesProcessor->processAndValidateProperties($properties, $caughtExceptions),
-                    $this->propertiesProcessor->processAndValidateReferences($properties, $caughtExceptions)
+                    $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
+                    $this->propertiesProcessor->processAndValidateReferences($node, $caughtExceptions)
                 );
 
                 $nodeMutators = $nodeMutators->withNodeMutators(
@@ -95,7 +92,7 @@ class NodeCreationService
                             NodeMutator::setProperties($validProperties)
                         )->merge($this->createMutatorCollectionFromTemplate(
                             $template->getChildNodes(),
-                            $parentNode->forTetheredChildNode($template->getName()),
+                            $node,
                             $caughtExceptions
                         ))
                     )
@@ -135,11 +132,11 @@ class NodeCreationService
                 continue;
             }
 
-            $properties = $this->propertiesProcessor->createFromArrayByTypeDeclaration($template->getProperties(), $nodeType);
+            $node = $parentNode->forRegularChildNode($nodeType, $template->getProperties());
 
             $validProperties = array_merge(
-                $this->propertiesProcessor->processAndValidateProperties($properties, $caughtExceptions),
-                $this->propertiesProcessor->processAndValidateReferences($properties, $caughtExceptions)
+                $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
+                $this->propertiesProcessor->processAndValidateReferences($node, $caughtExceptions)
             );
 
             $nodeMutators = $nodeMutators->withNodeMutators(
@@ -150,7 +147,7 @@ class NodeCreationService
                         $this->createMutatorForUriPathSegment($template->getProperties())
                     )->merge($this->createMutatorCollectionFromTemplate(
                         $template->getChildNodes(),
-                        $parentNode->forRegularChildNode($nodeType),
+                        $node,
                         $caughtExceptions
                     ))
                 )
