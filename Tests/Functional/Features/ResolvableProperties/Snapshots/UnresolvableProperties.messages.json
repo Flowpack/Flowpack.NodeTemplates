@@ -1,6 +1,6 @@
 [
     {
-        "message": "Template for \"UnresolvableProperties\" only partially applied. Please check the newly created nodes beneath Node \/sites\/test-site\/homepage\/main\/new-node@live[Flowpack.NodeTemplates:Content.UnresolvableProperties].",
+        "message": "Template for \"UnresolvableProperties\" only partially applied. Please check the newly created nodes beneath 186b511b-b807-6208-9e1c-593e7c1a63d3.",
         "severity": "ERROR"
     },
     {

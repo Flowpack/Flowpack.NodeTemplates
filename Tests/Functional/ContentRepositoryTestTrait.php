@@ -9,6 +9,7 @@ use Neos\ContentRepositoryRegistry\ContentRepositoryRegistry;
 use Neos\EventStore\Exception\CheckpointException;
 use Neos\Flow\Configuration\ConfigurationManager;
 use Neos\Flow\ObjectManagement\ObjectManager;
+use Neos\Flow\Persistence\Doctrine\PersistenceManager;
 
 /**
  * @property ObjectManager $objectManager
@@ -23,6 +24,17 @@ trait ContentRepositoryTestTrait
 
     private function initCleanContentRepository(ContentRepositoryId $contentRepositoryId): void
     {
+        if (!self::$wasContentRepositorySetupCalled) {
+            // TODO super hacky and as we never clean up !!!
+            $persistenceManager = $this->objectManager->get(PersistenceManager::class);
+            if (is_callable([$persistenceManager, 'compile'])) {
+                $result = $persistenceManager->compile();
+                if ($result === false) {
+                    self::markTestSkipped('Test skipped because setting up the persistence failed.');
+                }
+            }
+        }
+
         $this->contentRepositoryId = $contentRepositoryId;
 
         $configurationManager = $this->objectManager->get(ConfigurationManager::class);
