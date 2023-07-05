@@ -5,21 +5,9 @@ namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Service\Context;
-use Neos\Flow\Annotations as Flow;
 
-/**
- * @Flow\Proxy(false)
- */
 class ReferencesProcessor
 {
-    private Context $subgraph;
-
-    public function __construct(Context $subgraph)
-    {
-        $this->subgraph = $subgraph;
-    }
-
     public function processAndValidateReferences(TransientNode $node, CaughtExceptions $caughtExceptions): array
     {
         $nodeType = $node->getNodeType();
@@ -33,7 +21,7 @@ class ReferencesProcessor
                     if ($nodeAggregateIdentifier === null) {
                         continue;
                     }
-                    if (!($resolvedNode = $this->subgraph->getNodeByIdentifier($nodeAggregateIdentifier->__toString())) instanceof NodeInterface) {
+                    if (!($resolvedNode = $node->getSubgraph()->getNodeByIdentifier($nodeAggregateIdentifier->__toString())) instanceof NodeInterface) {
                         throw new InvalidReferenceException(sprintf(
                             'Node with identifier "%s" does not exist.',
                             $nodeAggregateIdentifier->__toString()
@@ -50,7 +38,7 @@ class ReferencesProcessor
                     }
                     $nodes = [];
                     foreach ($nodeAggregateIdentifiers as $nodeAggregateIdentifier) {
-                        if (!($nodes[] = $this->subgraph->getNodeByIdentifier($nodeAggregateIdentifier->__toString())) instanceof NodeInterface) {
+                        if (!($nodes[] = $node->getSubgraph()->getNodeByIdentifier($nodeAggregateIdentifier->__toString())) instanceof NodeInterface) {
                             throw new InvalidReferenceException(sprintf(
                                 'Node with identifier "%s" does not exist.',
                                 $nodeAggregateIdentifier->__toString()

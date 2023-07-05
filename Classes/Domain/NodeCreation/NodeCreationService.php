@@ -8,10 +8,14 @@ use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;
+use Neos\ContentRepository\Domain\Service\Context;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\Flow\Annotations as Flow;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
+/**
+ * @Flow\Scope("singleton")
+ */
 class NodeCreationService
 {
     /**
@@ -26,23 +30,25 @@ class NodeCreationService
      */
     protected $nodeUriPathSegmentGenerator;
 
-    private PropertiesProcessor $propertiesProcessor;
+    /**
+     * @Flow\Inject
+     * @var PropertiesProcessor
+     */
+    protected $propertiesProcessor;
 
-    private ReferencesProcessor $referencesProcessor;
-
-    public function __construct(PropertiesProcessor $propertiesProcessor, ReferencesProcessor $referencesProcessor)
-    {
-        $this->propertiesProcessor = $propertiesProcessor;
-        $this->referencesProcessor = $referencesProcessor;
-    }
+    /**
+     * @Flow\Inject
+     * @var ReferencesProcessor
+     */
+    protected $referencesProcessor;
 
     /**
      * Applies the root template and its descending configured child node templates on the given node.
      * @throws \InvalidArgumentException
      */
-    public function createMutatorCollection(RootTemplate $template, NodeType $nodeType, CaughtExceptions $caughtExceptions): NodeMutatorCollection
+    public function createMutatorCollection(RootTemplate $template, NodeType $nodeType, Context $subgraph, CaughtExceptions $caughtExceptions): NodeMutatorCollection
     {
-        $node = TransientNode::forRegular($nodeType, $template->getProperties());
+        $node = TransientNode::forRegular($nodeType, $subgraph, $template->getProperties());
 
         $validProperties = array_merge(
             $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
