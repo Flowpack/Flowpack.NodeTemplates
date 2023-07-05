@@ -5,6 +5,7 @@ namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 use Neos\ContentRepository\Domain\Model\NodeType;
 use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
 use Neos\ContentRepository\Domain\Service\Context;
+use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -18,13 +19,15 @@ class TransientNode
 
     private ?NodeType $tetheredParentNodeType;
 
+    private NodeTypeManager $nodeTypeManager;
+
     private Context $subgraph;
 
     private array $properties;
 
     private array $references;
 
-    private function __construct(NodeType $nodeType, ?NodeName $tetheredNodeName, ?NodeType $tetheredParentNodeType, Context $subgraph, array $rawProperties)
+    private function __construct(NodeType $nodeType, ?NodeName $tetheredNodeName, ?NodeType $tetheredParentNodeType, NodeTypeManager $nodeTypeManager, Context $subgraph, array $rawProperties)
     {
         $this->nodeType = $nodeType;
         $this->tetheredNodeName = $tetheredNodeName;
@@ -32,6 +35,7 @@ class TransientNode
         if ($tetheredNodeName !== null) {
             assert($tetheredParentNodeType !== null);
         }
+        $this->nodeTypeManager = $nodeTypeManager;
         $this->subgraph = $subgraph;
 
         // split properties and references by type declaration
@@ -51,9 +55,9 @@ class TransientNode
         $this->references = $references;
     }
 
-    public static function forRegular(NodeType $nodeType, Context $subgraph, array $rawProperties): self
+    public static function forRegular(NodeType $nodeType, NodeTypeManager $nodeTypeManager,  Context $subgraph, array $rawProperties): self
     {
-        return new self($nodeType, null, null, $subgraph, $rawProperties);
+        return new self($nodeType, null, null, $nodeTypeManager, $subgraph, $rawProperties);
     }
 
     public function forTetheredChildNode(NodeName $nodeName, array $rawProperties): self
@@ -65,12 +69,12 @@ class TransientNode
         if (!$childNodeType instanceof NodeType) {
             throw new \InvalidArgumentException('forTetheredChildNode only works for tethered nodes.');
         }
-        return new self($childNodeType, $nodeName, $this->nodeType, $this->subgraph, $rawProperties);
+        return new self($childNodeType, $nodeName, $this->nodeType, $this->nodeTypeManager, $this->subgraph, $rawProperties);
     }
 
     public function forRegularChildNode(NodeType $nodeType, array $rawProperties): self
     {
-        return new self($nodeType, null, null, $this->subgraph, $rawProperties);
+        return new self($nodeType, null, null, $this->nodeTypeManager, $this->subgraph, $rawProperties);
     }
 
     /**
@@ -88,6 +92,11 @@ class TransientNode
     public function getNodeType(): NodeType
     {
         return $this->nodeType;
+    }
+
+    public function getNodeTypeManager(): NodeTypeManager
+    {
+        return $this->nodeTypeManager;
     }
 
     public function getSubgraph(): Context

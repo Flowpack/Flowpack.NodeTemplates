@@ -19,12 +19,6 @@ use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 class NodeCreationService
 {
     /**
-     * @var NodeTypeManager
-     * @Flow\Inject
-     */
-    protected $nodeTypeManager;
-
-    /**
      * @Flow\Inject
      * @var NodeUriPathSegmentGenerator
      */
@@ -46,9 +40,9 @@ class NodeCreationService
      * Applies the root template and its descending configured child node templates on the given node.
      * @throws \InvalidArgumentException
      */
-    public function createMutatorCollection(RootTemplate $template, NodeType $nodeType, Context $subgraph, CaughtExceptions $caughtExceptions): NodeMutatorCollection
+    public function createMutatorCollection(RootTemplate $template, NodeType $nodeType, NodeTypeManager $nodeTypeManager, Context $subgraph, CaughtExceptions $caughtExceptions): NodeMutatorCollection
     {
-        $node = TransientNode::forRegular($nodeType, $subgraph, $template->getProperties());
+        $node = TransientNode::forRegular($nodeType, $nodeTypeManager, $subgraph, $template->getProperties());
 
         $validProperties = array_merge(
             $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
@@ -114,14 +108,14 @@ class NodeCreationService
                 );
                 continue;
             }
-            if (!$this->nodeTypeManager->hasNodeType($template->getType()->getValue())) {
+            if (!$parentNode->getNodeTypeManager()->hasNodeType($template->getType()->getValue())) {
                 $caughtExceptions->add(
                     CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a valid NodeType. Got: "%s".', $template->getType()->getValue()), 1685999795564))
                 );
                 continue;
             }
 
-            $nodeType = $this->nodeTypeManager->getNodeType($template->getType()->getValue());
+            $nodeType = $parentNode->getNodeTypeManager()->getNodeType($template->getType()->getValue());
 
             if ($nodeType->isAbstract()) {
                 $caughtExceptions->add(
