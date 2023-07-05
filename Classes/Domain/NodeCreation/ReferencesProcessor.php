@@ -19,6 +19,8 @@ class ReferencesProcessor
                 if ($referenceType->isReference()) {
                     $nodeAggregateIdentifier = $referenceType->toNodeAggregateId($referenceValue);
                     if ($nodeAggregateIdentifier === null) {
+                        // not necessary needed, but to reset in case there a default values
+                        $validReferences[$referenceName] = null;
                         continue;
                     }
                     if (!($resolvedNode = $node->getSubgraph()->getNodeByIdentifier($nodeAggregateIdentifier->__toString())) instanceof NodeInterface) {
@@ -34,6 +36,8 @@ class ReferencesProcessor
                 if ($referenceType->isReferences()) {
                     $nodeAggregateIdentifiers = $referenceType->toNodeAggregateIds($referenceValue);
                     if (count($nodeAggregateIdentifiers) === 0) {
+                        // not necessary needed, but to reset in case there a default values
+                        $validReferences[$referenceName] = null;
                         continue;
                     }
                     $nodes = [];
