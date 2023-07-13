@@ -52,7 +52,7 @@ class PropertiesProcessor
                     $propertyValue = $this->propertyMapper->convert($propertyValue, $propertyType->getValue(), $propertyMappingConfiguration);
                     $messages = $this->propertyMapper->getMessages();
                     if ($messages->hasErrors()) {
-                        throw new PropertyIgnoredException($this->propertyMapper->getMessages()->getFirstError()->getMessage(), 1686779371122);
+                        throw new PropertyIgnoredException($messages->getFirstError()->getMessage(), 1686779371122);
                     }
                 }
 
