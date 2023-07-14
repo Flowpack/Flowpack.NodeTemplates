@@ -38,7 +38,7 @@ final class PropertyType
         $this->value = $value;
         if ($this->isArrayOf()) {
             $arrayOfType = self::tryFromString($this->getArrayOf());
-            if (!$arrayOfType && !$arrayOfType->isArray()) {
+            if (!$arrayOfType || $arrayOfType->isArray()) {
                 throw new \DomainException(sprintf(
                     'Array declaration "%s" has invalid subType. Expected either class string or int',
                     $this->value
