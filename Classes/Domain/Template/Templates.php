@@ -4,7 +4,11 @@ namespace Flowpack\NodeTemplates\Domain\Template;
 
 use Neos\Flow\Annotations as Flow;
 
-/** @Flow\Proxy(false) */
+/**
+ * A collection of child templates {@see Template}
+ *
+ * @Flow\Proxy(false)
+ */
 class Templates implements \IteratorAggregate, \JsonSerializable
 {
     /** @var array<int|string, Template> */

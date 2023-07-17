@@ -27,6 +27,10 @@ use Neos\Neos\Ui\NodeCreationHandler\NodeCreationCommands;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
 /**
+ * Declares the steps how to create a node subtree starting from the root template {@see RootTemplate}
+ *
+ * The commands can then be handled by the content repository to create the node structure
+ *
  * @Flow\Scope("singleton")
  */
 class NodeCreationService
@@ -50,7 +54,7 @@ class NodeCreationService
     protected $referencesProcessor;
 
     /**
-     * Applies the root template and its descending configured child node templates on the given node.
+     * Creates commands {@see NodeCreationCommands} for the root template and its descending configured child node templates.
      * @throws \InvalidArgumentException
      */
     public function apply(RootTemplate $template, NodeCreationCommands $commands, NodeTypeManager $nodeTypeManager, ContentSubgraphInterface $subgraph, CaughtExceptions $caughtExceptions): NodeCreationCommands
@@ -104,6 +108,9 @@ class NodeCreationService
         $parentNodesAutoCreatedChildNodes = $parentNode->nodeType->getAutoCreatedChildNodes();
         foreach ($templates as $template) {
             if ($template->getName() && isset($parentNodesAutoCreatedChildNodes[$template->getName()->value])) {
+                /**
+                 * Case 1: Auto created child nodes
+                 */
                 if ($template->getType() !== null) {
                     $caughtExceptions->add(
                         CaughtException::fromException(new \RuntimeException(sprintf('Template cant mutate type of auto created child nodes. Got: "%s"', $template->getType()->value), 1685999829307))
@@ -142,6 +149,9 @@ class NodeCreationService
                 continue;
             }
 
+            /**
+             * Case 2: Regular to be created nodes (non auto-created nodes)
+             */
             if ($template->getType() === null) {
                 $caughtExceptions->add(
                     CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be set for non auto created child nodes.'), 1685999829307))
@@ -165,7 +175,7 @@ class NodeCreationService
             }
 
             try {
-                $parentNode->requireConstraintsImposedByAncestorsAreMet($nodeType);
+                $parentNode->requireConstraintsImposedByAncestorsToBeMet($nodeType);
             } catch (NodeConstraintException $nodeConstraintException) {
                 $caughtExceptions->add(
                     CaughtException::fromException($nodeConstraintException)

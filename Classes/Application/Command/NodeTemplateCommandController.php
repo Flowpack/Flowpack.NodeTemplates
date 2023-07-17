@@ -100,12 +100,17 @@ class NodeTemplateCommandController extends CommandController
                 $caughtExceptions
             );
 
-            $this->nodeCreationService->createMutatorCollection($template, $nodeType, $this->nodeTypeManager, $subgraph, $caughtExceptions);
+            $this->nodeCreationService->createMutatorsForRootTemplate($template, $nodeType, $this->nodeTypeManager, $subgraph, $caughtExceptions);
 
             if ($caughtExceptions->hasExceptions()) {
                 $faultyNodeTypeTemplates[$nodeType->getName()] = ['caughtExceptions' => $caughtExceptions, 'dataWasAccessed' => $observableEmptyData->dataWasAccessed];
             }
             $templatesChecked++;
+        }
+
+        if ($templatesChecked === 0) {
+            $this->outputLine('<comment>No NodeType templates found.</comment>');
+            return;
         }
 
         if (empty($faultyNodeTypeTemplates)) {
@@ -118,10 +123,12 @@ class NodeTemplateCommandController extends CommandController
 
         $this->outputLine();
 
+        $hasError = false;
         foreach ($faultyNodeTypeTemplates as $nodeTypeName => ['caughtExceptions' => $caughtExceptions, 'dataWasAccessed' => $dataWasAccessed]) {
             if ($dataWasAccessed) {
                 $this->outputLine(sprintf('<comment>%s</comment> <b>(depends on "data" context)</b>', $nodeTypeName));
             } else {
+                $hasError = true;
                 $this->outputLine(sprintf('<error>%s</error>', $nodeTypeName));
             }
 
@@ -129,6 +136,9 @@ class NodeTemplateCommandController extends CommandController
                 $this->outputLine('  ' . $caughtException->toMessage());
                 $this->outputLine();
             }
+        }
+        if ($hasError) {
+            $this->quit(1);
         }
     }
 }

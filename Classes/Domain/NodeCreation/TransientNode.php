@@ -12,6 +12,18 @@ use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
 use Neos\Flow\Annotations as Flow;
 
 /**
+ * Model about a non materialized node.
+ *
+ * The "to be created" node might not yet be available - and may never be.
+ *
+ * The transient node makes it possible, to still be able to enforce constraints {@see self::requireNodeTypeConstraintsImposedByGrandparentToBeMet()}
+ * and get information {@see self::$properties} about a node.
+ *
+ * For example the transient node can be passed as fictional $parentNode.
+ * To create child transient nodes of the $parentNode use {@see self::forRegularChildNode()} and {@see self::forTetheredChildNode()}
+ *
+ * An initial transient node can be created with {@see self::forRegular}
+ *
  * @Flow\Proxy(false)
  */
 final readonly class TransientNode
@@ -120,7 +132,7 @@ final readonly class TransientNode
     /**
      * @throws NodeConstraintException
      */
-    public function requireConstraintsImposedByAncestorsAreMet(NodeType $childNodeType): void
+    public function requireConstraintsImposedByAncestorsToBeMet(NodeType $childNodeType): void
     {
         if ($this->tetheredNodeName) {
             self::requireNodeTypeConstraintsImposedByGrandparentToBeMet($this->tetheredParentNodeType, $this->tetheredNodeName, $childNodeType);

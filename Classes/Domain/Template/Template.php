@@ -7,7 +7,11 @@ use Neos\ContentRepository\Core\NodeType\NodeTypeName;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
 use Neos\Flow\Annotations as Flow;
 
-/** @Flow\Proxy(false) */
+/**
+ * Evaluated template from the yaml configuration
+ *
+ * @Flow\Proxy(false)
+ */
 class Template implements \JsonSerializable
 {
     private ?NodeTypeName $type;
