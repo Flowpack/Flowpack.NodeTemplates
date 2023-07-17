@@ -117,6 +117,11 @@ class NodeTemplateCommandController extends CommandController
             $templatesChecked++;
         }
 
+        if ($templatesChecked === 0) {
+            $this->outputLine('<comment>No NodeType templates found.</comment>');
+            return;
+        }
+
         if (empty($faultyNodeTypeTemplates)) {
             $this->outputLine(sprintf('<success>%d NodeType templates validated.</success>', $templatesChecked));
             return;
@@ -127,10 +132,12 @@ class NodeTemplateCommandController extends CommandController
 
         $this->outputLine();
 
+        $hasError = false;
         foreach ($faultyNodeTypeTemplates as $nodeTypeName => ['caughtExceptions' => $caughtExceptions, 'dataWasAccessed' => $dataWasAccessed]) {
             if ($dataWasAccessed) {
                 $this->outputLine(sprintf('<comment>%s</comment> <b>(depends on "data" context)</b>', $nodeTypeName));
             } else {
+                $hasError = true;
                 $this->outputLine(sprintf('<error>%s</error>', $nodeTypeName));
             }
 
@@ -138,6 +145,9 @@ class NodeTemplateCommandController extends CommandController
                 $this->outputLine('  ' . $caughtException->toMessage());
                 $this->outputLine();
             }
+        }
+        if ($hasError) {
+            $this->quit(1);
         }
     }
 }
