@@ -81,7 +81,7 @@ class TransientNodeTest extends TestCase
     {
         $parentNode = $this->createFakeRegularTransientNode($this->getNodeType('A:Content1'));
         self::assertSame($this->getNodeType('A:Content1'), $parentNode->getNodeType());
-        $parentNode->requireConstraintsImposedByAncestorsAreMet($this->getNodeType('A:Content2'));
+        $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content2'));
     }
 
     /** @test */
@@ -92,7 +92,7 @@ class TransientNodeTest extends TestCase
         $parentNode = $grandParentNode->forTetheredChildNode(NodeName::fromString('collection'), []);
         self::assertSame($this->getNodeType('A:Collection.Allowed'), $parentNode->getNodeType());
 
-        $parentNode->requireConstraintsImposedByAncestorsAreMet($this->getNodeType('A:Content1'));
+        $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content1'));
     }
 
     /** @test */
@@ -103,7 +103,7 @@ class TransientNodeTest extends TestCase
         $parentNode = $grandParentNode->forTetheredChildNode(NodeName::fromString('collection'), []);
         self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());
 
-        $parentNode->requireConstraintsImposedByAncestorsAreMet($this->getNodeType('A:Content1'));
+        $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content1'));
     }
 
     /** @test */
@@ -114,7 +114,7 @@ class TransientNodeTest extends TestCase
         $parentNode = $grandParentNode->forRegularChildNode($this->getNodeType('A:Content2'), []);
         self::assertSame($this->getNodeType('A:Content2'), $parentNode->getNodeType());
 
-        $parentNode->requireConstraintsImposedByAncestorsAreMet($this->getNodeType('A:Content3'));
+        $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content3'));
     }
 
     /** @test */
@@ -126,7 +126,7 @@ class TransientNodeTest extends TestCase
         $parentNode = $this->createFakeRegularTransientNode($this->getNodeType('A:Collection.Disallowed'));
         self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());
 
-        $parentNode->requireConstraintsImposedByAncestorsAreMet($this->getNodeType('A:Content1'));
+        $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content1'));
     }
 
     /** @test */
@@ -140,7 +140,7 @@ class TransientNodeTest extends TestCase
         $parentNode = $grandParentNode->forTetheredChildNode(NodeName::fromString('collection'), []);
         self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());
 
-        $parentNode->requireConstraintsImposedByAncestorsAreMet($this->getNodeType('A:Content1'));
+        $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content1'));
     }
 
     /** @test */
@@ -154,7 +154,7 @@ class TransientNodeTest extends TestCase
         $parentNode = $grandParentNode->forRegularChildNode($this->getNodeType('A:Collection.Disallowed'), []);
         self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());
 
-        $parentNode->requireConstraintsImposedByAncestorsAreMet($this->getNodeType('A:Content1'));
+        $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content1'));
     }
 
     /** @test */

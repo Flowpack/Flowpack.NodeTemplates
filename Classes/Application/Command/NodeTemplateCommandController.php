@@ -109,7 +109,7 @@ class NodeTemplateCommandController extends CommandController
                 $caughtExceptions
             );
 
-            $this->nodeCreationService->createMutatorCollection($template, $nodeType, $this->nodeTypeManager, $subgraph, $caughtExceptions);
+            $this->nodeCreationService->createMutatorsForRootTemplate($template, $nodeType, $this->nodeTypeManager, $subgraph, $caughtExceptions);
 
             if ($caughtExceptions->hasExceptions()) {
                 $faultyNodeTypeTemplates[$nodeType->getName()] = ['caughtExceptions' => $caughtExceptions, 'dataWasAccessed' => $observableEmptyData->dataWasAccessed];

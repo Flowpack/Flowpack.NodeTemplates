@@ -14,6 +14,10 @@ use Neos\Flow\Annotations as Flow;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
 /**
+ * Declares the steps how to create a node subtree starting from the root template {@see RootTemplate}
+ *
+ * The steps can to be applied to create the node structure via {@see NodeMutatorCollection::executeWithStartingNode()}
+ *
  * @Flow\Scope("singleton")
  */
 class NodeCreationService
@@ -37,10 +41,10 @@ class NodeCreationService
     protected $referencesProcessor;
 
     /**
-     * Applies the root template and its descending configured child node templates on the given node.
+     * Creates mutator {@see NodeMutatorCollection} for the root template and its descending configured child node templates to be applied on a node.
      * @throws \InvalidArgumentException
      */
-    public function createMutatorCollection(RootTemplate $template, NodeType $nodeType, NodeTypeManager $nodeTypeManager, Context $subgraph, CaughtExceptions $caughtExceptions): NodeMutatorCollection
+    public function createMutatorsForRootTemplate(RootTemplate $template, NodeType $nodeType, NodeTypeManager $nodeTypeManager, Context $subgraph, CaughtExceptions $caughtExceptions): NodeMutatorCollection
     {
         $node = TransientNode::forRegular($nodeType, $nodeTypeManager, $subgraph, $template->getProperties());
 
@@ -49,21 +53,19 @@ class NodeCreationService
             $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
         );
 
-        $nodeMutators = NodeMutatorCollection::from(
+        return NodeMutatorCollection::from(
             NodeMutator::setProperties($validProperties),
             $this->createMutatorForUriPathSegment($template->getProperties()),
         )->merge(
-            $this->createMutatorCollectionFromTemplate(
+            $this->createMutatorsForChildNodeTemplates(
                 $template->getChildNodes(),
                 $node,
                 $caughtExceptions
             )
         );
-
-        return $nodeMutators;
     }
 
-    private function createMutatorCollectionFromTemplate(Templates $templates, TransientNode $parentNode, CaughtExceptions $caughtExceptions): NodeMutatorCollection
+    private function createMutatorsForChildNodeTemplates(Templates $templates, TransientNode $parentNode, CaughtExceptions $caughtExceptions): NodeMutatorCollection
     {
         $nodeMutators = NodeMutatorCollection::empty();
 
@@ -72,6 +74,9 @@ class NodeCreationService
         $parentNodesAutoCreatedChildNodes = $parentNode->getNodeType()->getAutoCreatedChildNodes();
         foreach ($templates as $template) {
             if ($template->getName() && isset($parentNodesAutoCreatedChildNodes[$template->getName()->__toString()])) {
+                /**
+                 * Case 1: Auto created child nodes
+                 */
                 if ($template->getType() !== null) {
                     $caughtExceptions->add(
                         CaughtException::fromException(new \RuntimeException(sprintf('Template cant mutate type of auto created child nodes. Got: "%s"', $template->getType()->getValue()), 1685999829307))
@@ -86,12 +91,12 @@ class NodeCreationService
                     $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
                 );
 
-                $nodeMutators = $nodeMutators->withNodeMutators(
+                $nodeMutators = $nodeMutators->append(
                     NodeMutator::isolated(
                         NodeMutatorCollection::from(
                             NodeMutator::selectChildNode($template->getName()),
                             NodeMutator::setProperties($validProperties)
-                        )->merge($this->createMutatorCollectionFromTemplate(
+                        )->merge($this->createMutatorsForChildNodeTemplates(
                             $template->getChildNodes(),
                             $node,
                             $caughtExceptions
@@ -100,8 +105,11 @@ class NodeCreationService
                 );
 
                 continue;
-
             }
+
+            /**
+             * Case 2: Regular to be created nodes (non auto-created nodes)
+             */
             if ($template->getType() === null) {
                 $caughtExceptions->add(
                     CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be set for non auto created child nodes.'), 1685999829307))
@@ -125,7 +133,7 @@ class NodeCreationService
             }
 
             try {
-                $parentNode->requireConstraintsImposedByAncestorsAreMet($nodeType);
+                $parentNode->requireConstraintsImposedByAncestorsToBeMet($nodeType);
             } catch (NodeConstraintException $nodeConstraintException) {
                 $caughtExceptions->add(
                     CaughtException::fromException($nodeConstraintException)
@@ -140,13 +148,13 @@ class NodeCreationService
                 $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
             );
 
-            $nodeMutators = $nodeMutators->withNodeMutators(
+            $nodeMutators = $nodeMutators->append(
                 NodeMutator::isolated(
                     NodeMutatorCollection::from(
                         NodeMutator::createAndSelectNode($template->getType(), $template->getName()),
                         NodeMutator::setProperties($validProperties),
                         $this->createMutatorForUriPathSegment($template->getProperties())
-                    )->merge($this->createMutatorCollectionFromTemplate(
+                    )->merge($this->createMutatorsForChildNodeTemplates(
                         $template->getChildNodes(),
                         $node,
                         $caughtExceptions
@@ -165,14 +173,14 @@ class NodeCreationService
      */
     private function createMutatorForUriPathSegment(array $properties): NodeMutator
     {
-        return NodeMutator::unsafeFromClosure(function (NodeInterface $previousNode) use ($properties) {
-            if (!$previousNode->getNodeType()->isOfType('Neos.Neos:Document')) {
+        return NodeMutator::unsafeFromClosure(function (NodeInterface $nodePointer) use ($properties) {
+            if (!$nodePointer->getNodeType()->isOfType('Neos.Neos:Document')) {
                 return;
             }
             if (isset($properties['uriPathSegment'])) {
                 return;
             }
-            $previousNode->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($previousNode, $properties['title'] ?? null));
+            $nodePointer->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($nodePointer, $properties['title'] ?? null));
         });
     }
 }

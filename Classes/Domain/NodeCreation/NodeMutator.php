@@ -25,7 +25,7 @@ class NodeMutator
     private \Closure $mutator;
 
     /**
-     * @param \Closure(NodeInterface $currentNode): ?NodeInterface $mutator
+     * @param \Closure(NodeInterface $nodePointer): ?NodeInterface $mutator
      */
     private function __construct(
         \Closure $mutator
@@ -34,48 +34,59 @@ class NodeMutator
     }
 
     /**
-     * Queues to execute this mutator on the current node
+     * Queues to set properties on the current node.
      *
-     * @param \Closure(NodeInterface $currentNode): void $mutator
+     * Preserves the current node pointer.
      */
-    public static function unsafeFromClosure(\Closure $mutator): self
+    public static function setProperties(array $properties): self
     {
-        return new self($mutator);
-    }
-
-    /**
-     * Queues to execute the collection {@see NodeMutatorCollection} on the current node but any selections made in the collection won't change the pointer to $this current node.
-     */
-    public static function isolated(NodeMutatorCollection $nodeMutators): self
-    {
-        return new self(function (NodeInterface $currentNode) use($nodeMutators) {
-            $nodeMutators->apply($currentNode);
+        return new static(function (NodeInterface $nodePointer) use ($properties) {
+            foreach ($properties as $key => $value) {
+                $nodePointer->setProperty($key, $value);
+            }
         });
     }
 
     /**
-     * Queues to select a child node of the current node
+     * Queues to execute the collection {@see NodeMutatorCollection} on the current node.
+     * Any selections made in the collection {@see self::selectChildNode()} won't change the pointer to $this current node.
+     *
+     * Preserves the current node pointer.
+     */
+    public static function isolated(NodeMutatorCollection $nodeMutators): self
+    {
+        return new self(function (NodeInterface $nodePointer) use($nodeMutators) {
+            $nodeMutators->executeWithStartingNode($nodePointer);
+        });
+    }
+
+    /**
+     * Queues to select a child node of the current node.
+     *
+     * Modifies the node pointer.
      */
     public static function selectChildNode(NodeName $nodeName): self
     {
-        return new self(function (NodeInterface $currentNode) use($nodeName) {
-            $nextNode = $currentNode->getNode($nodeName->__toString());
+        return new self(function (NodeInterface $nodePointer) use($nodeName) {
+            $nextNode = $nodePointer->getNode($nodeName->__toString());
             if (!$nextNode instanceof NodeInterface) {
-                throw new \RuntimeException(sprintf('Could not select childNode %s from %s', $nodeName->__toString(), $currentNode));
+                throw new \RuntimeException(sprintf('Could not select childNode %s from %s', $nodeName->__toString(), $nodePointer));
             }
             return $nextNode;
         });
     }
 
     /**
-     * Queues to create a new node into the current node and select it
+     * Queues to create a new node into the current node and select it.
+     *
+     * Modifies the node pointer.
      */
     public static function createAndSelectNode(NodeTypeName $nodeTypeName, ?NodeName $nodeName): self
     {
-        return new static(function (NodeInterface $currentNode) use($nodeTypeName, $nodeName) {
+        return new static(function (NodeInterface $nodePointer) use($nodeTypeName, $nodeName) {
             $nodeOperations = Bootstrap::$staticObjectManager->get(NodeOperations::class); // hack
             return $nodeOperations->create(
-                $currentNode,
+                $nodePointer,
                 [
                     'nodeType' => $nodeTypeName->getValue(),
                     'nodeName' => $nodeName ? $nodeName->__toString() : null
@@ -86,23 +97,26 @@ class NodeMutator
     }
 
     /**
-     * Queues to set properties on the current node
+     * Queues to execute this mutator on the current node
+     *
+     * Should preserve the current node pointer!
+     *
+     * @param \Closure(NodeInterface $nodePointer): void $mutator
      */
-    public static function setProperties(array $properties): self
+    public static function unsafeFromClosure(\Closure $mutator): self
     {
-        return new static(function (NodeInterface $currentNode) use ($properties) {
-            foreach ($properties as $key => $value) {
-                $currentNode->setProperty($key, $value);
-            }
-        });
+        return new self($mutator);
     }
 
     /**
-     * Applies the operations. The $currentNode being the current node for all operations
-     * It will return a new selected/created node or the current node in case only properties were set
+     * Applies this operation
+     * For multiple operations: {@see NodeMutatorCollection::executeWithStartingNode()}
+     *
+     * @param NodeInterface $nodePointer being the current node for this operation
+     * @return NodeInterface a new selected/created $nodePointer or the current node in case for example only properties were set
      */
-    public function apply(NodeInterface $currentNode): NodeInterface
+    public function executeWithNodePointer(NodeInterface $nodePointer): NodeInterface
     {
-        return ($this->mutator)($currentNode) ?? $currentNode;
+        return ($this->mutator)($nodePointer) ?? $nodePointer;
     }
 }
