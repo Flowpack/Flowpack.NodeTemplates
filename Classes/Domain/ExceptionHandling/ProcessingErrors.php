@@ -2,13 +2,12 @@
 
 namespace Flowpack\NodeTemplates\Domain\ExceptionHandling;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
 use Neos\Flow\Annotations as Flow;
 
 /** @Flow\Proxy(false) */
-class CaughtExceptions implements \IteratorAggregate
+class ProcessingErrors implements \IteratorAggregate
 {
-    /** @var array<int, CaughtException> */
+    /** @var array<int, ProcessingError> */
     private array $exceptions = [];
 
     private function __construct()
@@ -25,18 +24,18 @@ class CaughtExceptions implements \IteratorAggregate
         return $this->exceptions !== [];
     }
 
-    public function add(CaughtException $exception): void
+    public function add(ProcessingError $exception): void
     {
         $this->exceptions[] = $exception;
     }
 
-    public function first(): ?CaughtException
+    public function first(): ?ProcessingError
     {
         return $this->exceptions[0] ?? null;
     }
 
     /**
-     * @return \Traversable<int, CaughtException>|CaughtException[]
+     * @return \Traversable<int, ProcessingError>|ProcessingError[]
      */
     public function getIterator()
     {

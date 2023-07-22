@@ -2,7 +2,7 @@
 
 namespace Flowpack\NodeTemplates\Domain;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\ExceptionHandler;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplateNotCreatedException;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplatePartiallyCreatedException;
@@ -58,15 +58,15 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 
         $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');
 
-        $caughtExceptions = CaughtExceptions::create();
+        $processingErrors = ProcessingErrors::create();
         try {
-            $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
-            $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $node);
+            $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $processingErrors);
+            $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($processingErrors, $node);
 
-            $nodeMutators = $this->nodeCreationService->createMutatorsForRootTemplate($template, $node->getNodeType(), $this->nodeTypeManager, $node->getContext(), $caughtExceptions);
+            $nodeMutators = $this->nodeCreationService->createMutatorsForRootTemplate($template, $node->getNodeType(), $this->nodeTypeManager, $node->getContext(), $processingErrors);
             $nodeMutators->executeWithStartingNode($node);
 
-            $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $node);
+            $this->exceptionHandler->handleAfterNodeCreation($processingErrors, $node);
         } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
         }
     }

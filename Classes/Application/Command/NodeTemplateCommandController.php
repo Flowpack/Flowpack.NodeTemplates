@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Application\Command;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\NodeTemplateDumper\NodeTemplateDumper;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
@@ -77,7 +77,7 @@ class NodeTemplateCommandController extends CommandController
         $templatesChecked = 0;
         /**
          * nodeTypeNames as index
-         * @var array<string, array{caughtExceptions: CaughtExceptions, dataWasAccessed: bool}> $faultyNodeTypeTemplates
+         * @var array<string, array{processingErrors: ProcessingErrors, dataWasAccessed: bool}> $faultyNodeTypeTemplates
          */
         $faultyNodeTypeTemplates = [];
 
@@ -86,7 +86,7 @@ class NodeTemplateCommandController extends CommandController
             if (!$templateConfiguration) {
                 continue;
             }
-            $caughtExceptions = CaughtExceptions::create();
+            $processingErrors = ProcessingErrors::create();
 
             $subgraph = $this->contextFactory->create();
 
@@ -106,13 +106,13 @@ class NodeTemplateCommandController extends CommandController
                     'data' => $observableEmptyData,
                     'triggeringNode' => $subgraph->getRootNode(),
                 ],
-                $caughtExceptions
+                $processingErrors
             );
 
-            $this->nodeCreationService->createMutatorsForRootTemplate($template, $nodeType, $this->nodeTypeManager, $subgraph, $caughtExceptions);
+            $this->nodeCreationService->createMutatorsForRootTemplate($template, $nodeType, $this->nodeTypeManager, $subgraph, $processingErrors);
 
-            if ($caughtExceptions->hasExceptions()) {
-                $faultyNodeTypeTemplates[$nodeType->getName()] = ['caughtExceptions' => $caughtExceptions, 'dataWasAccessed' => $observableEmptyData->dataWasAccessed];
+            if ($processingErrors->hasExceptions()) {
+                $faultyNodeTypeTemplates[$nodeType->getName()] = ['processingErrors' => $processingErrors, 'dataWasAccessed' => $observableEmptyData->dataWasAccessed];
             }
             $templatesChecked++;
         }
@@ -133,7 +133,7 @@ class NodeTemplateCommandController extends CommandController
         $this->outputLine();
 
         $hasError = false;
-        foreach ($faultyNodeTypeTemplates as $nodeTypeName => ['caughtExceptions' => $caughtExceptions, 'dataWasAccessed' => $dataWasAccessed]) {
+        foreach ($faultyNodeTypeTemplates as $nodeTypeName => ['processingErrors' => $processingErrors, 'dataWasAccessed' => $dataWasAccessed]) {
             if ($dataWasAccessed) {
                 $this->outputLine(sprintf('<comment>%s</comment> <b>(depends on "data" context)</b>', $nodeTypeName));
             } else {
@@ -141,8 +141,8 @@ class NodeTemplateCommandController extends CommandController
                 $this->outputLine(sprintf('<error>%s</error>', $nodeTypeName));
             }
 
-            foreach ($caughtExceptions as $caughtException) {
-                $this->outputLine('  ' . $caughtException->toMessage());
+            foreach ($processingErrors as $processingError) {
+                $this->outputLine('  ' . $processingError->toMessage());
                 $this->outputLine();
             }
         }

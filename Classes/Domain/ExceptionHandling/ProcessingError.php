@@ -8,7 +8,7 @@ use Neos\Flow\Annotations as Flow;
 /**
  * @Flow\Proxy(false)
  */
-class CaughtException
+class ProcessingError
 {
     private \Throwable $exception;
 
