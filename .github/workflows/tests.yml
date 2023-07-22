@@ -19,10 +19,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - php-version: 7.4
-            neos-version: 7.3
-          - php-version: 8.1
-            neos-version: 8.3
+          - php-version: "8.2"
+            neos-version: "9.0"
+
+    services:
+      mariadb:
+        # see https://mariadb.com/kb/en/mariadb-server-release-dates/
+        # this should be a current release, e.g. the LTS version
+        image: mariadb:10.8
+        env:
+          MYSQL_USER: neos
+          MYSQL_PASSWORD: neos
+          MYSQL_DATABASE: neos_functional_testing
+          MYSQL_ROOT_PASSWORD: neos
+        ports:
+          - "3306:3306"
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
       - name: Checkout code
@@ -62,7 +74,30 @@ jobs:
           cd ${FLOW_PATH_ROOT}
           bin/phpunit --colors -c Build/BuildEssentials/PhpUnit/UnitTests.xml Packages/Application/Flowpack.NodeTemplates/Tests/Unit
 
+      - name: Setup Flow configuration
+        run: |
+          cd ${FLOW_PATH_ROOT}
+          mkdir -p Configuration/Testing/Behat
+          rm -f Configuration/Testing/Behat/Settings.yaml
+          cat <<EOF >> Configuration/Testing/Settings.Database.yaml
+          Neos:
+          Flow:
+           persistence:
+             backendOptions:
+               host: '127.0.0.1'
+               driver: pdo_mysql
+               user: 'neos'
+               password: 'neos'
+               dbname: 'neos_functional_testing'
+          EOF
+
       - name: Run Functional tests
         run: |
           cd ${FLOW_PATH_ROOT}
           bin/phpunit --colors -c Build/BuildEssentials/PhpUnit/FunctionalTests.xml Packages/Application/Flowpack.NodeTemplates/Tests/Functional
+
+      - name: Show log on failure
+        if: ${{ failure()  }}
+        run: |
+          cd ${FLOW_PATH_ROOT}
+          cat Data/Logs/System_Testing.log
