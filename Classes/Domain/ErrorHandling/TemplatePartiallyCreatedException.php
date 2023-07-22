@@ -1,6 +1,6 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain\ExceptionHandling;
+namespace Flowpack\NodeTemplates\Domain\ErrorHandling;
 
 /**
  * Thrown in the following cases:

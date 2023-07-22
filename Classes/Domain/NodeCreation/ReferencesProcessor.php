@@ -2,8 +2,8 @@
 
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\ProcessingError;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\ProcessingErrors;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 
 class ReferencesProcessor

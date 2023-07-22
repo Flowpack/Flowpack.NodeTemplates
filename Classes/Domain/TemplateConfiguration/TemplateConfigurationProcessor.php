@@ -2,8 +2,8 @@
 
 namespace Flowpack\NodeTemplates\Domain\TemplateConfiguration;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\ProcessingError;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\ProcessingErrors;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;

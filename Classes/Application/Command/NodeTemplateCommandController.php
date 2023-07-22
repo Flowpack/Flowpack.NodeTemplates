@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Application\Command;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\ProcessingErrors;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\NodeTemplateDumper\NodeTemplateDumper;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;

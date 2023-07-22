@@ -2,10 +2,10 @@
 
 namespace Flowpack\NodeTemplates\Domain;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\ProcessingErrors;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\ProcessingErrorHandler;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplateNotCreatedException;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplatePartiallyCreatedException;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrorHandler;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\TemplateNotCreatedException;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\TemplatePartiallyCreatedException;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
 use Neos\ContentRepository\Domain\Model\NodeInterface;

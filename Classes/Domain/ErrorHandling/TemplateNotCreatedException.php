@@ -1,6 +1,6 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain\ExceptionHandling;
+namespace Flowpack\NodeTemplates\Domain\ErrorHandling;
 
 /**
  * Thrown if the templateConfigurationProcessing was unsuccessful (due to an invalid EEL expression f.x),
