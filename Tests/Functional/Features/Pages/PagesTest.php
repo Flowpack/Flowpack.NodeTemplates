@@ -14,7 +14,10 @@ class PagesTest extends AbstractNodeTemplateTestCase
         $createdNode = $this->createNodeInto(
             $this->homePageNode,
             'Flowpack.NodeTemplates:Document.StaticPages',
-            []
+            [
+                // we specify this context, to tests that the default neos ui node creation handler, which sets the title property can be overridden.
+                'title' => 'WeDontUseThisTitle'
+            ]
         );
 
         $this->assertLastCreatedTemplateMatchesSnapshot('Pages1');
