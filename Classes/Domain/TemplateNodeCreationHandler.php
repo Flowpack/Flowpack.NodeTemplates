@@ -9,22 +9,29 @@ use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplatePartiallyCreatedExce
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\Flow\Annotations as Flow;
 use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
 
 class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 {
     /**
-     * @var TemplateConfigurationProcessor
-     * @Flow\Inject
-     */
-    protected $templateConfigurationProcessor;
-
-    /**
      * @var NodeCreationService
      * @Flow\Inject
      */
     protected $nodeCreationService;
+
+    /**
+     * @var NodeTypeManager
+     * @Flow\Inject
+     */
+    protected $nodeTypeManager;
+
+    /**
+     * @var TemplateConfigurationProcessor
+     * @Flow\Inject
+     */
+    protected $templateConfigurationProcessor;
 
     /**
      * @var ExceptionHandler
@@ -56,7 +63,9 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
             $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
             $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $node);
 
-            $this->nodeCreationService->apply($template, $node, $caughtExceptions);
+            $nodeMutators = $this->nodeCreationService->createMutatorsForRootTemplate($template, $node->getNodeType(), $this->nodeTypeManager, $node->getContext(), $caughtExceptions);
+            $nodeMutators->executeWithStartingNode($node);
+
             $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $node);
         } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
         }

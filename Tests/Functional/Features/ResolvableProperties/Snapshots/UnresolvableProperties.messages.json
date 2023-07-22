@@ -4,7 +4,11 @@
         "severity": "ERROR"
     },
     {
-        "message": "Property \"asset\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | FlowException(Object of type \"Neos\\Media\\Domain\\Model\\Asset\" with identity \"non-existing\" not found., 1686779371122)",
+        "message": "Property \"someString\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | PropertyIgnoredException(Because value `[\"foo\"]` is not assignable to property type \"string\"., 1685958105644)",
+        "severity": "ERROR"
+    },
+    {
+        "message": "Property \"asset\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | PropertyIgnoredException(Object of type \"Neos\\Media\\Domain\\Model\\Asset\" with identity \"non-existing\" not found., 1686779371122)",
         "severity": "ERROR"
     },
     {
@@ -12,15 +16,11 @@
         "severity": "ERROR"
     },
     {
-        "message": "Property \"someString\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | PropertyIgnoredException(Because value `[\"foo\"]` is not assignable to property type \"string\"., 1685958105644)",
+        "message": "Reference \"reference\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | InvalidReferenceException(Invalid reference value. Value `true` is not a valid node or node identifier., 1687632177555)",
         "severity": "ERROR"
     },
     {
-        "message": "Reference \"reference\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | RuntimeException(Reference could not be set, because node reference(s) true cannot be resolved., 1685958176560)",
-        "severity": "ERROR"
-    },
-    {
-        "message": "Reference \"references\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | RuntimeException(Reference could not be set, because node reference(s) [\"some-non-existing-node-id\"] cannot be resolved., 1685958176560)",
+        "message": "Reference \"references\" in NodeType \"Flowpack.NodeTemplates:Content.UnresolvableProperties\" | InvalidReferenceException(Node with identifier \"some-non-existing-node-id\" does not exist., 1687632330292)",
         "severity": "ERROR"
     }
 ]

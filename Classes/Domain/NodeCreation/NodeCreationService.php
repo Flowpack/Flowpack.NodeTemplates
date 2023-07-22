@@ -5,33 +5,23 @@ namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
-use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;
+use Neos\ContentRepository\Domain\Service\Context;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
-use Neos\ContentRepository\Exception\NodeConstraintException;
 use Neos\Flow\Annotations as Flow;
-use Neos\Flow\Property\PropertyMapper;
-use Neos\Flow\Property\PropertyMappingConfiguration;
-use Neos\Neos\Service\NodeOperations;
 use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
-use Neos\Flow\Property\Exception as PropertyWasNotMappedException;
 
+/**
+ * Declares the steps how to create a node subtree starting from the root template {@see RootTemplate}
+ *
+ * The steps can to be applied to create the node structure via {@see NodeMutatorCollection::executeWithStartingNode()}
+ *
+ * @Flow\Scope("singleton")
+ */
 class NodeCreationService
 {
-    /**
-     * @var NodeOperations
-     * @Flow\Inject
-     */
-    protected $nodeOperations;
-
-    /**
-     * @var NodeTypeManager
-     * @Flow\Inject
-     */
-    protected $nodeTypeManager;
-
     /**
      * @Flow\Inject
      * @var NodeUriPathSegmentGenerator
@@ -40,163 +30,157 @@ class NodeCreationService
 
     /**
      * @Flow\Inject
-     * @var PropertyMapper
+     * @var PropertiesProcessor
      */
-    protected $propertyMapper;
+    protected $propertiesProcessor;
 
     /**
-     * Applies the root template and its descending configured child node templates on the given node.
+     * @Flow\Inject
+     * @var ReferencesProcessor
+     */
+    protected $referencesProcessor;
+
+    /**
+     * Creates mutator {@see NodeMutatorCollection} for the root template and its descending configured child node templates to be applied on a node.
      * @throws \InvalidArgumentException
      */
-    public function apply(RootTemplate $template, NodeInterface $node, CaughtExceptions $caughtExceptions): void
+    public function createMutatorsForRootTemplate(RootTemplate $template, NodeType $nodeType, NodeTypeManager $nodeTypeManager, Context $subgraph, CaughtExceptions $caughtExceptions): NodeMutatorCollection
     {
-        $nodeType = $node->getNodeType();
-        $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties(), $caughtExceptions), $nodeType);
+        $node = TransientNode::forRegular($nodeType, $nodeTypeManager, $subgraph, $template->getProperties());
 
-        // set properties
-        foreach ($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions) as $key => $value) {
-            $node->setProperty($key, $value);
-        }
+        $validProperties = array_merge(
+            $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
+            $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
+        );
 
-        // set references
-        foreach ($propertiesAndReferences->requireValidReferences($nodeType, $node->getContext(), $caughtExceptions) as $key => $value) {
-            $node->setProperty($key, $value);
-        }
-
-        $this->ensureNodeHasUriPathSegment($node, $template);
-        $this->applyTemplateRecursively($template->getChildNodes(), $node, $caughtExceptions);
+        return NodeMutatorCollection::from(
+            NodeMutator::setProperties($validProperties),
+            $this->createMutatorForUriPathSegment($template->getProperties()),
+        )->merge(
+            $this->createMutatorsForChildNodeTemplates(
+                $template->getChildNodes(),
+                $node,
+                $caughtExceptions
+            )
+        );
     }
 
-    private function applyTemplateRecursively(Templates $templates, NodeInterface $parentNode, CaughtExceptions $caughtExceptions): void
+    private function createMutatorsForChildNodeTemplates(Templates $templates, TransientNode $parentNode, CaughtExceptions $caughtExceptions): NodeMutatorCollection
     {
+        $nodeMutators = NodeMutatorCollection::empty();
+
         // `hasAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
         // https://github.com/neos/neos-ui/issues/3527
         $parentNodesAutoCreatedChildNodes = $parentNode->getNodeType()->getAutoCreatedChildNodes();
         foreach ($templates as $template) {
             if ($template->getName() && isset($parentNodesAutoCreatedChildNodes[$template->getName()->__toString()])) {
-                $node = $parentNode->getNode($template->getName()->__toString());
+                /**
+                 * Case 1: Auto created child nodes
+                 */
                 if ($template->getType() !== null) {
                     $caughtExceptions->add(
                         CaughtException::fromException(new \RuntimeException(sprintf('Template cant mutate type of auto created child nodes. Got: "%s"', $template->getType()->getValue()), 1685999829307))
                     );
                     // we continue processing the node
                 }
-            } else {
-                if ($template->getType() === null) {
-                    $caughtExceptions->add(
-                        CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be set for non auto created child nodes.'), 1685999829307))
-                    );
-                    continue;
-                }
-                if (!$this->nodeTypeManager->hasNodeType($template->getType()->getValue())) {
-                    $caughtExceptions->add(
-                        CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a valid NodeType. Got: "%s".', $template->getType()->getValue()), 1685999795564))
-                    );
-                    continue;
-                }
 
-                $nodeType = $this->nodeTypeManager->getNodeType($template->getType()->getValue());
+                $node = $parentNode->forTetheredChildNode($template->getName(), $template->getProperties());
 
-                if ($nodeType->isAbstract()) {
-                    $caughtExceptions->add(
-                        CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a non abstract NodeType. Got: "%s".', $template->getType()->getValue()), 1686417628976))
-                    );
-                    continue;
-                }
+                $validProperties = array_merge(
+                    $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
+                    $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
+                );
 
-                if (!$parentNode->getNodeType()->allowsChildNodeType($nodeType)) {
-                    $caughtExceptions->add(
-                        CaughtException::fromException(new \RuntimeException(sprintf('Node type "%s" is not allowed for child nodes of type %s', $template->getType()->getValue(), $parentNode->getNodeType()->getName()), 1686417627173))
-                    );
-                    continue;
-                }
+                $nodeMutators = $nodeMutators->append(
+                    NodeMutator::isolated(
+                        NodeMutatorCollection::from(
+                            NodeMutator::selectChildNode($template->getName()),
+                            NodeMutator::setProperties($validProperties)
+                        )->merge($this->createMutatorsForChildNodeTemplates(
+                            $template->getChildNodes(),
+                            $node,
+                            $caughtExceptions
+                        ))
+                    )
+                );
 
-                // todo maybe check also explicitly for allowsGrandchildNodeType (we do this currently like below)
-                try {
-                    $node = $this->nodeOperations->create(
-                        $parentNode,
-                        [
-                            'nodeType' => $template->getType()->getValue(),
-                            'nodeName' => $template->getName() ? $template->getName()->__toString() : null
-                        ],
-                        'into'
-                    );
-                } catch (NodeConstraintException $nodeConstraintException) {
-                    $caughtExceptions->add(
-                        CaughtException::fromException($nodeConstraintException)
-                    );
-                    continue; // try the next childNode
-                }
-            }
-            $nodeType = $node->getNodeType();
-            $propertiesAndReferences = PropertiesAndReferences::createFromArrayAndTypeDeclarations($this->convertProperties($nodeType, $template->getProperties(), $caughtExceptions), $nodeType);
-
-            // set properties
-            foreach ($propertiesAndReferences->requireValidProperties($nodeType, $caughtExceptions) as $key => $value) {
-                $node->setProperty($key, $value);
+                continue;
             }
 
-            // set references
-            foreach ($propertiesAndReferences->requireValidReferences($nodeType, $node->getContext(), $caughtExceptions) as $key => $value) {
-                $node->setProperty($key, $value);
+            /**
+             * Case 2: Regular to be created nodes (non auto-created nodes)
+             */
+            if ($template->getType() === null) {
+                $caughtExceptions->add(
+                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be set for non auto created child nodes.'), 1685999829307))
+                );
+                continue;
+            }
+            if (!$parentNode->getNodeTypeManager()->hasNodeType($template->getType()->getValue())) {
+                $caughtExceptions->add(
+                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a valid NodeType. Got: "%s".', $template->getType()->getValue()), 1685999795564))
+                );
+                continue;
             }
 
-            $this->ensureNodeHasUriPathSegment($node, $template);
-            $this->applyTemplateRecursively($template->getChildNodes(), $node, $caughtExceptions);
+            $nodeType = $parentNode->getNodeTypeManager()->getNodeType($template->getType()->getValue());
+
+            if ($nodeType->isAbstract()) {
+                $caughtExceptions->add(
+                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a non abstract NodeType. Got: "%s".', $template->getType()->getValue()), 1686417628976))
+                );
+                continue;
+            }
+
+            try {
+                $parentNode->requireConstraintsImposedByAncestorsToBeMet($nodeType);
+            } catch (NodeConstraintException $nodeConstraintException) {
+                $caughtExceptions->add(
+                    CaughtException::fromException($nodeConstraintException)
+                );
+                continue;
+            }
+
+            $node = $parentNode->forRegularChildNode($nodeType, $template->getProperties());
+
+            $validProperties = array_merge(
+                $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
+                $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
+            );
+
+            $nodeMutators = $nodeMutators->append(
+                NodeMutator::isolated(
+                    NodeMutatorCollection::from(
+                        NodeMutator::createAndSelectNode($template->getType(), $template->getName()),
+                        NodeMutator::setProperties($validProperties),
+                        $this->createMutatorForUriPathSegment($template->getProperties())
+                    )->merge($this->createMutatorsForChildNodeTemplates(
+                        $template->getChildNodes(),
+                        $node,
+                        $caughtExceptions
+                    ))
+                )
+            );
+
         }
+
+        return $nodeMutators;
     }
 
     /**
      * All document node types get a uri path segment; if it is not explicitly set in the properties,
      * it should be built based on the title property
-     *
-     * @param Template|RootTemplate $template
      */
-    private function ensureNodeHasUriPathSegment(NodeInterface $node, $template)
+    private function createMutatorForUriPathSegment(array $properties): NodeMutator
     {
-        if (!$node->getNodeType()->isOfType('Neos.Neos:Document')) {
-            return;
-        }
-        $properties = $template->getProperties();
-        if (isset($properties['uriPathSegment'])) {
-            return;
-        }
-        $node->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($node, $properties['title'] ?? null));
-    }
-
-    private function convertProperties(NodeType $nodeType, array $properties, CaughtExceptions $caughtExceptions): array
-    {
-        // TODO combine with PropertiesAndReferences::requireValidProperties
-        foreach ($nodeType->getConfiguration('properties') as $propertyName => $propertyConfiguration) {
-            if (!isset($properties[$propertyName])) {
-                continue;
+        return NodeMutator::unsafeFromClosure(function (NodeInterface $nodePointer) use ($properties) {
+            if (!$nodePointer->getNodeType()->isOfType('Neos.Neos:Document')) {
+                return;
             }
-            $propertyType = $nodeType->getPropertyType($propertyName);
-            if ($propertyType === 'references' || $propertyType === 'reference') {
-                continue;
+            if (isset($properties['uriPathSegment'])) {
+                return;
             }
-            $propertyType = PropertyType::fromPropertyOfNodeType($propertyName, $nodeType);
-            $propertyValue = $properties[$propertyName];
-            if (!$propertyType->isClass() && !$propertyType->isArrayOfClass()) {
-                // property mapping only for class types or array of classes!
-                continue;
-            }
-            try {
-                $propertyMappingConfiguration = new PropertyMappingConfiguration();
-                $propertyMappingConfiguration->allowAllProperties();
-
-                $properties[$propertyName] = $this->propertyMapper->convert($propertyValue, $propertyType->getValue(), $propertyMappingConfiguration);
-                $messages = $this->propertyMapper->getMessages();
-                if ($messages->hasErrors()) {
-                    throw new PropertyWasNotMappedException($this->propertyMapper->getMessages()->getFirstError()->getMessage(), 1686779371122);
-                }
-            } catch (PropertyWasNotMappedException $exception) {
-                $caughtExceptions->add(CaughtException::fromException(
-                    $exception
-                )->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->getName())));
-                unset($properties[$propertyName]);
-            }
-        }
-        return $properties;
+            $nodePointer->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($nodePointer, $properties['title'] ?? null));
+        });
     }
 }

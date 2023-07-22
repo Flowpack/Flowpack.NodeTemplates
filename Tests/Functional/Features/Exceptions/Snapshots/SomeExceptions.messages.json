@@ -72,11 +72,11 @@
         "severity": "ERROR"
     },
     {
-        "message": "Reference \"reference\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | RuntimeException(Reference could not be set, because node reference(s) \"non-existing-node-id\" cannot be resolved., 1685958176560)",
+        "message": "Reference \"reference\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | InvalidReferenceException(Node with identifier \"non-existing-node-id\" does not exist., 1687632330292)",
         "severity": "ERROR"
     },
     {
-        "message": "Reference \"references\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | RuntimeException(Reference could not be set, because node reference(s) [\"non-existing-node-id\"] cannot be resolved., 1685958176560)",
+        "message": "Reference \"references\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | InvalidReferenceException(Node with identifier \"non-existing-node-id\" does not exist., 1687632330292)",
         "severity": "ERROR"
     },
     {
@@ -84,7 +84,7 @@
         "severity": "ERROR"
     },
     {
-        "message": "RuntimeException(Node type \"Flowpack.NodeTemplates:Document.Page\" is not allowed for child nodes of type Flowpack.NodeTemplates:Content.SomeExceptions, 1686417627173)",
+        "message": "NodeConstraintException(Node type \"Flowpack.NodeTemplates:Document.Page\" is not allowed for child nodes of type Flowpack.NodeTemplates:Content.SomeExceptions, 1686417627173)",
         "severity": "ERROR"
     },
     {

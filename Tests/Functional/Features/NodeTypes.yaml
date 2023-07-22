@@ -19,3 +19,10 @@
       type: string
       ui:
         label: "Text"
+
+'Flowpack.NodeTemplates:Collection.Disallowed':
+  superTypes:
+    'Neos.Neos:ContentCollection': true
+  constraints:
+    nodeTypes:
+      '*': false

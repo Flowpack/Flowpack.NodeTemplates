@@ -1,21 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation;
 
+use Flowpack\NodeTemplates\Domain\NodeCreation\InvalidReferenceException;
 use Flowpack\NodeTemplates\Domain\NodeCreation\ReferenceType;
 use GuzzleHttp\Psr7\Uri;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\NodeType;
-use Neos\ContentRepository\Domain\Service\Context;
 use Neos\Flow\ResourceManagement\PersistentResource;
 use Neos\Media\Domain\Model\Asset;
 use Neos\Media\Domain\Model\Image;
-use PHPUnit\Framework\Assert;
 use PHPUnit\Framework\TestCase;
 
 class ReferenceTypeTest extends TestCase
 {
-
     private const VALID_NODE_ID_1 = '123';
     private const VALID_NODE_ID_2 = '456';
 
@@ -24,14 +24,6 @@ class ReferenceTypeTest extends TestCase
      */
     public function testIsMatchedBy(string $declarationType, array $validValues, array $invalidValues): void
     {
-        // subgraph that knows the nodes 123 and 456
-        $subgraphMock = $this->getMockBuilder(Context::class)->disableOriginalConstructor()->getMock();
-        $subgraphMock->expects(self::any())->method('getNodeByIdentifier')->willReturnCallback(function ($nodeId) {
-            if ($nodeId === self::VALID_NODE_ID_1 || $nodeId === self::VALID_NODE_ID_2) {
-                return $this->createStub(NodeInterface::class);
-            }
-            return null;
-        });
         $nodeTypeMock = $this->getMockBuilder(NodeType::class)->disableOriginalConstructor()->getMock();
         $nodeTypeMock->expects(self::once())->method('getPropertyType')->with('test')->willReturn($declarationType);
         $subject = ReferenceType::fromPropertyOfNodeType(
@@ -39,10 +31,16 @@ class ReferenceTypeTest extends TestCase
             $nodeTypeMock,
         );
         foreach ($validValues as $validValue) {
-            Assert::assertTrue($subject->isMatchedBy($validValue, $subgraphMock), sprintf('Value %s should match.', get_debug_type($validValue)));
+            $subject->isReference() ? $subject->toNodeAggregateId($validValue) : $subject->toNodeAggregateIds($validValue);
+            self::assertTrue(true);
         }
         foreach ($invalidValues as $invalidValue) {
-            Assert::assertFalse($subject->isMatchedBy($invalidValue, $subgraphMock), sprintf('Value %s should not match.', get_debug_type($validValue)));
+            try {
+                $subject->isReference() ? $subject->toNodeAggregateId($invalidValue) : $subject->toNodeAggregateIds($invalidValue);
+                self::fail(sprintf('Value %s should not match.', var_export($invalidValue, true)));
+            } catch (InvalidReferenceException $exception) {
+                self::assertTrue(true);
+            }
         }
     }
 
@@ -50,26 +48,29 @@ class ReferenceTypeTest extends TestCase
     {
         $int = 13;
         $float = 4.2;
-        $string = 'It\'s a graph!';
-        $stringArray = [$string];
+        $stringWithSpecialChars = 'Special äüö chars';
+        $stringWithSpecialCharsArray = [$stringWithSpecialChars];
         $image = new Image(new PersistentResource());
         $asset = new Asset(new PersistentResource());
         $date = \DateTimeImmutable::createFromFormat(\DateTimeInterface::W3C, '2020-08-20T18:56:15+00:00');
         $uri = new Uri('https://www.neos.io');
 
-        $nodeMock1 = $this->createStub(NodeInterface::class);
-        $nodeMock2 = $this->createStub(NodeInterface::class);
+        $nodeMock1 = $this->getMockBuilder(NodeInterface::class)->getMock();
+        $nodeMock1->method('getIdentifier')->willReturn(self::VALID_NODE_ID_1);
+
+        $nodeMock2 = $this->getMockBuilder(NodeInterface::class)->getMock();
+        $nodeMock2->method('getIdentifier')->willReturn(self::VALID_NODE_ID_2);
 
         return [
             [
                 'reference',
                 [null, $nodeMock1, $nodeMock2, self::VALID_NODE_ID_1, self::VALID_NODE_ID_2],
-                [0, $int, 0.0, $float, '', $string, [], $stringArray, $date, $uri, $image, $asset, [$asset]]
+                [0, $int, 0.0, $float, '', $stringWithSpecialChars, [], $stringWithSpecialCharsArray, $date, $uri, $image, $asset, [$asset]]
             ],
             [
                 'references',
                 [[], null, [self::VALID_NODE_ID_1], [$nodeMock1], [self::VALID_NODE_ID_2, $nodeMock2]],
-                [true, $float, $string, $stringArray, $date, $uri, $image, $asset, [$asset]]
+                [true, $float, $stringWithSpecialChars, $stringWithSpecialCharsArray, $date, $uri, $image, $asset, [$asset]]
             ],
         ];
     }
