@@ -108,7 +108,11 @@ class TemplateConfigurationProcessor
 
         // process the childNodes
         $childNodeTemplates = Templates::empty();
-        foreach ($templatePart->getRawConfiguration('childNodes') ?? [] as $childNodeConfigurationPath => $_) {
+        foreach ($templatePart->getRawConfiguration('childNodes') ?? [] as $childNodeConfigurationPath => $childNodeConfiguration) {
+            if ($childNodeConfiguration === null) {
+                // childNode was unset: `child: ~`
+                continue;
+            }
             try {
                 $childNodeTemplatePart = $templatePart->withConfigurationByConfigurationPath(['childNodes', $childNodeConfigurationPath]);
             } catch (StopBuildingTemplatePartException $e) {

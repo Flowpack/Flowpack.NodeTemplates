@@ -84,3 +84,5 @@
           type: "Flowpack.NodeTemplates:Content.SomeExceptions"
         invalidOption:
           crazy: me
+        unsetChildNode: ~
+
