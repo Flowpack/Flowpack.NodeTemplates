@@ -58,10 +58,30 @@ jobs:
 
       - name: Prepare Neos distribution
         run: |
-          git clone --depth 1 --branch ${{ matrix.neos-version }} https://github.com/neos/neos-base-distribution.git ${FLOW_PATH_ROOT}
+          git clone --depth 1 --branch ${{ matrix.neos-version }} https://github.com/neos/neos-development-distribution.git ${FLOW_PATH_ROOT}
           cd ${FLOW_PATH_ROOT}
           composer config --no-plugins allow-plugins.neos/composer-plugin true
           composer config repositories.tested-package path ../Flowpack.NodeTemplates
+
+          #
+          # PATCHES
+          #
+          composer config --no-plugins allow-plugins.cweagans/composer-patches true
+          composer require --no-update --no-interaction cweagans/composer-patches:^1.7.3
+          # the packages might have to be installed from source, so the patch works
+          patches='{
+            "neos/neos-ui": {
+              "improvedNodeCreationHandler": "https://github.com/neos/neos-ui/pull/3519.patch"
+            },
+            "neos/neos-development-collection": {
+              "tetheredNodeIdsDeterministic": "https://github.com/neos/neos-development-collection/pull/4313.patch"
+            }
+          }'
+          composer config extra.patches --json ${patches//[[:space:]]/}
+          #
+          # PATCHES END
+          #
+
           composer require --no-update --no-interaction flowpack/nodetemplates:@dev
 
       - name: Install dependencies
@@ -72,29 +92,28 @@ jobs:
       - name: Run Unit tests
         run: |
           cd ${FLOW_PATH_ROOT}
-          bin/phpunit --colors -c Build/BuildEssentials/PhpUnit/UnitTests.xml Packages/Application/Flowpack.NodeTemplates/Tests/Unit
+          bin/phpunit -c Build/BuildEssentials/PhpUnit/UnitTests.xml Packages/Application/Flowpack.NodeTemplates/Tests/Unit
 
       - name: Setup Flow configuration
         run: |
           cd ${FLOW_PATH_ROOT}
-          mkdir -p Configuration/Testing/Behat
-          rm -f Configuration/Testing/Behat/Settings.yaml
-          cat <<EOF >> Configuration/Testing/Settings.Database.yaml
+          rm -f Configuration/Testing/Settings.yaml
+          cat <<EOF >> Configuration/Testing/Settings.yaml
           Neos:
-          Flow:
-           persistence:
-             backendOptions:
-               host: '127.0.0.1'
-               driver: pdo_mysql
-               user: 'neos'
-               password: 'neos'
-               dbname: 'neos_functional_testing'
+            Flow:
+              persistence:
+                backendOptions:
+                  host: '127.0.0.1'
+                  driver: pdo_mysql
+                  user: 'neos'
+                  password: 'neos'
+                  dbname: 'neos_functional_testing'
           EOF
 
       - name: Run Functional tests
         run: |
           cd ${FLOW_PATH_ROOT}
-          bin/phpunit --colors -c Build/BuildEssentials/PhpUnit/FunctionalTests.xml Packages/Application/Flowpack.NodeTemplates/Tests/Functional
+          bin/phpunit -c Build/BuildEssentials/PhpUnit/FunctionalTests.xml Packages/Application/Flowpack.NodeTemplates/Tests/Functional
 
       - name: Show log on failure
         if: ${{ failure()  }}
