@@ -4,8 +4,6 @@ namespace Flowpack\NodeTemplates\Domain;
 
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrorHandler;
-use Flowpack\NodeTemplates\Domain\ErrorHandling\TemplateNotCreatedException;
-use Flowpack\NodeTemplates\Domain\ErrorHandling\TemplatePartiallyCreatedException;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
@@ -59,15 +57,22 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
         $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');
 
         $processingErrors = ProcessingErrors::create();
-        try {
-            $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $processingErrors);
-            $this->processingErrorHandler->handleAfterTemplateConfigurationProcessing($processingErrors, $node);
 
-            $nodeMutators = $this->nodeCreationService->createMutatorsForRootTemplate($template, $node->getNodeType(), $this->nodeTypeManager, $node->getContext(), $processingErrors);
-            $nodeMutators->executeWithStartingNode($node);
+        $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $processingErrors);
+        $shouldContinue = $this->processingErrorHandler->handleAfterTemplateConfigurationProcessing($processingErrors, $node);
 
-            $this->processingErrorHandler->handleAfterNodeCreation($processingErrors, $node);
-        } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
+        if (!$shouldContinue) {
+            return;
         }
+
+        $nodeMutators = $this->nodeCreationService->createMutatorsForRootTemplate($template, $node->getNodeType(), $this->nodeTypeManager, $node->getContext(), $processingErrors);
+
+        $shouldContinue = $this->processingErrorHandler->handleAfterNodeCreation($processingErrors, $node);
+
+        if (!$shouldContinue) {
+            return;
+        }
+
+        $nodeMutators->executeWithStartingNode($node);
     }
 }

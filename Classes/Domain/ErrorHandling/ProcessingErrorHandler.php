@@ -36,14 +36,17 @@ class ProcessingErrorHandler
      */
     protected $configuration;
 
-    public function handleAfterTemplateConfigurationProcessing(ProcessingErrors $processingErrors, NodeInterface $node): void
+    /**
+     * @return bool if to continue or abort
+     */
+    public function handleAfterTemplateConfigurationProcessing(ProcessingErrors $processingErrors, NodeInterface $node): bool
     {
         if (!$processingErrors->hasExceptions()) {
-            return;
+            return true;
         }
 
         if (!$this->configuration->shouldStopOnExceptionAfterTemplateConfigurationProcessing()) {
-            return;
+            return true;
         }
 
         $templateNotCreatedException = new TemplateNotCreatedException(
@@ -54,13 +57,16 @@ class ProcessingErrorHandler
 
         $this->logProcessingErrors($processingErrors, $templateNotCreatedException);
 
-        throw $templateNotCreatedException;
+        return false;
     }
 
-    public function handleAfterNodeCreation(ProcessingErrors $processingErrors, NodeInterface $node): void
+    /**
+     * @return bool if to continue or abort
+     */
+    public function handleAfterNodeCreation(ProcessingErrors $processingErrors, NodeInterface $node): bool
     {
         if (!$processingErrors->hasExceptions()) {
-            return;
+            return true;
         }
 
         $templatePartiallyCreatedException = new TemplatePartiallyCreatedException(
@@ -71,7 +77,8 @@ class ProcessingErrorHandler
 
         $this->logProcessingErrors($processingErrors, $templatePartiallyCreatedException);
 
-        throw $templatePartiallyCreatedException;
+        // TODO add setting to abort here in case of previous processing errors
+        return true;
     }
 
     /**
