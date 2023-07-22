@@ -2,10 +2,8 @@
 
 namespace Flowpack\NodeTemplates\Domain;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\ExceptionHandler;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplateNotCreatedException;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplatePartiallyCreatedException;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrorHandler;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
 use Neos\ContentRepository\Core\ContentRepository;
@@ -29,10 +27,10 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
     protected $templateConfigurationProcessor;
 
     /**
-     * @var ExceptionHandler
+     * @var ProcessingErrorHandler
      * @Flow\Inject
      */
-    protected $exceptionHandler;
+    protected $processingErrorHandler;
 
     /**
      * Create child nodes and change properties upon node creation
@@ -64,17 +62,21 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
             'subgraph' => $subgraph
         ];
 
-        $caughtExceptions = CaughtExceptions::create();
-        try {
-            $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
-            $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $nodeType, $commands->first->nodeAggregateId);
+        $processingErrors = ProcessingErrors::create();
+        $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $processingErrors);
+        $shouldContinue = $this->processingErrorHandler->handleAfterTemplateConfigurationProcessing($processingErrors, $nodeType, $commands->first->nodeAggregateId);
 
-            $commands = $this->nodeCreationService->apply($template, $commands, $contentRepository->getNodeTypeManager(), $subgraph, $caughtExceptions);
-            $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $nodeType, $commands->first->nodeAggregateId);
-
-        } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
+        if (!$shouldContinue) {
+            return $commands;
         }
 
-        return $commands;
+        $additionalCommands = $this->nodeCreationService->apply($template, $commands, $contentRepository->getNodeTypeManager(), $subgraph, $processingErrors);
+        $shouldContinue = $this->processingErrorHandler->handleAfterNodeCreation($processingErrors, $nodeType, $commands->first->nodeAggregateId);
+
+        if (!$shouldContinue) {
+            return $commands;
+        }
+
+        return $additionalCommands;
     }
 }

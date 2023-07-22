@@ -2,8 +2,8 @@
 
 namespace Flowpack\NodeTemplates\Domain\TemplateConfiguration;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -37,7 +37,7 @@ class TemplatePart
     /**
      * @psalm-readonly
      */
-    private CaughtExceptions $caughtExceptions;
+    private ProcessingErrors $processingErrors;
 
     /**
      * @psalm-param array<string, mixed> $configuration
@@ -50,13 +50,13 @@ class TemplatePart
         array $fullPathToConfiguration,
         array $evaluationContext,
         \Closure $configurationValueProcessor,
-        CaughtExceptions $caughtExceptions
+        ProcessingErrors $processingErrors
     ) {
         $this->configuration = $configuration;
         $this->fullPathToConfiguration = $fullPathToConfiguration;
         $this->evaluationContext = $evaluationContext;
         $this->configurationValueProcessor = $configurationValueProcessor;
-        $this->caughtExceptions = $caughtExceptions;
+        $this->processingErrors = $processingErrors;
         $this->validateTemplateConfigurationKeys();
     }
 
@@ -70,20 +70,20 @@ class TemplatePart
         array $configuration,
         array $evaluationContext,
         \Closure $configurationValueProcessor,
-        CaughtExceptions $caughtExceptions
+        ProcessingErrors $processingErrors
     ): self {
         return new self(
             $configuration,
             [],
             $evaluationContext,
             $configurationValueProcessor,
-            $caughtExceptions
+            $processingErrors
         );
     }
 
-    public function getCaughtExceptions(): CaughtExceptions
+    public function getProcessingErrors(): ProcessingErrors
     {
-        return $this->caughtExceptions;
+        return $this->processingErrors;
     }
 
     public function getFullPathToConfiguration(): array
@@ -102,7 +102,7 @@ class TemplatePart
             array_merge($this->fullPathToConfiguration, $configurationPath),
             $this->evaluationContext,
             $this->configurationValueProcessor,
-            $this->caughtExceptions
+            $this->processingErrors
         );
     }
 
@@ -119,7 +119,7 @@ class TemplatePart
             $this->fullPathToConfiguration,
             array_merge($this->evaluationContext, $evaluationContext),
             $this->configurationValueProcessor,
-            $this->caughtExceptions
+            $this->processingErrors
         );
     }
 
@@ -140,8 +140,8 @@ class TemplatePart
                 $this->fullPathToConfiguration,
                 is_array($configurationPath) ? $configurationPath : [$configurationPath]
             );
-            $this->caughtExceptions->add(
-                CaughtException::fromException($exception)->withOrigin(
+            $this->processingErrors->add(
+                ProcessingError::fromException($exception)->withOrigin(
                     sprintf(
                         'Expression "%s" in "%s"',
                         $value,
@@ -199,15 +199,15 @@ class TemplatePart
         $isRootTemplate = $this->fullPathToConfiguration === [];
         foreach (array_keys($this->configuration) as $key) {
             if (!in_array($key, ['type', 'name', 'properties', 'childNodes', 'when', 'withItems', 'withContext'], true)) {
-                $this->caughtExceptions->add(
-                    CaughtException::fromException(new \InvalidArgumentException(sprintf('Template configuration has illegal key "%s"', $key), 1686150349274))
+                $this->processingErrors->add(
+                    ProcessingError::fromException(new \InvalidArgumentException(sprintf('Template configuration has illegal key "%s"', $key), 1686150349274))
                 );
                 throw new StopBuildingTemplatePartException();
             }
             if ($isRootTemplate) {
                 if (!in_array($key, ['properties', 'childNodes', 'when', 'withContext'], true)) {
-                    $this->caughtExceptions->add(
-                        CaughtException::fromException(new \InvalidArgumentException(sprintf('Root template configuration doesnt allow option "%s', $key), 1686150340657))
+                    $this->processingErrors->add(
+                        ProcessingError::fromException(new \InvalidArgumentException(sprintf('Root template configuration doesnt allow option "%s', $key), 1686150340657))
                     );
                     throw new StopBuildingTemplatePartException();
                 }

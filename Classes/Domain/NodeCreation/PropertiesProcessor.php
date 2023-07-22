@@ -2,8 +2,8 @@
 
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Neos\Flow\Property\Exception as PropertyMappingException;
 use Neos\Flow\Property\PropertyMapper;
 use Neos\Flow\Property\PropertyMappingConfiguration;
@@ -19,14 +19,14 @@ class PropertiesProcessor
 
     /**
      * We run a few checks and convert the properties.
-     * If any of the checks fails we append an exception to the $caughtExceptions.
+     * If any of the checks fails we append an exception to the $processingErrors.
      *
      * 1. Check if the NodeType schema has the property declared.
      *
      * 2. It is checked, that the property value is assignable to the property type.
      *   In case the type is class or an array of classes, the property mapper will be used map the given type to it. If it doesn't succeed, we will log an error.
      */
-    public function processAndValidateProperties(TransientNode $node, CaughtExceptions $caughtExceptions): array
+    public function processAndValidateProperties(TransientNode $node, ProcessingErrors $processingErrors): array
     {
         $nodeType = $node->nodeType;
         $validProperties = [];
@@ -68,8 +68,8 @@ class PropertiesProcessor
                 }
                 $validProperties[$propertyName] = $propertyValue;
             } catch (PropertyIgnoredException|PropertyMappingException $exception) {
-                $caughtExceptions->add(
-                    CaughtException::fromException($exception)->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->getName()))
+                $processingErrors->add(
+                    ProcessingError::fromException($exception)->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->getName()))
                 );
             }
         }

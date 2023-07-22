@@ -2,8 +2,8 @@
 
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
@@ -57,7 +57,7 @@ class NodeCreationService
      * Creates commands {@see NodeCreationCommands} for the root template and its descending configured child node templates.
      * @throws \InvalidArgumentException
      */
-    public function apply(RootTemplate $template, NodeCreationCommands $commands, NodeTypeManager $nodeTypeManager, ContentSubgraphInterface $subgraph, CaughtExceptions $caughtExceptions): NodeCreationCommands
+    public function apply(RootTemplate $template, NodeCreationCommands $commands, NodeTypeManager $nodeTypeManager, ContentSubgraphInterface $subgraph, ProcessingErrors $processingErrors): NodeCreationCommands
     {
         $nodeType = $nodeTypeManager->getNodeType($commands->first->nodeTypeName);
         $node = TransientNode::forRegular(
@@ -74,7 +74,7 @@ class NodeCreationService
 
         $initialProperties = $initialProperties->merge(
             PropertyValuesToWrite::fromArray(
-                $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions)
+                $this->propertiesProcessor->processAndValidateProperties($node, $processingErrors)
             )
         );
 
@@ -94,14 +94,14 @@ class NodeCreationService
                     $commands->first->contentStreamId,
                     $commands->first->nodeAggregateId,
                     $commands->first->originDimensionSpacePoint,
-                    $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
+                    $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
                 )
             ),
-            $caughtExceptions
+            $processingErrors
         );
     }
 
-    private function applyTemplateRecursively(Templates $templates, TransientNode $parentNode, NodeCreationCommands $commands, CaughtExceptions $caughtExceptions): NodeCreationCommands
+    private function applyTemplateRecursively(Templates $templates, TransientNode $parentNode, NodeCreationCommands $commands, ProcessingErrors $processingErrors): NodeCreationCommands
     {
         // `hasAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
         // https://github.com/neos/neos-ui/issues/3527
@@ -112,8 +112,8 @@ class NodeCreationService
                  * Case 1: Auto created child nodes
                  */
                 if ($template->getType() !== null) {
-                    $caughtExceptions->add(
-                        CaughtException::fromException(new \RuntimeException(sprintf('Template cant mutate type of auto created child nodes. Got: "%s"', $template->getType()->value), 1685999829307))
+                    $processingErrors->add(
+                        ProcessingError::fromException(new \RuntimeException(sprintf('Template cant mutate type of auto created child nodes. Got: "%s"', $template->getType()->value), 1685999829307))
                     );
                     // we continue processing the node
                 }
@@ -129,14 +129,14 @@ class NodeCreationService
                         $node->nodeAggregateId,
                         $parentNode->originDimensionSpacePoint,
                         PropertyValuesToWrite::fromArray(
-                            $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions)
+                            $this->propertiesProcessor->processAndValidateProperties($node, $processingErrors)
                         )
                     ),
                     ...$this->createReferencesCommands(
                         $parentNode->contentStreamId,
                         $node->nodeAggregateId,
                         $parentNode->originDimensionSpacePoint,
-                        $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
+                        $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
                     )
                 );
 
@@ -144,7 +144,7 @@ class NodeCreationService
                     $template->getChildNodes(),
                     $node,
                     $commands,
-                    $caughtExceptions
+                    $processingErrors
                 );
                 continue;
             }
@@ -153,14 +153,14 @@ class NodeCreationService
              * Case 2: Regular to be created nodes (non auto-created nodes)
              */
             if ($template->getType() === null) {
-                $caughtExceptions->add(
-                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be set for non auto created child nodes.'), 1685999829307))
+                $processingErrors->add(
+                    ProcessingError::fromException(new \RuntimeException(sprintf('Template requires type to be set for non auto created child nodes.'), 1685999829307))
                 );
                 continue;
             }
             if (!$parentNode->nodeTypeManager->hasNodeType($template->getType())) {
-                $caughtExceptions->add(
-                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a valid NodeType. Got: "%s".', $template->getType()->value), 1685999795564))
+                $processingErrors->add(
+                    ProcessingError::fromException(new \RuntimeException(sprintf('Template requires type to be a valid NodeType. Got: "%s".', $template->getType()->value), 1685999795564))
                 );
                 continue;
             }
@@ -168,8 +168,8 @@ class NodeCreationService
             $nodeType = $parentNode->nodeTypeManager->getNodeType($template->getType());
 
             if ($nodeType->isAbstract()) {
-                $caughtExceptions->add(
-                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a non abstract NodeType. Got: "%s".', $template->getType()->value), 1686417628976))
+                $processingErrors->add(
+                    ProcessingError::fromException(new \RuntimeException(sprintf('Template requires type to be a non abstract NodeType. Got: "%s".', $template->getType()->value), 1686417628976))
                 );
                 continue;
             }
@@ -177,8 +177,8 @@ class NodeCreationService
             try {
                 $parentNode->requireConstraintsImposedByAncestorsToBeMet($nodeType);
             } catch (NodeConstraintException $nodeConstraintException) {
-                $caughtExceptions->add(
-                    CaughtException::fromException($nodeConstraintException)
+                $processingErrors->add(
+                    ProcessingError::fromException($nodeConstraintException)
                 );
                 continue;
             }
@@ -188,7 +188,7 @@ class NodeCreationService
             $nodeName = $template->getName() ?? NodeName::fromString(uniqid('node-', false));
 
             $initialProperties = PropertyValuesToWrite::fromArray(
-                $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions)
+                $this->propertiesProcessor->processAndValidateProperties($node, $processingErrors)
             );
 
             $initialProperties = $this->ensureNodeHasUriPathSegment(
@@ -213,7 +213,7 @@ class NodeCreationService
                     $parentNode->contentStreamId,
                     $node->nodeAggregateId,
                     $parentNode->originDimensionSpacePoint,
-                    $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
+                    $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
                 )
             );
 
@@ -222,7 +222,7 @@ class NodeCreationService
                 $template->getChildNodes(),
                 $node,
                 $commands,
-                $caughtExceptions
+                $processingErrors
             );
         }
 
