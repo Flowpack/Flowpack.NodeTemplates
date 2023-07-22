@@ -8,7 +8,7 @@ use Neos\Flow\Annotations as Flow;
 class ProcessingErrors implements \IteratorAggregate
 {
     /** @var array<int, ProcessingError> */
-    private array $exceptions = [];
+    private array $errors = [];
 
     private function __construct()
     {
@@ -19,19 +19,19 @@ class ProcessingErrors implements \IteratorAggregate
         return new self();
     }
 
-    public function hasExceptions(): bool
+    public function hasError(): bool
     {
-        return $this->exceptions !== [];
+        return $this->errors !== [];
     }
 
-    public function add(ProcessingError $exception): void
+    public function add(ProcessingError $error): void
     {
-        $this->exceptions[] = $exception;
+        $this->errors[] = $error;
     }
 
     public function first(): ?ProcessingError
     {
-        return $this->exceptions[0] ?? null;
+        return $this->errors[0] ?? null;
     }
 
     /**
@@ -39,6 +39,6 @@ class ProcessingErrors implements \IteratorAggregate
      */
     public function getIterator()
     {
-        yield from $this->exceptions;
+        yield from $this->errors;
     }
 }

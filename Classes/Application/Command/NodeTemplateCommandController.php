@@ -111,7 +111,7 @@ class NodeTemplateCommandController extends CommandController
 
             $this->nodeCreationService->createMutatorsForRootTemplate($template, $nodeType, $this->nodeTypeManager, $subgraph, $processingErrors);
 
-            if ($processingErrors->hasExceptions()) {
+            if ($processingErrors->hasError()) {
                 $faultyNodeTypeTemplates[$nodeType->getName()] = ['processingErrors' => $processingErrors, 'dataWasAccessed' => $observableEmptyData->dataWasAccessed];
             }
             $templatesChecked++;

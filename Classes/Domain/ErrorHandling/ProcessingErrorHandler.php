@@ -41,7 +41,7 @@ class ProcessingErrorHandler
      */
     public function handleAfterTemplateConfigurationProcessing(ProcessingErrors $processingErrors, NodeInterface $node): bool
     {
-        if (!$processingErrors->hasExceptions()) {
+        if (!$processingErrors->hasError()) {
             return true;
         }
 
@@ -65,7 +65,7 @@ class ProcessingErrorHandler
      */
     public function handleAfterNodeCreation(ProcessingErrors $processingErrors, NodeInterface $node): bool
     {
-        if (!$processingErrors->hasExceptions()) {
+        if (!$processingErrors->hasError()) {
             return true;
         }
 
