@@ -3,7 +3,7 @@
 namespace Flowpack\NodeTemplates\Domain;
 
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\ProcessingErrors;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\ExceptionHandler;
+use Flowpack\NodeTemplates\Domain\ExceptionHandling\ProcessingErrorHandler;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplateNotCreatedException;
 use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplatePartiallyCreatedException;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
@@ -34,10 +34,10 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
     protected $templateConfigurationProcessor;
 
     /**
-     * @var ExceptionHandler
+     * @var ProcessingErrorHandler
      * @Flow\Inject
      */
-    protected $exceptionHandler;
+    protected $processingErrorHandler;
 
     /**
      * Create child nodes and change properties upon node creation
@@ -61,12 +61,12 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
         $processingErrors = ProcessingErrors::create();
         try {
             $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $processingErrors);
-            $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($processingErrors, $node);
+            $this->processingErrorHandler->handleAfterTemplateConfigurationProcessing($processingErrors, $node);
 
             $nodeMutators = $this->nodeCreationService->createMutatorsForRootTemplate($template, $node->getNodeType(), $this->nodeTypeManager, $node->getContext(), $processingErrors);
             $nodeMutators->executeWithStartingNode($node);
 
-            $this->exceptionHandler->handleAfterNodeCreation($processingErrors, $node);
+            $this->processingErrorHandler->handleAfterNodeCreation($processingErrors, $node);
         } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
         }
     }

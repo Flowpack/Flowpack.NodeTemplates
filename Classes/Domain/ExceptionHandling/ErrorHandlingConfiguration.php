@@ -4,7 +4,7 @@ namespace Flowpack\NodeTemplates\Domain\ExceptionHandling;
 
 use Neos\Flow\Annotations as Flow;
 
-class ExceptionHandlingConfiguration
+class ErrorHandlingConfiguration
 {
     /**
      * @Flow\InjectConfiguration(package="Flowpack.NodeTemplates", path="exceptionHandling")

@@ -10,7 +10,7 @@ use Neos\Neos\Ui\Domain\Model\Feedback\Messages\Error;
 use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
 use Psr\Log\LoggerInterface;
 
-class ExceptionHandler
+class ProcessingErrorHandler
 {
     /**
      * @var FeedbackCollection
@@ -31,7 +31,7 @@ class ExceptionHandler
     protected $throwableStorage;
 
     /**
-     * @var ExceptionHandlingConfiguration
+     * @var ErrorHandlingConfiguration
      * @Flow\Inject
      */
     protected $configuration;
