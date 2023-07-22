@@ -1,6 +1,6 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain\ExceptionHandling;
+namespace Flowpack\NodeTemplates\Domain\ErrorHandling;
 
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\Flow\Annotations as Flow;
@@ -10,7 +10,7 @@ use Neos\Neos\Ui\Domain\Model\Feedback\Messages\Error;
 use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
 use Psr\Log\LoggerInterface;
 
-class ExceptionHandler
+class ProcessingErrorHandler
 {
     /**
      * @var FeedbackCollection
@@ -31,57 +31,64 @@ class ExceptionHandler
     protected $throwableStorage;
 
     /**
-     * @var ExceptionHandlingConfiguration
+     * @var ErrorHandlingConfiguration
      * @Flow\Inject
      */
     protected $configuration;
 
-    public function handleAfterTemplateConfigurationProcessing(CaughtExceptions $caughtExceptions, NodeInterface $node): void
+    /**
+     * @return bool if to continue or abort
+     */
+    public function handleAfterTemplateConfigurationProcessing(ProcessingErrors $processingErrors, NodeInterface $node): bool
     {
-        if (!$caughtExceptions->hasExceptions()) {
-            return;
+        if (!$processingErrors->hasError()) {
+            return true;
         }
 
         if (!$this->configuration->shouldStopOnExceptionAfterTemplateConfigurationProcessing()) {
-            return;
+            return true;
         }
 
         $templateNotCreatedException = new TemplateNotCreatedException(
             sprintf('Template for "%s" was not applied. Only %s was created.', $node->getNodeType()->getLabel(), (string)$node),
             1686135532992,
-            $caughtExceptions->first()->getException(),
+            $processingErrors->first()->getException(),
         );
 
-        $this->logCaughtExceptions($caughtExceptions, $templateNotCreatedException);
+        $this->logProcessingErrors($processingErrors, $templateNotCreatedException);
 
-        throw $templateNotCreatedException;
+        return false;
     }
 
-    public function handleAfterNodeCreation(CaughtExceptions $caughtExceptions, NodeInterface $node): void
+    /**
+     * @return bool if to continue or abort
+     */
+    public function handleAfterNodeCreation(ProcessingErrors $processingErrors, NodeInterface $node): bool
     {
-        if (!$caughtExceptions->hasExceptions()) {
-            return;
+        if (!$processingErrors->hasError()) {
+            return true;
         }
 
         $templatePartiallyCreatedException = new TemplatePartiallyCreatedException(
             sprintf('Template for "%s" only partially applied. Please check the newly created nodes beneath %s.', $node->getNodeType()->getLabel(), (string)$node),
             1686135564160,
-            $caughtExceptions->first()->getException(),
+            $processingErrors->first()->getException(),
         );
 
-        $this->logCaughtExceptions($caughtExceptions, $templatePartiallyCreatedException);
+        $this->logProcessingErrors($processingErrors, $templatePartiallyCreatedException);
 
-        throw $templatePartiallyCreatedException;
+        // TODO add setting to abort here in case of previous processing errors
+        return true;
     }
 
     /**
      * @param TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException
      */
-    private function logCaughtExceptions(CaughtExceptions $caughtExceptions, \DomainException $templateCreationException): void
+    private function logProcessingErrors(ProcessingErrors $processingErrors, \DomainException $templateCreationException): void
     {
         $messages = [];
-        foreach ($caughtExceptions as $index => $caughtException) {
-            $messages[sprintf('CaughtException (%s)', $index)] = $caughtException->toMessage();
+        foreach ($processingErrors as $index => $processingError) {
+            $messages[sprintf('ProcessingError (%s)', $index)] = $processingError->toMessage();
         }
 
         // log exception

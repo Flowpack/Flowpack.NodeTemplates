@@ -32,7 +32,7 @@ class ExceptionsTest extends AbstractNodeTemplateTestCase
         $this->withMockedConfigurationSettings([
             'Flowpack' => [
                 'NodeTemplates' => [
-                    'exceptionHandling' => [
+                    'errorHandling' => [
                         'templateConfigurationProcessing' => [
                             'stopOnException' => true
                         ]

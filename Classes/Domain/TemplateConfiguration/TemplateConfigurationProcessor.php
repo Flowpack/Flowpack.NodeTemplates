@@ -2,8 +2,8 @@
 
 namespace Flowpack\NodeTemplates\Domain\TemplateConfiguration;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
@@ -26,10 +26,10 @@ class TemplateConfigurationProcessor
     /**
      * @psalm-param array<string, mixed> $configuration
      * @psalm-param array<string, mixed> $evaluationContext
-     * @param CaughtExceptions $caughtEvaluationExceptions
+     * @param ProcessingErrors $caughtEvaluationExceptions
      * @return RootTemplate
      */
-    public function processTemplateConfiguration(array $configuration, array $evaluationContext, CaughtExceptions $caughtEvaluationExceptions): RootTemplate
+    public function processTemplateConfiguration(array $configuration, array $evaluationContext, ProcessingErrors $caughtEvaluationExceptions): RootTemplate
     {
         try {
             $templatePart = TemplatePart::createRoot(
@@ -63,8 +63,8 @@ class TemplateConfigurationProcessor
             $items = $templatePart->processConfiguration('withItems');
 
             if (!is_iterable($items)) {
-                $templatePart->getCaughtExceptions()->add(
-                    CaughtException::fromException(
+                $templatePart->getProcessingErrors()->add(
+                    ProcessingError::fromException(
                         new \RuntimeException(sprintf('Type %s is not iterable.', gettype($items)), 1685802354186)
                     )->withOrigin(sprintf('Configuration "%s" in "%s"', json_encode($templatePart->getRawConfiguration('withItems')), join('.', array_merge($templatePart->getFullPathToConfiguration(), ['withItems']))))
                 );
@@ -95,7 +95,7 @@ class TemplateConfigurationProcessor
         $processedProperties = [];
         foreach ($templatePart->getRawConfiguration('properties') ?? [] as $propertyName => $value) {
             if (!is_scalar($value) && !is_null($value)) {
-                $templatePart->getCaughtExceptions()->add(CaughtException::fromException(
+                $templatePart->getProcessingErrors()->add(ProcessingError::fromException(
                     new \RuntimeException(sprintf('Template configuration properties can only hold int|float|string|bool|null. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730)
                 ));
                 continue;

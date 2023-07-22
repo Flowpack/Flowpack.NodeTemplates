@@ -1,6 +1,6 @@
 Flowpack:
   NodeTemplates:
-    exceptionHandling:
+    errorHandling:
       templateConfigurationProcessing:
         stopOnException: false
 

@@ -169,17 +169,17 @@ values are not available. As ``withContext`` is evaluated before ``when`` and ``
 access context variables from ``withContext`` in ``withItems`` at the same level – but not the other
 way around.
 
-## Exception handling, resuming with the next possible operation.
+## Fine-grained error handling, resuming with the next possible operation.
 
 In the first step the configuration is processed, exceptions like those caused by an EEL Expression are caught, and any malformed parts of the template are ignored (with their errors being logged).
 This might lead to a partially processed template with some properties or childNodes missing.
 
-You can decide via the exception handling configuration `Flowpack.NodeTemplates.exceptionHandling`, if you want to start the node creation of this partially processed template (`stopOnException: false`) or abort the process (`stopOnException: true`), which will only lead to creating the root node, ignoring the whole template.
+You can decide via the error handling configuration `Flowpack.NodeTemplates.errorHandling`, if you want to start the node creation of this partially processed template (`stopOnException: false`) or abort the process (`stopOnException: true`), which will only lead to creating the root node, ignoring the whole template.
 
 ```yaml
 Flowpack:
   NodeTemplates:
-    exceptionHandling:
+    errorHandling:
      templateConfigurationProcessing:
         stopOnException: false
 ```

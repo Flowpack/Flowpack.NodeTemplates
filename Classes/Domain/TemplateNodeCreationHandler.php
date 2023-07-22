@@ -2,10 +2,8 @@
 
 namespace Flowpack\NodeTemplates\Domain;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\ExceptionHandler;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplateNotCreatedException;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\TemplatePartiallyCreatedException;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrorHandler;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
@@ -34,10 +32,10 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
     protected $templateConfigurationProcessor;
 
     /**
-     * @var ExceptionHandler
+     * @var ProcessingErrorHandler
      * @Flow\Inject
      */
-    protected $exceptionHandler;
+    protected $processingErrorHandler;
 
     /**
      * Create child nodes and change properties upon node creation
@@ -58,16 +56,23 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 
         $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');
 
-        $caughtExceptions = CaughtExceptions::create();
-        try {
-            $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $caughtExceptions);
-            $this->exceptionHandler->handleAfterTemplateConfigurationProcessing($caughtExceptions, $node);
+        $processingErrors = ProcessingErrors::create();
 
-            $nodeMutators = $this->nodeCreationService->createMutatorsForRootTemplate($template, $node->getNodeType(), $this->nodeTypeManager, $node->getContext(), $caughtExceptions);
-            $nodeMutators->executeWithStartingNode($node);
+        $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $processingErrors);
+        $shouldContinue = $this->processingErrorHandler->handleAfterTemplateConfigurationProcessing($processingErrors, $node);
 
-            $this->exceptionHandler->handleAfterNodeCreation($caughtExceptions, $node);
-        } catch (TemplateNotCreatedException|TemplatePartiallyCreatedException $templateCreationException) {
+        if (!$shouldContinue) {
+            return;
         }
+
+        $nodeMutators = $this->nodeCreationService->createMutatorsForRootTemplate($template, $node->getNodeType(), $this->nodeTypeManager, $node->getContext(), $processingErrors);
+
+        $shouldContinue = $this->processingErrorHandler->handleAfterNodeCreation($processingErrors, $node);
+
+        if (!$shouldContinue) {
+            return;
+        }
+
+        $nodeMutators->executeWithStartingNode($node);
     }
 }

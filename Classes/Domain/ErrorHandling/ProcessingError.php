@@ -1,6 +1,6 @@
 <?php
 
-namespace Flowpack\NodeTemplates\Domain\ExceptionHandling;
+namespace Flowpack\NodeTemplates\Domain\ErrorHandling;
 
 
 use Neos\Flow\Annotations as Flow;
@@ -8,7 +8,7 @@ use Neos\Flow\Annotations as Flow;
 /**
  * @Flow\Proxy(false)
  */
-class CaughtException
+class ProcessingError
 {
     private \Throwable $exception;
 

@@ -2,13 +2,13 @@
 
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
 
 class ReferencesProcessor
 {
-    public function processAndValidateReferences(TransientNode $node, CaughtExceptions $caughtExceptions): array
+    public function processAndValidateReferences(TransientNode $node, ProcessingErrors $processingErrors): array
     {
         $nodeType = $node->getNodeType();
         $validReferences = [];
@@ -53,8 +53,8 @@ class ReferencesProcessor
                     continue;
                 }
             } catch (InvalidReferenceException $runtimeException) {
-                $caughtExceptions->add(
-                    CaughtException::fromException($runtimeException)
+                $processingErrors->add(
+                    ProcessingError::fromException($runtimeException)
                         ->withOrigin(sprintf('Reference "%s" in NodeType "%s"', $referenceName, $nodeType->getName()))
                 );
                 continue;

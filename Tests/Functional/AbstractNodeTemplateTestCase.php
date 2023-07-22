@@ -11,6 +11,7 @@ use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Model\Workspace;
 use Neos\ContentRepository\Domain\Repository\ContentDimensionRepository;
 use Neos\ContentRepository\Domain\Repository\WorkspaceRepository;
+use Neos\ContentRepository\Domain\Service\Context;
 use Neos\ContentRepository\Domain\Service\ContextFactoryInterface;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\Flow\Configuration\ConfigurationManager;
@@ -43,6 +44,8 @@ abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
     private RootTemplate $lastCreatedRootTemplate;
 
     private NodeTypeManager $nodeTypeManager;
+
+    private Context $subgraph;
 
     private string $fixturesDir;
 

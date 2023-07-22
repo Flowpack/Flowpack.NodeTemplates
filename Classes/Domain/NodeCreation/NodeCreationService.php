@@ -2,8 +2,8 @@
 
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtException;
-use Flowpack\NodeTemplates\Domain\ExceptionHandling\CaughtExceptions;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
+use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
@@ -44,13 +44,13 @@ class NodeCreationService
      * Creates mutator {@see NodeMutatorCollection} for the root template and its descending configured child node templates to be applied on a node.
      * @throws \InvalidArgumentException
      */
-    public function createMutatorsForRootTemplate(RootTemplate $template, NodeType $nodeType, NodeTypeManager $nodeTypeManager, Context $subgraph, CaughtExceptions $caughtExceptions): NodeMutatorCollection
+    public function createMutatorsForRootTemplate(RootTemplate $template, NodeType $nodeType, NodeTypeManager $nodeTypeManager, Context $subgraph, ProcessingErrors $processingErrors): NodeMutatorCollection
     {
         $node = TransientNode::forRegular($nodeType, $nodeTypeManager, $subgraph, $template->getProperties());
 
         $validProperties = array_merge(
-            $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
-            $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
+            $this->propertiesProcessor->processAndValidateProperties($node, $processingErrors),
+            $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
         );
 
         return NodeMutatorCollection::from(
@@ -60,12 +60,12 @@ class NodeCreationService
             $this->createMutatorsForChildNodeTemplates(
                 $template->getChildNodes(),
                 $node,
-                $caughtExceptions
+                $processingErrors
             )
         );
     }
 
-    private function createMutatorsForChildNodeTemplates(Templates $templates, TransientNode $parentNode, CaughtExceptions $caughtExceptions): NodeMutatorCollection
+    private function createMutatorsForChildNodeTemplates(Templates $templates, TransientNode $parentNode, ProcessingErrors $processingErrors): NodeMutatorCollection
     {
         $nodeMutators = NodeMutatorCollection::empty();
 
@@ -78,8 +78,8 @@ class NodeCreationService
                  * Case 1: Auto created child nodes
                  */
                 if ($template->getType() !== null) {
-                    $caughtExceptions->add(
-                        CaughtException::fromException(new \RuntimeException(sprintf('Template cant mutate type of auto created child nodes. Got: "%s"', $template->getType()->getValue()), 1685999829307))
+                    $processingErrors->add(
+                        ProcessingError::fromException(new \RuntimeException(sprintf('Template cant mutate type of auto created child nodes. Got: "%s"', $template->getType()->getValue()), 1685999829307))
                     );
                     // we continue processing the node
                 }
@@ -87,8 +87,8 @@ class NodeCreationService
                 $node = $parentNode->forTetheredChildNode($template->getName(), $template->getProperties());
 
                 $validProperties = array_merge(
-                    $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
-                    $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
+                    $this->propertiesProcessor->processAndValidateProperties($node, $processingErrors),
+                    $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
                 );
 
                 $nodeMutators = $nodeMutators->append(
@@ -99,7 +99,7 @@ class NodeCreationService
                         )->merge($this->createMutatorsForChildNodeTemplates(
                             $template->getChildNodes(),
                             $node,
-                            $caughtExceptions
+                            $processingErrors
                         ))
                     )
                 );
@@ -111,14 +111,14 @@ class NodeCreationService
              * Case 2: Regular to be created nodes (non auto-created nodes)
              */
             if ($template->getType() === null) {
-                $caughtExceptions->add(
-                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be set for non auto created child nodes.'), 1685999829307))
+                $processingErrors->add(
+                    ProcessingError::fromException(new \RuntimeException('Template requires type to be set for non auto created child nodes.', 1685999829307))
                 );
                 continue;
             }
             if (!$parentNode->getNodeTypeManager()->hasNodeType($template->getType()->getValue())) {
-                $caughtExceptions->add(
-                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a valid NodeType. Got: "%s".', $template->getType()->getValue()), 1685999795564))
+                $processingErrors->add(
+                    ProcessingError::fromException(new \RuntimeException(sprintf('Template requires type to be a valid NodeType. Got: "%s".', $template->getType()->getValue()), 1685999795564))
                 );
                 continue;
             }
@@ -126,8 +126,8 @@ class NodeCreationService
             $nodeType = $parentNode->getNodeTypeManager()->getNodeType($template->getType()->getValue());
 
             if ($nodeType->isAbstract()) {
-                $caughtExceptions->add(
-                    CaughtException::fromException(new \RuntimeException(sprintf('Template requires type to be a non abstract NodeType. Got: "%s".', $template->getType()->getValue()), 1686417628976))
+                $processingErrors->add(
+                    ProcessingError::fromException(new \RuntimeException(sprintf('Template requires type to be a non abstract NodeType. Got: "%s".', $template->getType()->getValue()), 1686417628976))
                 );
                 continue;
             }
@@ -135,8 +135,8 @@ class NodeCreationService
             try {
                 $parentNode->requireConstraintsImposedByAncestorsToBeMet($nodeType);
             } catch (NodeConstraintException $nodeConstraintException) {
-                $caughtExceptions->add(
-                    CaughtException::fromException($nodeConstraintException)
+                $processingErrors->add(
+                    ProcessingError::fromException($nodeConstraintException)
                 );
                 continue;
             }
@@ -144,8 +144,8 @@ class NodeCreationService
             $node = $parentNode->forRegularChildNode($nodeType, $template->getProperties());
 
             $validProperties = array_merge(
-                $this->propertiesProcessor->processAndValidateProperties($node, $caughtExceptions),
-                $this->referencesProcessor->processAndValidateReferences($node, $caughtExceptions)
+                $this->propertiesProcessor->processAndValidateProperties($node, $processingErrors),
+                $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
             );
 
             $nodeMutators = $nodeMutators->append(
@@ -157,7 +157,7 @@ class NodeCreationService
                     )->merge($this->createMutatorsForChildNodeTemplates(
                         $template->getChildNodes(),
                         $node,
-                        $caughtExceptions
+                        $processingErrors
                     ))
                 )
             );
