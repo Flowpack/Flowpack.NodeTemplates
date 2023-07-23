@@ -199,6 +199,7 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
                 ],
                 'nodeType' => $nodeTypeName,
                 'name' => 'new-node',
+                'nodeAggregateId' => '186b511b-b807-6208-9e1c-593e7c1a63d3',
                 'data' => $nodeCreationDialogValues,
                 'baseNodeType' => '',
             ],
