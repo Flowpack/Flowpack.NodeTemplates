@@ -2,6 +2,7 @@
 
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
+use Behat\Transliterator\Transliterator;
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
@@ -274,7 +275,7 @@ class NodeCreationService
 
         return $propertiesToWrite->withValue(
             'uriPathSegment',
-            $this->transliterateText(
+            $this->generateUriPathSegment(
                 $dimensionSpacePoint,
                 $properties['title'] ?? $nodeName?->value ?? uniqid('', true)
             )
@@ -288,7 +289,7 @@ class NodeCreationService
      *
      * Duplicated code might be cleaned up via https://github.com/neos/neos-development-collection/pull/4324
      */
-    private function transliterateText(DimensionSpacePoint $dimensionSpacePoint, string $text): string
+    private function generateUriPathSegment(DimensionSpacePoint $dimensionSpacePoint, string $text): string
     {
         $languageDimensionValue = $dimensionSpacePoint->getCoordinate(new ContentDimensionId('language'));
         if ($languageDimensionValue !== null) {
@@ -298,6 +299,8 @@ class NodeCreationService
                 // we don't need to do anything here; we'll just transliterate the text.
             }
         }
-        return $this->transliterationService->transliterate($text, $language ?? null);
+        $transliterated = $this->transliterationService->transliterate($text, $language ?? null);
+
+        return Transliterator::urlize($transliterated);
     }
 }
