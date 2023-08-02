@@ -7,6 +7,7 @@ use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
+use Neos\ContentRepository\Core\Dimension\ContentDimensionId;
 use Neos\ContentRepository\Core\DimensionSpace\DimensionSpacePoint;
 use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
 use Neos\ContentRepository\Core\Feature\NodeCreation\Command\CreateNodeAggregateWithNode;
@@ -23,8 +24,10 @@ use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
 use Neos\ContentRepository\Core\SharedModel\Node\ReferenceName;
 use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
 use Neos\Flow\Annotations as Flow;
+use Neos\Flow\I18n\Exception\InvalidLocaleIdentifierException;
+use Neos\Flow\I18n\Locale;
+use Neos\Neos\Service\TransliterationService;
 use Neos\Neos\Ui\NodeCreationHandler\NodeCreationCommands;
-use Neos\Neos\Utility\NodeUriPathSegmentGenerator;
 
 /**
  * Declares the steps how to create a node subtree starting from the root template {@see RootTemplate}
@@ -37,9 +40,9 @@ class NodeCreationService
 {
     /**
      * @Flow\Inject
-     * @var NodeUriPathSegmentGenerator
+     * @var TransliterationService
      */
-    protected $nodeUriPathSegmentGenerator;
+    protected $transliterationService;
 
     /**
      * @Flow\Inject
@@ -271,10 +274,30 @@ class NodeCreationService
 
         return $propertiesToWrite->withValue(
             'uriPathSegment',
-            $this->nodeUriPathSegmentGenerator->generateUriPathSegmentFromTextForDimension(
-                $properties['title'] ?? $nodeName?->value ?? uniqid('', true),
-                $dimensionSpacePoint
+            $this->transliterateText(
+                $dimensionSpacePoint,
+                $properties['title'] ?? $nodeName?->value ?? uniqid('', true)
             )
         );
+    }
+
+    /**
+     * Copied from https://github.com/neos/neos-ui/blob/6929f73ffc74b1c7b63fbf80b5c2b3152e443534/Classes/NodeCreationHandler/DocumentTitleNodeCreationHandler.php#L80
+     *
+     * The {@see \Neos\Neos\Utility\NodeUriPathSegmentGenerator::generateUriPathSegment()} only works with whole Nodes.
+     *
+     * Duplicated code might be cleaned up via https://github.com/neos/neos-development-collection/pull/4324
+     */
+    private function transliterateText(DimensionSpacePoint $dimensionSpacePoint, string $text): string
+    {
+        $languageDimensionValue = $dimensionSpacePoint->getCoordinate(new ContentDimensionId('language'));
+        if ($languageDimensionValue !== null) {
+            try {
+                $language = (new Locale($languageDimensionValue))->getLanguage();
+            } catch (InvalidLocaleIdentifierException $e) {
+                // we don't need to do anything here; we'll just transliterate the text.
+            }
+        }
+        return $this->transliterationService->transliterate($text, $language ?? null);
     }
 }
