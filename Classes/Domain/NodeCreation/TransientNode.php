@@ -96,10 +96,7 @@ final readonly class TransientNode
             throw new \InvalidArgumentException('forTetheredChildNode only works for tethered nodes.');
         }
 
-        $nodeAggregateId = NodeAggregateId::fromParentNodeAggregateIdAndNodeName(
-            $this->nodeAggregateId,
-            $nodeName
-        );
+        $nodeAggregateId = $nodeName->tetheredNodeAggregateIdByParent($this->nodeAggregateId);
 
         return new self(
             $nodeAggregateId,
