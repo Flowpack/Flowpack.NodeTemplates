@@ -86,8 +86,7 @@ class NodeCreationService
             $nodeType,
             $commands->first->nodeName,
             $commands->first->originDimensionSpacePoint->toDimensionSpacePoint(),
-            $initialProperties,
-            $template
+            $initialProperties
         );
 
         return $this->applyTemplateRecursively(
@@ -199,8 +198,7 @@ class NodeCreationService
                 $nodeType,
                 $nodeName,
                 $parentNode->originDimensionSpacePoint->toDimensionSpacePoint(),
-                $initialProperties,
-                $template
+                $initialProperties
             );
 
             $commands = $commands->withAdditionalCommands(
@@ -253,23 +251,19 @@ class NodeCreationService
     }
 
     /**
-     * All document node types get a uri path segmfent; if it is not explicitly set in the properties,
+     * All document node types get a uri path segment; if it is not explicitly set in the properties,
      * it should be built based on the title property
-     *
-     * @param Template|RootTemplate $template
      */
     private function ensureNodeHasUriPathSegment(
         NodeType $nodeType,
         ?NodeName $nodeName,
         DimensionSpacePoint $dimensionSpacePoint,
-        PropertyValuesToWrite $propertiesToWrite,
-        Template|RootTemplate $template
+        PropertyValuesToWrite $propertiesToWrite
     ): PropertyValuesToWrite {
         if (!$nodeType->isOfType('Neos.Neos:Document')) {
             return $propertiesToWrite;
         }
-        $properties = $template->getProperties();
-        if (isset($properties['uriPathSegment'])) {
+        if (isset($propertiesToWrite->values['uriPathSegment'])) {
             return $propertiesToWrite;
         }
 
@@ -277,7 +271,7 @@ class NodeCreationService
             'uriPathSegment',
             $this->generateUriPathSegment(
                 $dimensionSpacePoint,
-                $properties['title'] ?? $nodeName?->value ?? uniqid('', true)
+                $propertiesToWrite->values['title'] ?? $nodeName?->value ?? uniqid('', true)
             )
         );
     }
