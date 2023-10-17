@@ -57,6 +57,11 @@ jobs:
           cd ${FLOW_PATH_ROOT}
           composer install --no-interaction --no-progress --prefer-dist
 
+      - name: Linting
+        run: |
+          cd ${FLOW_PATH_ROOT}/Packages/Application/Flowpack.NodeTemplates
+          composer run lint
+
       - name: Run Unit tests
         run: |
           cd ${FLOW_PATH_ROOT}

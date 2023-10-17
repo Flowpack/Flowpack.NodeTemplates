@@ -57,7 +57,7 @@ class Templates implements \IteratorAggregate, \JsonSerializable
         return RootTemplate::empty();
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->items;
     }

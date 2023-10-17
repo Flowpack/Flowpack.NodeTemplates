@@ -40,10 +40,11 @@ class NodeMutator
      */
     public static function setProperties(array $properties): self
     {
-        return new static(function (NodeInterface $nodePointer) use ($properties) {
+        return new self(function (NodeInterface $nodePointer) use ($properties) {
             foreach ($properties as $key => $value) {
                 $nodePointer->setProperty($key, $value);
             }
+            return null;
         });
     }
 
@@ -57,6 +58,7 @@ class NodeMutator
     {
         return new self(function (NodeInterface $nodePointer) use($nodeMutators) {
             $nodeMutators->executeWithStartingNode($nodePointer);
+            return null;
         });
     }
 
@@ -70,7 +72,8 @@ class NodeMutator
         return new self(function (NodeInterface $nodePointer) use($nodeName) {
             $nextNode = $nodePointer->getNode($nodeName->__toString());
             if (!$nextNode instanceof NodeInterface) {
-                throw new \RuntimeException(sprintf('Could not select childNode %s from %s', $nodeName->__toString(), $nodePointer));
+                assert(method_exists($nodePointer, '__toString'));
+                throw new \RuntimeException(sprintf('Could not select childNode %s from %s', $nodeName->__toString(), $nodePointer->__toString()));
             }
             return $nextNode;
         });
@@ -83,7 +86,7 @@ class NodeMutator
      */
     public static function createAndSelectNode(NodeTypeName $nodeTypeName, ?NodeName $nodeName): self
     {
-        return new static(function (NodeInterface $nodePointer) use($nodeTypeName, $nodeName) {
+        return new self(function (NodeInterface $nodePointer) use($nodeTypeName, $nodeName) {
             $nodeOperations = Bootstrap::$staticObjectManager->get(NodeOperations::class); // hack
             return $nodeOperations->create(
                 $nodePointer,
@@ -101,7 +104,7 @@ class NodeMutator
      *
      * Should preserve the current node pointer!
      *
-     * @param \Closure(NodeInterface $nodePointer): void $mutator
+     * @param \Closure(NodeInterface $nodePointer): null $mutator
      */
     public static function unsafeFromClosure(\Closure $mutator): self
     {

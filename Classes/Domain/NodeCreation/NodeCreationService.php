@@ -175,12 +175,13 @@ class NodeCreationService
     {
         return NodeMutator::unsafeFromClosure(function (NodeInterface $nodePointer) use ($properties) {
             if (!$nodePointer->getNodeType()->isOfType('Neos.Neos:Document')) {
-                return;
+                return null;
             }
             if (isset($properties['uriPathSegment'])) {
-                return;
+                return null;
             }
             $nodePointer->setProperty('uriPathSegment', $this->nodeUriPathSegmentGenerator->generateUriPathSegment($nodePointer, $properties['title'] ?? null));
+            return null;
         });
     }
 }

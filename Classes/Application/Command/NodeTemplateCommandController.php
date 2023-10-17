@@ -93,7 +93,7 @@ class NodeTemplateCommandController extends CommandController
             $observableEmptyData = new class ([]) extends \ArrayObject
             {
                 public bool $dataWasAccessed = false;
-                public function offsetExists($key)
+                public function offsetExists($key): bool
                 {
                     $this->dataWasAccessed = true;
                     return false;

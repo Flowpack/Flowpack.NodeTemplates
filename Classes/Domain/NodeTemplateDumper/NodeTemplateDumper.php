@@ -6,6 +6,7 @@ namespace Flowpack\NodeTemplates\Domain\NodeTemplateDumper;
 
 use Neos\ContentRepository\Domain\Model\ArrayPropertyCollection;
 use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Domain\Projection\Content\PropertyCollectionInterface;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\I18n\EelHelper\TranslationHelper;
 use Symfony\Component\Yaml\Yaml;
@@ -90,7 +91,7 @@ class NodeTemplateDumper
             }
 
             if ($isDocumentNode) {
-                if ($node->isTethered()) {
+                if ($node->isAutoCreated()) {
                     $documentNodeTemplates[$node->getLabel() ?: $node->getName()] = array_merge([
                         'name' => $node->getName()
                     ], $templatePart);
@@ -103,7 +104,7 @@ class NodeTemplateDumper
                 continue;
             }
 
-            if ($node->isTethered()) {
+            if ($node->isAutoCreated()) {
                 $contentNodeTemplates[$node->getLabel() ?: $node->getName()] = array_merge([
                     'name' => $node->getName()
                 ], $templatePart);
@@ -126,9 +127,7 @@ class NodeTemplateDumper
         $filteredProperties = [];
         foreach ($nodeType->getProperties() as $propertyName => $configuration) {
             if (
-                $nodeProperties instanceof ArrayPropertyCollection
-                    ? !$nodeProperties->offsetExists($propertyName)
-                    : !array_key_exists($propertyName, $nodeProperties)
+                !$nodeProperties->offsetExists($propertyName)
             ) {
                 // node doesn't have the property set
                 continue;
@@ -155,7 +154,7 @@ class NodeTemplateDumper
             if ($label) {
                 $label = $this->translationHelper->translate($label);
                 $augmentCommentWithLabel = fn (Comment $comment) => Comment::fromRenderer(
-                    function ($indentation, $propertyName) use($comment, $propertyValue, $label) {
+                    function ($indentation, $propertyName) use($comment, $label) {
                         return $indentation . '# ' . $label . "\n" .
                             $comment->toYamlComment($indentation, $propertyName);
                     }
