@@ -57,7 +57,7 @@ class ReferencesProcessor
             } catch (InvalidReferenceException $runtimeException) {
                 $processingErrors->add(
                     ProcessingError::fromException($runtimeException)
-                        ->withOrigin(sprintf('Reference "%s" in NodeType "%s"', $referenceName, $nodeType->getName()))
+                        ->withOrigin(sprintf('Reference "%s" in NodeType "%s"', $referenceName, $nodeType->name->value))
                 );
                 continue;
             }

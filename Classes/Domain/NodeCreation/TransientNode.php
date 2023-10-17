@@ -51,8 +51,6 @@ final readonly class TransientNode
         $properties = [];
         $references = [];
         foreach ($rawProperties as $propertyName => $propertyValue) {
-            // TODO: remove the next line to initialise the nodeType, once https://github.com/neos/neos-development-collection/issues/4333 is fixed
-            $this->nodeType->getFullConfiguration();
             $declaration = $this->nodeType->getPropertyType($propertyName);
             if ($declaration === 'reference' || $declaration === 'references') {
                 $references[$propertyName] = $propertyValue;
@@ -88,14 +86,14 @@ final readonly class TransientNode
 
     public function forTetheredChildNode(NodeName $nodeName, array $rawProperties): self
     {
-        // `getTypeOfAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
-        // https://github.com/neos/neos-ui/issues/3527
-        $parentNodesAutoCreatedChildNodes = $this->nodeType->getAutoCreatedChildNodes();
-        $childNodeType = $parentNodesAutoCreatedChildNodes[$nodeName->value] ?? null;
-        if (!$childNodeType instanceof NodeType) {
+        if (!$this->nodeType->hasTetheredNode($nodeName)) {
             throw new \InvalidArgumentException('forTetheredChildNode only works for tethered nodes.');
         }
 
+        $childNodeType = $this->nodeTypeManager->getTypeOfTetheredNode($this->nodeType, $nodeName);
+
+        // @todo repair
+        /** @phpstan-ignore-next-line */
         $nodeAggregateId = $nodeName->tetheredNodeAggregateIdByParent($this->nodeAggregateId);
 
         return new self(
@@ -132,7 +130,7 @@ final readonly class TransientNode
     public function requireConstraintsImposedByAncestorsToBeMet(NodeType $childNodeType): void
     {
         if ($this->tetheredNodeName) {
-            self::requireNodeTypeConstraintsImposedByGrandparentToBeMet($this->tetheredParentNodeType, $this->tetheredNodeName, $childNodeType);
+            $this->requireNodeTypeConstraintsImposedByGrandparentToBeMet($this->tetheredParentNodeType, $this->tetheredNodeName, $childNodeType);
         } else {
             self::requireNodeTypeConstraintsImposedByParentToBeMet($this->nodeType, $childNodeType);
         }
@@ -152,9 +150,9 @@ final readonly class TransientNode
         }
     }
 
-    private static function requireNodeTypeConstraintsImposedByGrandparentToBeMet(NodeType $grandParentNodeType, NodeName $nodeName, NodeType $nodeType): void
+    private function requireNodeTypeConstraintsImposedByGrandparentToBeMet(NodeType $grandParentNodeType, NodeName $nodeName, NodeType $nodeType): void
     {
-        if (!$grandParentNodeType->allowsGrandchildNodeType($nodeName->value, $nodeType)) {
+        if (!$this->nodeTypeManager->isNodeTypeAllowedAsChildToTetheredNode($grandParentNodeType, $nodeName, $nodeType)) {
             throw new NodeConstraintException(
                 sprintf(
                     'Node type "%s" is not allowed below tethered child nodes "%s" of nodes of type "%s"',

@@ -58,7 +58,7 @@ final class PropertyType
                 sprintf(
                     'Given property "%s" is declared as "reference" in node type "%s" and must be treated as such.',
                     $propertyName,
-                    $nodeType->getName()
+                    $nodeType->name->value
                 ),
                 1685964835205
             );
@@ -70,7 +70,7 @@ final class PropertyType
                     'Given property "%s" is declared as undefined type "%s" in node type "%s"',
                     $propertyName,
                     $declaration,
-                    $nodeType->getName()
+                    $nodeType->name->value
                 ),
                 1685952798732
             );

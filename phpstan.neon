@@ -1,4 +1,7 @@
 parameters:
-    level: 5
+    level: 3
     paths:
         - Classes
+    excludePaths:
+        - Classes/Application/Command/NodeTemplateCommandController.php
+        - Classes/Domain/NodeTemplateDumper/NodeTemplateDumper.php

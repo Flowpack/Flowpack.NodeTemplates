@@ -106,11 +106,8 @@ class NodeCreationService
 
     private function applyTemplateRecursively(Templates $templates, TransientNode $parentNode, NodeCreationCommands $commands, ProcessingErrors $processingErrors): NodeCreationCommands
     {
-        // `hasAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
-        // https://github.com/neos/neos-ui/issues/3527
-        $parentNodesAutoCreatedChildNodes = $parentNode->nodeType->getAutoCreatedChildNodes();
         foreach ($templates as $template) {
-            if ($template->getName() && isset($parentNodesAutoCreatedChildNodes[$template->getName()->value])) {
+            if ($template->getName() && $parentNode->nodeType->hasTetheredNode($template->getName())) {
                 /**
                  * Case 1: Auto created child nodes
                  */
@@ -127,7 +124,7 @@ class NodeCreationService
                 );
 
                 $commands = $commands->withAdditionalCommands(
-                    new SetNodeProperties(
+                    SetNodeProperties::create(
                         $parentNode->contentStreamId,
                         $node->nodeAggregateId,
                         $parentNode->originDimensionSpacePoint,
@@ -202,7 +199,7 @@ class NodeCreationService
             );
 
             $commands = $commands->withAdditionalCommands(
-                new CreateNodeAggregateWithNode(
+                CreateNodeAggregateWithNode::create(
                     $parentNode->contentStreamId,
                     $node->nodeAggregateId,
                     $template->getType(),

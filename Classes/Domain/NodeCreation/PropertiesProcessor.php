@@ -69,7 +69,7 @@ class PropertiesProcessor
                 $validProperties[$propertyName] = $propertyValue;
             } catch (PropertyIgnoredException|PropertyMappingException $exception) {
                 $processingErrors->add(
-                    ProcessingError::fromException($exception)->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->getName()))
+                    ProcessingError::fromException($exception)->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->name->value))
                 );
             }
         }

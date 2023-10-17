@@ -74,9 +74,6 @@ jobs:
           patches='{
             "neos/neos-ui": {
               "improvedNodeCreationHandler": "https://github.com/neos/neos-ui/pull/3519.patch"
-            },
-            "neos/neos-development-collection": {
-              "tetheredNodeIdsDeterministic": "https://github.com/neos/neos-development-collection/pull/4313.patch"
             }
           }'
           composer config extra.patches --json ${patches//[[:space:]]/}

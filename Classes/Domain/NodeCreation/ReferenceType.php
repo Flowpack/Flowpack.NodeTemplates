@@ -43,7 +43,7 @@ final class ReferenceType
             sprintf(
                 'Given property "%s" is not declared as "reference" in node type "%s" and must be treated as such.',
                 $propertyName,
-                $nodeType->getName()
+                $nodeType->name->value
             ),
             1685964955964
         );
