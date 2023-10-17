@@ -49,7 +49,7 @@ jobs:
           git clone --depth 1 --branch ${{ matrix.neos-version }} https://github.com/neos/neos-base-distribution.git ${FLOW_PATH_ROOT}
           cd ${FLOW_PATH_ROOT}
           composer config --no-plugins allow-plugins.neos/composer-plugin true
-          composer config repositories.tested-package path ../Flowpack.NodeTemplates
+          composer config repositories.package '{ "type": "path", "url": "../Flowpack.NodeTemplates", "options": { "symlink": false } }'
           composer require --no-update --no-interaction flowpack/nodetemplates:@dev
           composer require --dev --no-update --no-interaction phpstan/phpstan:^1.10
 
