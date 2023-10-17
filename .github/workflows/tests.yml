@@ -51,6 +51,7 @@ jobs:
           composer config --no-plugins allow-plugins.neos/composer-plugin true
           composer config repositories.tested-package path ../Flowpack.NodeTemplates
           composer require --no-update --no-interaction flowpack/nodetemplates:@dev
+          composer require --dev --no-update --no-interaction phpstan/phpstan:^1.10
 
       - name: Install dependencies
         run: |
