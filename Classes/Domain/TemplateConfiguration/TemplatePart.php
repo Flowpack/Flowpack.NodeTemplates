@@ -156,10 +156,11 @@ class TemplatePart
     /**
      * Minimal implementation of {@see \Neos\Utility\Arrays::getValueByPath()} (but we dont allow $configurationPath to contain dots.)
      *
-     * @psalm-param string|list<string> $configurationPath
+     * @param string|list<string> $configurationPath
      */
     public function getRawConfiguration($configurationPath)
     {
+        /** @phpstan-ignore-next-line */
         assert(is_array($configurationPath) || is_string($configurationPath));
         $path = is_array($configurationPath) ? $configurationPath : [$configurationPath];
         $array = $this->configuration;
@@ -178,6 +179,7 @@ class TemplatePart
      */
     public function hasConfiguration($configurationPath): bool
     {
+        /** @phpstan-ignore-next-line */
         assert(is_array($configurationPath) || is_string($configurationPath));
         $path = is_array($configurationPath) ? $configurationPath : [$configurationPath];
         $array = $this->configuration;

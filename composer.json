@@ -8,9 +8,18 @@
         "neos/neos": "^7.3 || ^8.0",
         "neos/neos-ui": "~7.3.18 || ~8.0.13 || ~8.1.10 || ~8.2.10 || ~8.3.1"
     },
+    "require-dev": {
+        "phpstan/phpstan": "^1.10"
+    },
     "autoload": {
         "psr-4": {
             "Flowpack\\NodeTemplates\\": "Classes/"
         }
+    },
+    "scripts": {
+        "lint:phpstan": "../../../bin/phpstan analyse",
+        "lint": [
+            "@lint:phpstan"
+        ]
     }
 }

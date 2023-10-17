@@ -8,6 +8,7 @@ use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\NodeTemplateDumper\NodeTemplateDumper;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
+use Neos\ContentRepository\Domain\Model\NodeInterface;
 use Neos\ContentRepository\Domain\Service\ContextFactoryInterface;
 use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\Flow\Annotations as Flow;
@@ -58,6 +59,7 @@ class NodeTemplateCommandController extends CommandController
         $subgraph = $this->contextFactory->create([
             'workspaceName' => $workspaceName
         ]);
+        /** @var ?NodeInterface $node */
         $node = $subgraph->getNodeByIdentifier($startingNodeId);
         if (!$node) {
             throw new \InvalidArgumentException("Node $startingNodeId doesnt exist in workspace $workspaceName.");
@@ -93,7 +95,7 @@ class NodeTemplateCommandController extends CommandController
             $observableEmptyData = new class ([]) extends \ArrayObject
             {
                 public bool $dataWasAccessed = false;
-                public function offsetExists($key)
+                public function offsetExists($key): bool
                 {
                     $this->dataWasAccessed = true;
                     return false;

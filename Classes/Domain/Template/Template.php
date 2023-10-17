@@ -60,7 +60,7 @@ class Template implements \JsonSerializable
         return $this->childNodes;
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'type' => $this->type,

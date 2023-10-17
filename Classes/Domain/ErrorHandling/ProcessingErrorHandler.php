@@ -49,6 +49,7 @@ class ProcessingErrorHandler
             return true;
         }
 
+        assert(method_exists($node, '__toString'));
         $templateNotCreatedException = new TemplateNotCreatedException(
             sprintf('Template for "%s" was not applied. Only %s was created.', $node->getNodeType()->getLabel(), (string)$node),
             1686135532992,
@@ -69,6 +70,7 @@ class ProcessingErrorHandler
             return true;
         }
 
+        assert(method_exists($node, '__toString'));
         $templatePartiallyCreatedException = new TemplatePartiallyCreatedException(
             sprintf('Template for "%s" only partially applied. Please check the newly created nodes beneath %s.', $node->getNodeType()->getLabel(), (string)$node),
             1686135564160,
