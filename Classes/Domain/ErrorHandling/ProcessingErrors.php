@@ -37,7 +37,7 @@ class ProcessingErrors implements \IteratorAggregate
     /**
      * @return \Traversable<int, ProcessingError>|ProcessingError[]
      */
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
         yield from $this->errors;
     }

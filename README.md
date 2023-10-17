@@ -187,6 +187,34 @@ Flowpack:
 In case exceptions are thrown in the node creation of the template, because a node constraint was not met or the `type` field was not set, the creation of the childNode is aborted, but we continue with the node creation of the other left over parts of the template.
 It behaves similar with properties: In case a property value doesn't match its declared type the exception is logged, but we will try to continue with the next property.
 
+# Commands
+
+## Validate simple node templates
+
+It might be tedious to validate that all your templates are working especially in a larger project. To validate the ones that are not dependent on data from the node creation dialog (less complex templates) you can utilize this command:
+
+```sh
+flow nodetemplate:validate
+```
+
+In case everything is okay it will succeed with `X NodeType templates validated.`.
+
+But in case you either have a syntax error in your template or the template does not match the node structure (illegal properties) you will be warned:
+
+```
+76 of 78 NodeType template validated. 2 could not be build standalone.
+
+My.NodeType:Bing
+ Property "someLegacyProperty" in NodeType "My.NodeType:Bing" | PropertyIgnoredException(Because property is not declared in NodeType. Got value `"bg-gray-100"`., 1685869035209)
+
+My.NodeType:Bar (depends on "data" context)
+  Configuration ""${data.aListOfThings}"" in "childNodes.pages.withItems" | RuntimeException(Type NULL is not iterable., 1685802354186)
+```
+
+The standalone validation should detect errors and prevents editors having to deal with these errors at runtime.
+
+For more complex templates, which are dependent on the node creation data, it is recommended to write separate tests. Currently, errors in templates depending on the data context will only be treated as warning, as they are probably not an issue at runtime. 
+
 ## Create template from node subtree
 
 When creating a more complex node template (to create multiple pages and content elements) it can be helpful to take the current node subtree from your workspace as reference.
@@ -196,7 +224,7 @@ For this case you can use the command:
 flow nodeTemplate:createFromNodeSubtree <nodeIdentifier>
 ```
 
-It will give you the output similar to the example above.
+It will give you the output similar to the yaml example above.
 References to Nodes and non-primitive property values are commented out in the YAML.
 
 ## More examples
