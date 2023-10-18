@@ -58,7 +58,7 @@ jobs:
 
       - name: Prepare Neos distribution
         run: |
-          git clone --depth 1 --branch ${{ matrix.neos-version }} https://github.com/neos/neos-base-distribution.git ${FLOW_PATH_ROOT}
+          git clone --depth 1 --branch ${{ matrix.neos-version }} https://github.com/neos/neos-development-distribution.git ${FLOW_PATH_ROOT}
           cd ${FLOW_PATH_ROOT}
           composer config --no-plugins allow-plugins.neos/composer-plugin true
           composer config repositories.package '{ "type": "path", "url": "../Flowpack.NodeTemplates", "options": { "symlink": false } }'
@@ -84,6 +84,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd ${FLOW_PATH_ROOT}
+          rm -rf composer.lock
           composer install --no-interaction --no-progress --prefer-dist
 
       - name: Linting
