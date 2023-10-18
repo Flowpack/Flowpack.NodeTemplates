@@ -4,7 +4,6 @@ namespace Flowpack\NodeTemplates\Domain\TemplateConfiguration;
 
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
-use Neos\Flow\Annotations as Flow;
 
 /**
  * @internal implementation detail of {@see TemplateConfigurationProcessor}
@@ -34,7 +33,7 @@ final readonly class TemplatePart
     private ProcessingErrors $processingErrors;
 
     /**
-     * @param array<string, mixed> $configuration
+     * @param array<string|int, mixed> $configuration
      * @param list<string> $fullPathToConfiguration
      * @param array<string, mixed> $evaluationContext
      * @param \Closure(mixed $value, array<string, mixed> $evaluationContext): mixed $configurationValueProcessor
@@ -77,9 +76,9 @@ final readonly class TemplatePart
     }
 
     /**
-     * @param string|list<string|int> $configurationPath
+     * @param string|int|list<string|int> $configurationPath
      */
-    public function addProcessingErrorForPath(\Throwable $throwable, $configurationPath): void
+    public function addProcessingErrorForPath(\Throwable $throwable, array|string|int $configurationPath): void
     {
         $this->processingErrors->add(
             ProcessingError::fromException(
@@ -105,7 +104,7 @@ final readonly class TemplatePart
     {
         return new self(
             $this->getRawConfiguration($configurationPath),
-            array_merge($this->fullPathToConfiguration, $configurationPath),
+            array_merge($this->fullPathToConfiguration, is_array($configurationPath) ? $configurationPath : [$configurationPath]),
             $this->evaluationContext,
             $this->configurationValueProcessor,
             $this->processingErrors
@@ -134,7 +133,7 @@ final readonly class TemplatePart
      * @return mixed
      * @throws StopBuildingTemplatePartException
      */
-    public function processConfiguration($configurationPath)
+    public function processConfiguration(string|array $configurationPath): mixed
     {
         if (($value = $this->getRawConfiguration($configurationPath)) === null) {
             return null;
