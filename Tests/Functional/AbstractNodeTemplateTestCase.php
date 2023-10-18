@@ -143,7 +143,7 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
         $siteNodeCommand = CreateNodeAggregateWithNode::create(
             $contentStreamId,
             $testSiteId = NodeAggregateId::fromString('test-site'),
-            NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page'),
+            NodeTypeName::fromString('Flowpack.NodeTemplates:Document.HomePage'),
             OriginDimensionSpacePoint::fromDimensionSpacePoint(
                 $dimensionSpacePoint = DimensionSpacePoint::fromArray([])
             ),

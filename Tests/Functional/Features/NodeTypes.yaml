@@ -1,5 +1,14 @@
 # Basic NodeType definitions for all tests
 ---
+'Flowpack.NodeTemplates:Document.HomePage':
+  superTypes:
+    'Neos.Neos:Site': true
+  constraints:
+    nodeTypes:
+      unstructured: true
+  childNodes:
+    main:
+      type: 'Neos.Neos:ContentCollection'
 
 'Flowpack.NodeTemplates:Document.Page':
   superTypes:

@@ -1,0 +1,20 @@
+{
+    "properties": [],
+    "childNodes": [
+        {
+            "type": null,
+            "name": "container",
+            "properties": [],
+            "childNodes": [
+                {
+                    "type": null,
+                    "name": "text",
+                    "properties": {
+                        "text": "nested text"
+                    },
+                    "childNodes": []
+                }
+            ]
+        }
+    ]
+}
