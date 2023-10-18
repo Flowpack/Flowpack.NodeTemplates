@@ -12,7 +12,7 @@
         "severity": "ERROR"
     },
     {
-        "message": "RuntimeException(Template configuration properties can only hold int|float|string|bool|null. Property \"nonEelArrayNotAllowed\" has type \"array\", 1685725310730)",
+        "message": "Configuration \"properties.nonEelArrayNotAllowed\" | RuntimeException(Template configuration properties can only hold int|float|string|bool|null. Property \"nonEelArrayNotAllowed\" has type \"array\", 1685725310730)",
         "severity": "ERROR"
     },
     {
@@ -44,11 +44,11 @@
         "severity": "ERROR"
     },
     {
-        "message": "Configuration \"null\" in \"childNodes.withItemsAbortBecauseNotIterable.withItems\" | RuntimeException(Type NULL is not iterable., 1685802354186)",
+        "message": "Configuration \"childNodes.withItemsAbortBecauseNotIterable.withItems\" | RuntimeException(Type NULL is not iterable., 1685802354186)",
         "severity": "ERROR"
     },
     {
-        "message": "InvalidArgumentException(Template configuration has illegal key \"crazy\", 1686150349274)",
+        "message": "Configuration \"childNodes.invalidOption.crazy\" | InvalidArgumentException(Template configuration has illegal key \"crazy\", 1686150349274)",
         "severity": "ERROR"
     },
     {
