@@ -17,6 +17,7 @@ class ProcessingErrors implements \IteratorAggregate
         return new self();
     }
 
+    /** @phpstan-assert-if-true !null $this->first() */
     public function hasError(): bool
     {
         return $this->errors !== [];

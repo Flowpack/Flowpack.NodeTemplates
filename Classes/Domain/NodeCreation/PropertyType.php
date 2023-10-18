@@ -173,6 +173,7 @@ final class PropertyType
         return $this->value === self::TYPE_ARRAY;
     }
 
+    /** @phpstan-assert-if-true !null $this->arrayOfType */
     public function isArrayOf(): bool
     {
         return (bool)preg_match(self::PATTERN_ARRAY_OF, $this->value);

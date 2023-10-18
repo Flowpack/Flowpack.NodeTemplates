@@ -154,7 +154,7 @@ final readonly class TransientNode
      */
     public function requireConstraintsImposedByAncestorsToBeMet(NodeType $childNodeType): void
     {
-        if ($this->tetheredNodeName) {
+        if ($this->isTethered()) {
             $this->requireNodeTypeConstraintsImposedByGrandparentToBeMet($this->tetheredParentNodeType, $this->tetheredNodeName, $childNodeType);
         } else {
             self::requireNodeTypeConstraintsImposedByParentToBeMet($this->nodeType, $childNodeType);
@@ -188,5 +188,14 @@ final readonly class TransientNode
                 1687541480146
             );
         }
+    }
+
+    /**
+     * @phpstan-assert-if-true !null $this->tetheredNodeName
+     * @phpstan-assert-if-true !null $this->tetheredParentNodeType
+     */
+    private function isTethered(): bool
+    {
+        return $this->tetheredNodeName !== null;
     }
 }

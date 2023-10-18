@@ -53,6 +53,6 @@ class Comments
                 throw new \Exception('Error while trying to render comment ' . $matches[0] . '. Reason: comment id doesnt exist.', 1684309524383);
             }
             return $comment->toYamlComment($indentation, $property);
-        }, $yamlDump);
+        }, $yamlDump) ?? throw new \Exception('Error in preg_replace_callback while trying to render comments.');
     }
 }
