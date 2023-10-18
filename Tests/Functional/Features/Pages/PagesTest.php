@@ -27,7 +27,7 @@ class PagesTest extends AbstractNodeTemplateTestCase
     }
 
     /** @test */
-    public function itMatchesSnapsho2(): void
+    public function itMatchesSnapshot2(): void
     {
         $createdNode = $this->createNodeInto(
             $this->homePageNode,

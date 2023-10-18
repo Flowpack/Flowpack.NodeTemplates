@@ -1,0 +1,17 @@
+{
+    "childNodes": [
+        {
+            "nodeTypeName": "Flowpack.NodeTemplates:Content.TextContainer",
+            "nodeName": "container",
+            "childNodes": [
+                {
+                    "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+                    "nodeName": "text",
+                    "properties": {
+                        "text": "nested text"
+                    }
+                }
+            ]
+        }
+    ]
+}

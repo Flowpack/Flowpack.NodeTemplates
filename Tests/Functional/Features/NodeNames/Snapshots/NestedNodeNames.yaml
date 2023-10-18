@@ -1,0 +1,12 @@
+'{nodeTypeName}':
+  options:
+    template:
+      childNodes:
+        'Content (container)':
+          name: container
+          childNodes:
+            'nested text':
+              name: text
+              properties:
+                # Text
+                text: 'nested text'

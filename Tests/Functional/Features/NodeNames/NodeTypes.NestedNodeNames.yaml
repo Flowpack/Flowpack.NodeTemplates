@@ -1,0 +1,25 @@
+# Targeting a tethered node of a tethered node should work
+---
+'Flowpack.NodeTemplates:Content.NestedNodeNames':
+  superTypes:
+    'Neos.Neos:Content': true
+  childNodes:
+    container:
+      type: 'Flowpack.NodeTemplates:Content.TextContainer'
+  options:
+    template:
+      childNodes:
+        tetheredNodeOnFirstLevel:
+          name: container
+          childNodes:
+            tetheredNodeOnSecondLevel:
+              name: text
+              properties:
+                text: "nested text"
+
+'Flowpack.NodeTemplates:Content.TextContainer':
+  superTypes:
+    'Neos.Neos:Content': true
+  childNodes:
+    text:
+      type: 'Flowpack.NodeTemplates:Content.Text'
