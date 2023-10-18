@@ -5,6 +5,6 @@ Neos:
         preset: default
         contentDimensions: []
         userIdProvider:
-          factoryObjectName: Neos\ContentRepository\Core\Tests\Behavior\Features\Bootstrap\Helpers\FakeUserIdProviderFactory
+          factoryObjectName: Neos\ContentRepository\BehavioralTests\TestSuite\Behavior\FakeUserIdProviderFactory
         clock:
-          factoryObjectName: Neos\ContentRepository\Core\Tests\Behavior\Features\Bootstrap\Helpers\FakeClockFactory
+          factoryObjectName: Neos\ContentRepository\BehavioralTests\TestSuite\Behavior\FakeClockFactory

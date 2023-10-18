@@ -26,7 +26,7 @@ use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceDescription;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceName;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceTitle;
-use Neos\ContentRepository\Core\Tests\Behavior\Features\Bootstrap\Helpers\FakeUserIdProvider;
+use Neos\ContentRepository\TestSuite\Behavior\Features\Bootstrap\Helpers\FakeUserIdProvider;
 use Neos\ContentRepositoryRegistry\Factory\ProjectionCatchUpTrigger\CatchUpTriggerWithSynchronousOption;
 use Neos\Flow\Configuration\ConfigurationManager;
 use Neos\Flow\Core\Bootstrap;
@@ -114,14 +114,14 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
 
     private function setupContentRepository(): void
     {
-        CatchUpTriggerWithSynchronousOption::enableSynchonityForSpeedingUpTesting();
+        CatchUpTriggerWithSynchronousOption::enableSynchronicityForSpeedingUpTesting();
 
         $this->initCleanContentRepository(ContentRepositoryId::fromString('node_templates'));
 
         $this->nodeTypeManager = $this->contentRepository->getNodeTypeManager();
         $this->loadFakeNodeTypes();
 
-        $liveWorkspaceCommand = new CreateRootWorkspace(
+        $liveWorkspaceCommand = CreateRootWorkspace::create(
             WorkspaceName::fromString('live'),
             new WorkspaceTitle('Live'),
             new WorkspaceDescription('The live workspace'),
@@ -132,7 +132,7 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
 
         FakeUserIdProvider::setUserId(UserId::fromString('initiating-user-identifier'));
 
-        $rootNodeCommand = new CreateRootNodeAggregateWithNode(
+        $rootNodeCommand = CreateRootNodeAggregateWithNode::create(
             $contentStreamId,
             $sitesId = NodeAggregateId::fromString('sites'),
             NodeTypeName::fromString('Neos.Neos:Sites')
@@ -140,7 +140,7 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
 
         $this->contentRepository->handle($rootNodeCommand)->block();
 
-        $siteNodeCommand = new CreateNodeAggregateWithNode(
+        $siteNodeCommand = CreateNodeAggregateWithNode::create(
             $contentStreamId,
             $testSiteId = NodeAggregateId::fromString('test-site'),
             NodeTypeName::fromString('Flowpack.NodeTemplates:Document.Page'),
@@ -218,7 +218,7 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
     protected function createFakeNode(string $nodeAggregateId): Node
     {
         $this->contentRepository->handle(
-            new CreateNodeAggregateWithNode(
+            CreateNodeAggregateWithNode::create(
                 $this->homePageNode->subgraphIdentity->contentStreamId,
                 $someNodeId = NodeAggregateId::fromString($nodeAggregateId),
                 NodeTypeName::fromString('unstructured'),
