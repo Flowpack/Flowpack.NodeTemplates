@@ -130,7 +130,7 @@ abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
         $testSiteNode = $sitesRootNode->createNode('test-site');
         $this->homePageNode = $testSiteNode->createNode(
             'homepage',
-            $this->nodeTypeManager->getNodeType('Flowpack.NodeTemplates:Document.Page')
+            $this->nodeTypeManager->getNodeType('Flowpack.NodeTemplates:Document.HomePage')
         );
 
         $this->homePageMainContentCollectionNode = $this->homePageNode->getNode('main');
