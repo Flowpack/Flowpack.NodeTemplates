@@ -35,7 +35,7 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
     /**
      * Create child nodes and change properties upon node creation
      *
-     * @param array $data incoming data from the creationDialog
+     * @param array<string|int,mixed> $data incoming data from the creationDialog
      */
     public function handle(
         NodeCreationCommands $commands,

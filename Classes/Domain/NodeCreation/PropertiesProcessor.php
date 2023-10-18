@@ -25,6 +25,8 @@ class PropertiesProcessor
      *
      * 2. It is checked, that the property value is assignable to the property type.
      *   In case the type is class or an array of classes, the property mapper will be used map the given type to it. If it doesn't succeed, we will log an error.
+     *
+     * @return array<string, mixed>
      */
     public function processAndValidateProperties(TransientNode $node, ProcessingErrors $processingErrors): array
     {
@@ -80,7 +82,7 @@ class PropertiesProcessor
      * In the old CR, it was common practice to set internal or meta properties via this syntax: `_hidden` but we don't allow this anymore.
      * @throws PropertyIgnoredException
      */
-    private function assertValidPropertyName($propertyName): void
+    private function assertValidPropertyName(string|int $propertyName): void
     {
         $legacyInternalProperties = ['_accessRoles', '_contentObject', '_hidden', '_hiddenAfterDateTime', '_hiddenBeforeDateTime', '_hiddenInIndex',
             '_index', '_name', '_nodeType', '_removed', '_workspace'];

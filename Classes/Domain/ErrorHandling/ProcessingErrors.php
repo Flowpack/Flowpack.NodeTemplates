@@ -2,9 +2,7 @@
 
 namespace Flowpack\NodeTemplates\Domain\ErrorHandling;
 
-use Neos\Flow\Annotations as Flow;
-
-/** @Flow\Proxy(false) */
+/** @implements \IteratorAggregate<int, ProcessingError> */
 class ProcessingErrors implements \IteratorAggregate
 {
     /** @var array<int, ProcessingError> */

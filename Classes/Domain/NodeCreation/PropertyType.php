@@ -206,7 +206,7 @@ final class PropertyType
         return \mb_substr($this->value, 6, -1);
     }
 
-    public function isMatchedBy($propertyValue): bool
+    public function isMatchedBy(mixed $propertyValue): bool
     {
         if (is_null($propertyValue)) {
             return true;

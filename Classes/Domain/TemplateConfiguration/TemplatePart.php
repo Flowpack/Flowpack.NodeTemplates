@@ -8,41 +8,36 @@ use Neos\Flow\Annotations as Flow;
 
 /**
  * @internal implementation detail of {@see TemplateConfigurationProcessor}
- * @psalm-immutable
- * @Flow\Proxy(false)
  */
-class TemplatePart
+final readonly class TemplatePart
 {
     /**
-     * @psalm-readonly
+     * @var array<string|int, mixed>
      */
     private array $configuration;
 
     /**
-     * @psalm-readonly
+     * @var list<string>
      */
     private array $fullPathToConfiguration;
 
     /**
-     * @psalm-readonly
+     * @var array<string, mixed>
      */
     private array $evaluationContext;
 
     /**
-     * @psalm-readonly
-     * @psalm-var \Closure(mixed $value, array<string, mixed> $evaluationContext): mixed
+     * @var \Closure(mixed $value, array<string, mixed> $evaluationContext): mixed
      */
     private \Closure $configurationValueProcessor;
 
-    /**
-     * @psalm-readonly
-     */
     private ProcessingErrors $processingErrors;
 
     /**
-     * @psalm-param array<string, mixed> $configuration
-     * @psalm-param array<string, mixed> $evaluationContext
-     * @psalm-param \Closure(mixed $value, array<string, mixed> $evaluationContext): mixed $configurationValueProcessor
+     * @param array<string, mixed> $configuration
+     * @param list<string> $fullPathToConfiguration
+     * @param array<string, mixed> $evaluationContext
+     * @param \Closure(mixed $value, array<string, mixed> $evaluationContext): mixed $configurationValueProcessor
      * @throws StopBuildingTemplatePartException
      */
     private function __construct(
@@ -86,6 +81,7 @@ class TemplatePart
         return $this->processingErrors;
     }
 
+    /** @return list<string> */
     public function getFullPathToConfiguration(): array
     {
         return $this->fullPathToConfiguration;
@@ -158,9 +154,8 @@ class TemplatePart
      *
      * @psalm-param string|list<string> $configurationPath
      */
-    public function getRawConfiguration($configurationPath)
+    public function getRawConfiguration(array|string $configurationPath): mixed
     {
-        assert(is_array($configurationPath) || is_string($configurationPath));
         $path = is_array($configurationPath) ? $configurationPath : [$configurationPath];
         $array = $this->configuration;
         foreach ($path as $key) {
@@ -176,9 +171,8 @@ class TemplatePart
     /**
      * @psalm-param string|list<string> $configurationPath
      */
-    public function hasConfiguration($configurationPath): bool
+    public function hasConfiguration(array|string $configurationPath): bool
     {
-        assert(is_array($configurationPath) || is_string($configurationPath));
         $path = is_array($configurationPath) ? $configurationPath : [$configurationPath];
         $array = $this->configuration;
         foreach ($path as $key) {

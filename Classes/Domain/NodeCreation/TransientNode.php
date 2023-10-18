@@ -30,10 +30,13 @@ use Neos\Flow\Annotations as Flow;
  */
 final readonly class TransientNode
 {
+    /** @var array<string, mixed> */
     public array $properties;
 
+    /** @var array<string, mixed> */
     public array $references;
 
+    /** @param array<string, mixed> $rawProperties */
     private function __construct(
         public NodeAggregateId $nodeAggregateId,
         public ContentStreamId $contentStreamId,
@@ -65,6 +68,7 @@ final readonly class TransientNode
         $this->references = $references;
     }
 
+    /** @param array<string, mixed> $rawProperties */
     public static function forRegular(
         NodeAggregateId $nodeAggregateId,
         ContentStreamId $contentStreamId,
@@ -89,6 +93,7 @@ final readonly class TransientNode
         );
     }
 
+    /** @param array<string, mixed> $rawProperties */
     public function forTetheredChildNode(NodeName $nodeName, array $rawProperties): self
     {
         $nodeAggregateId = $this->tetheredNodeAggregateIds->getNodeAggregateId(NodePath::fromNodeNames($nodeName));
@@ -126,6 +131,7 @@ final readonly class TransientNode
         );
     }
 
+    /** @param array<string, mixed> $rawProperties */
     public function forRegularChildNode(NodeAggregateId $nodeAggregateId, NodeType $nodeType, array $rawProperties): self
     {
         $tetheredNodeAggregateIds = NodeAggregateIdsByNodePaths::createForNodeType($nodeType->name, $this->nodeTypeManager);
