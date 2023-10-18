@@ -109,7 +109,7 @@ class TemplatePart
     {
         return new self(
             $this->getRawConfiguration($configurationPath),
-            array_merge($this->fullPathToConfiguration, $configurationPath),
+            array_merge($this->fullPathToConfiguration, is_array($configurationPath) ? $configurationPath : [$configurationPath]),
             $this->evaluationContext,
             $this->configurationValueProcessor,
             $this->processingErrors
