@@ -81,9 +81,19 @@ class TemplatePart
         );
     }
 
-    public function getProcessingErrors(): ProcessingErrors
+    /**
+     * @param string|list<string|int> $configurationPath
+     */
+    public function addProcessingErrorForPath(\Throwable $throwable, $configurationPath): void
     {
-        return $this->processingErrors;
+        $this->processingErrors->add(
+            ProcessingError::fromException(
+                $throwable
+            )->withOrigin(sprintf(
+                'Configuration "%s"',
+                join('.', array_merge($this->getFullPathToConfiguration(), is_array($configurationPath) ? $configurationPath : [$configurationPath]))
+            ))
+        );
     }
 
     public function getFullPathToConfiguration(): array
@@ -201,15 +211,17 @@ class TemplatePart
         $isRootTemplate = $this->fullPathToConfiguration === [];
         foreach (array_keys($this->configuration) as $key) {
             if (!in_array($key, ['type', 'name', 'properties', 'childNodes', 'when', 'withItems', 'withContext'], true)) {
-                $this->processingErrors->add(
-                    ProcessingError::fromException(new \InvalidArgumentException(sprintf('Template configuration has illegal key "%s"', $key), 1686150349274))
+                $this->addProcessingErrorForPath(
+                    new \InvalidArgumentException(sprintf('Template configuration has illegal key "%s"', $key), 1686150349274),
+                    $key
                 );
                 throw new StopBuildingTemplatePartException();
             }
             if ($isRootTemplate) {
                 if (!in_array($key, ['properties', 'childNodes', 'when', 'withContext'], true)) {
-                    $this->processingErrors->add(
-                        ProcessingError::fromException(new \InvalidArgumentException(sprintf('Root template configuration doesnt allow option "%s', $key), 1686150340657))
+                    $this->addProcessingErrorForPath(
+                        new \InvalidArgumentException(sprintf('Root template configuration doesnt allow option "%s', $key), 1686150340657),
+                        $key
                     );
                     throw new StopBuildingTemplatePartException();
                 }

@@ -2,7 +2,6 @@
 
 namespace Flowpack\NodeTemplates\Domain\TemplateConfiguration;
 
-use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Template;
@@ -49,6 +48,13 @@ class TemplateConfigurationProcessor
         try {
             $withContext = [];
             foreach ($templatePart->getRawConfiguration('withContext') ?? [] as $key => $_) {
+                if (!is_string($key)) {
+                    $templatePart->addProcessingErrorForPath(
+                        new \RuntimeException(sprintf('Key must be string. Got %s.', gettype($key)), 1697663846),
+                        ['withContext', $key]
+                    );
+                    continue;
+                }
                 $withContext[$key] = $templatePart->processConfiguration(['withContext', $key]);
             }
             $templatePart = $templatePart->withMergedEvaluationContext($withContext);
@@ -63,10 +69,9 @@ class TemplateConfigurationProcessor
             $items = $templatePart->processConfiguration('withItems');
 
             if (!is_iterable($items)) {
-                $templatePart->getProcessingErrors()->add(
-                    ProcessingError::fromException(
-                        new \RuntimeException(sprintf('Type %s is not iterable.', gettype($items)), 1685802354186)
-                    )->withOrigin(sprintf('Configuration "%s" in "%s"', json_encode($templatePart->getRawConfiguration('withItems')), join('.', array_merge($templatePart->getFullPathToConfiguration(), ['withItems']))))
+                $templatePart->addProcessingErrorForPath(
+                    new \RuntimeException(sprintf('Type %s is not iterable.', gettype($items)), 1685802354186),
+                    'withItems'
                 );
                 return Templates::empty();
             }
@@ -95,9 +100,17 @@ class TemplateConfigurationProcessor
         $processedProperties = [];
         foreach ($templatePart->getRawConfiguration('properties') ?? [] as $propertyName => $value) {
             if (!is_scalar($value) && !is_null($value)) {
-                $templatePart->getProcessingErrors()->add(ProcessingError::fromException(
-                    new \RuntimeException(sprintf('Template configuration properties can only hold int|float|string|bool|null. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730)
-                ));
+                $templatePart->addProcessingErrorForPath(
+                    new \RuntimeException(sprintf('Template configuration properties can only hold int|float|string|bool|null. Property "%s" has type "%s"', $propertyName, gettype($value)), 1685725310730),
+                    ['properties', $propertyName]
+                );
+                continue;
+            }
+            if (!is_string($propertyName)) {
+                $templatePart->addProcessingErrorForPath(
+                    new \RuntimeException(sprintf('Template configuration property names must be of type string. Got: %s', gettype($propertyName)), 1697663340),
+                    ['properties', $propertyName]
+                );
                 continue;
             }
             try {
