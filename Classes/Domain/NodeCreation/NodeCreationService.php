@@ -69,6 +69,7 @@ class NodeCreationService
             $commands->first->contentStreamId,
             $commands->first->originDimensionSpacePoint,
             $nodeType,
+            $commands->first->tetheredDescendantNodeAggregateIds,
             $nodeTypeManager,
             $subgraph,
             $template->getProperties()
@@ -207,7 +208,7 @@ class NodeCreationService
                     $parentNode->nodeAggregateId,
                     nodeName: $nodeName,
                     initialPropertyValues: $initialProperties
-                ),
+                )->withTetheredDescendantNodeAggregateIds($node->tetheredNodeAggregateIds),
                 ...$this->createReferencesCommands(
                     $parentNode->contentStreamId,
                     $node->nodeAggregateId,

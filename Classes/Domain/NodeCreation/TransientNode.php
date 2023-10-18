@@ -3,9 +3,11 @@
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
+use Neos\ContentRepository\Core\Feature\NodeCreation\Dto\NodeAggregateIdsByNodePaths;
 use Neos\ContentRepository\Core\NodeType\NodeType;
 use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
 use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
+use Neos\ContentRepository\Core\Projection\ContentGraph\NodePath;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
 use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
@@ -37,6 +39,7 @@ final readonly class TransientNode
         public ContentStreamId $contentStreamId,
         public OriginDimensionSpacePoint $originDimensionSpacePoint,
         public NodeType $nodeType,
+        public NodeAggregateIdsByNodePaths $tetheredNodeAggregateIds,
         private ?NodeName $tetheredNodeName,
         private ?NodeType $tetheredParentNodeType,
         public NodeTypeManager $nodeTypeManager,
@@ -67,6 +70,7 @@ final readonly class TransientNode
         ContentStreamId $contentStreamId,
         OriginDimensionSpacePoint $originDimensionSpacePoint,
         NodeType $nodeType,
+        NodeAggregateIdsByNodePaths $tetheredNodeAggregateIds,
         NodeTypeManager $nodeTypeManager,
         ContentSubgraphInterface $subgraph,
         array $rawProperties
@@ -76,6 +80,7 @@ final readonly class TransientNode
             $contentStreamId,
             $originDimensionSpacePoint,
             $nodeType,
+            $tetheredNodeAggregateIds,
             null,
             null,
             $nodeTypeManager,
@@ -86,21 +91,33 @@ final readonly class TransientNode
 
     public function forTetheredChildNode(NodeName $nodeName, array $rawProperties): self
     {
-        if (!$this->nodeType->hasTetheredNode($nodeName)) {
+        $nodeAggregateId = $this->tetheredNodeAggregateIds->getNodeAggregateId(NodePath::fromNodeNames($nodeName));
+
+        if (!$nodeAggregateId || !$this->nodeType->hasTetheredNode($nodeName)) {
             throw new \InvalidArgumentException('forTetheredChildNode only works for tethered nodes.');
         }
 
         $childNodeType = $this->nodeTypeManager->getTypeOfTetheredNode($this->nodeType, $nodeName);
 
-        // @todo repair
-        /** @phpstan-ignore-next-line */
-        $nodeAggregateId = $nodeName->tetheredNodeAggregateIdByParent($this->nodeAggregateId);
+        $descendantTetheredNodeAggregateIds = NodeAggregateIdsByNodePaths::createEmpty();
+        foreach ($this->tetheredNodeAggregateIds->getNodeAggregateIds() as $stringNodePath => $descendantNodeAggregateId) {
+            $nodePath = NodePath::fromString($stringNodePath);
+            $pathParts = $nodePath->getParts();
+            $firstPart = array_pop($pathParts);
+            if ($firstPart?->equals($nodeName) && count($pathParts)) {
+                $descendantTetheredNodeAggregateIds = $descendantTetheredNodeAggregateIds->add(
+                    NodePath::fromNodeNames(...$pathParts),
+                    $descendantNodeAggregateId
+                );
+            }
+        }
 
         return new self(
             $nodeAggregateId,
             $this->contentStreamId,
             $this->originDimensionSpacePoint,
             $childNodeType,
+            $descendantTetheredNodeAggregateIds,
             $nodeName,
             $this->nodeType,
             $this->nodeTypeManager,
@@ -111,11 +128,13 @@ final readonly class TransientNode
 
     public function forRegularChildNode(NodeAggregateId $nodeAggregateId, NodeType $nodeType, array $rawProperties): self
     {
+        $tetheredNodeAggregateIds = NodeAggregateIdsByNodePaths::createForNodeType($nodeType->name, $this->nodeTypeManager);
         return new self(
             $nodeAggregateId,
             $this->contentStreamId,
             $this->originDimensionSpacePoint,
             $nodeType,
+            $tetheredNodeAggregateIds,
             null,
             null,
             $this->nodeTypeManager,
