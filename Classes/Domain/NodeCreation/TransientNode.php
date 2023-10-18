@@ -103,7 +103,7 @@ final readonly class TransientNode
         foreach ($this->tetheredNodeAggregateIds->getNodeAggregateIds() as $stringNodePath => $descendantNodeAggregateId) {
             $nodePath = NodePath::fromString($stringNodePath);
             $pathParts = $nodePath->getParts();
-            $firstPart = array_pop($pathParts);
+            $firstPart = array_shift($pathParts);
             if ($firstPart?->equals($nodeName) && count($pathParts)) {
                 $descendantTetheredNodeAggregateIds = $descendantTetheredNodeAggregateIds->add(
                     NodePath::fromNodeNames(...$pathParts),
