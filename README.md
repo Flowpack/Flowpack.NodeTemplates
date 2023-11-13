@@ -6,11 +6,11 @@ automatically creating helpful child nodes and making useful modifications to no
 properties when creating new nodes in the Neos UI.
 
 In contrast to child nodes that are defined in the regular node type definition
-(they cannot be removed by the editor), all modifications that are made when a 
+(which cannot be removed by the editor), all modifications that are made when a 
 template is applied can be changed or removed by the editor.
 
 The desired node structure is defined in a declarative way in the NodeTypes.yaml
-under the path "options.template".
+under the path `options.template`.
 
 ## TL;DR
 
@@ -39,7 +39,7 @@ to the main content collection of all pages that are created via the UI:
 
 ## Using the node creation dialog
 
-The Neos React UI comes with a configurable node creation dialog. You can access
+The Neos UI comes with a configurable node creation dialog. You can access
 the data entered in the node creation dialog in your node templates using EEL queries.
 You could let the editor choose between different dummy texts like this:
 
@@ -69,6 +69,32 @@ You could let the editor choose between different dummy texts like this:
               type: 'Neos.NodeTypes:Text'
               properties:
                 text: '${"<p>" + data.dummyText + "</p>"}'
+```
+
+You can also access data from the node creation dialog if you use the
+`showInCreationDialog` feature:
+
+```yaml
+'Some.Package:SomeNodeType':
+  # ...
+  properties:
+    'firstName':
+      type: string
+      label: 'First Name'
+      ui:
+        showInCreationDialog: true
+    'lastName':
+      type: string
+      label: 'First Name'
+      ui:
+        showInCreationDialog: true
+    'cardTitle':
+      type: string:
+      label: 'Card Title'
+  options:
+    template:
+      properties:
+        cardTitle: '${"<h2>" + data.firstName + " " + data.lastName + "</h2>"}'
 ```
 
 ## Conditions and loops
@@ -168,6 +194,16 @@ Inside ``withContext`` the parent context may be accessed in EEL expressions, bu
 values are not available. As ``withContext`` is evaluated before ``when`` and ``withItems``, you can
 access context variables from ``withContext`` in ``withItems`` at the same level – but not the other
 way around.
+
+If you want to use a custom EEL helper, make sure to register it in the package's Settings. EEL
+helpers configured for Neos.Fusion are not automatically available:
+
+```yaml
+Flowpack:
+  NodeTemplates:
+    defaultEelContext:
+      My.Foo: 'My\Site\Eel\Helper\FooHelper'
+```
 
 ## Fine-grained error handling, resuming with the next possible operation.
 
