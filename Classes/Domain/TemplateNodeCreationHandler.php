@@ -32,6 +32,10 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
      */
     protected $processingErrorHandler;
 
+    public function __construct(private readonly ContentRepository $contentRepository)
+    {
+    }
+
     /**
      * Create child nodes and change properties upon node creation
      *
@@ -39,17 +43,16 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
      */
     public function handle(
         NodeCreationCommands $commands,
-        array $data,
-        ContentRepository $contentRepository
+        array $data
     ): NodeCreationCommands {
-        $nodeType = $contentRepository->getNodeTypeManager()
+        $nodeType = $this->contentRepository->getNodeTypeManager()
             ->getNodeType($commands->first->nodeTypeName);
         $templateConfiguration = $nodeType->getOptions()['template'] ?? null;
         if (!$templateConfiguration) {
             return $commands;
         }
 
-        $subgraph = $contentRepository->getContentGraph()->getSubgraph(
+        $subgraph = $this->contentRepository->getContentGraph()->getSubgraph(
             $commands->first->contentStreamId,
             $commands->first->originDimensionSpacePoint->toDimensionSpacePoint(),
             VisibilityConstraints::frontend()
@@ -70,7 +73,7 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
             return $commands;
         }
 
-        $additionalCommands = $this->nodeCreationService->apply($template, $commands, $contentRepository->getNodeTypeManager(), $subgraph, $processingErrors);
+        $additionalCommands = $this->nodeCreationService->apply($template, $commands, $this->contentRepository->getNodeTypeManager(), $subgraph, $processingErrors);
         $shouldContinue = $this->processingErrorHandler->handleAfterNodeCreation($processingErrors, $nodeType, $commands->first->nodeAggregateId);
 
         if (!$shouldContinue) {

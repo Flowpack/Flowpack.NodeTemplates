@@ -35,7 +35,7 @@ class PropertiesProcessor
         foreach ($node->properties as $propertyName => $propertyValue) {
             try {
                 $this->assertValidPropertyName($propertyName);
-                if (!isset($nodeType->getProperties()[$propertyName])) {
+                if (!$nodeType->hasProperty($propertyName)) {
                     throw new PropertyIgnoredException(
                         sprintf(
                             'Because property is not declared in NodeType. Got value `%s`.',

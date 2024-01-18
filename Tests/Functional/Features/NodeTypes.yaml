@@ -35,3 +35,8 @@
   constraints:
     nodeTypes:
       '*': false
+
+'unstructured': {}
+
+# todo remove me
+'Neos.ContentRepository:Root': {}

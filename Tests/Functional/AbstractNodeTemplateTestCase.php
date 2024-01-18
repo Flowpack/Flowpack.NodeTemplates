@@ -157,9 +157,9 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
 
         $this->homePageNode = $this->subgraph->findNodeById($testSiteId);
 
-        $this->homePageMainContentCollectionNode = $this->subgraph->findChildNodeConnectedThroughEdgeName(
-            $testSiteId,
-            NodeName::fromString('main')
+        $this->homePageMainContentCollectionNode = $this->subgraph->findNodeByPath(
+            NodeName::fromString('main'),
+            $testSiteId
         );
 
         // For the case you the Neos Site is expected to return the correct site node you can use:
@@ -209,9 +209,9 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
         assert($changeCollection instanceof ChangeCollection);
         $changeCollection->apply();
 
-        return $this->subgraph->findChildNodeConnectedThroughEdgeName(
-            $targetNode->nodeAggregateId,
-            NodeName::fromString('new-node')
+        return $this->subgraph->findNodeByPath(
+            NodeName::fromString('new-node'),
+            $targetNode->nodeAggregateId
         );
     }
 
@@ -255,7 +255,7 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
             $this->subgraph->findSubtree(
                 $node->nodeAggregateId,
                 FindSubtreeFilter::create(
-                    nodeTypeConstraints: 'Neos.Neos:Node'
+                    nodeTypes: 'Neos.Neos:Node'
                 )
             )
         );

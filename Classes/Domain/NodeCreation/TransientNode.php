@@ -57,6 +57,11 @@ final readonly class TransientNode
         $properties = [];
         $references = [];
         foreach ($rawProperties as $propertyName => $propertyValue) {
+            if (!$this->nodeType->hasProperty($propertyName)) {
+                // invalid properties will be filtered out in the PropertiesProcessor
+                $properties[$propertyName] = $propertyValue;
+                continue;
+            }
             $declaration = $this->nodeType->getPropertyType($propertyName);
             if ($declaration === 'reference' || $declaration === 'references') {
                 $references[$propertyName] = $propertyValue;

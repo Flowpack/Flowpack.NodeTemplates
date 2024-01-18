@@ -28,7 +28,7 @@ trait NodeMockTrait
 {
     private function createNodeMock(NodeAggregateId $nodeAggregateId = null): Node
     {
-        return new Node(
+        return Node::create(
             ContentSubgraphIdentity::create(
                 ContentRepositoryId::fromString("cr"),
                 ContentStreamId::fromString("cs"),

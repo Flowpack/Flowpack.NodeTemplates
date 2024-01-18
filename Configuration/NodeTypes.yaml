@@ -5,4 +5,4 @@
         # after the default Neos.Neos.Ui creationHandler
         # https://github.com/Flowpack/Flowpack.NodeTemplates/pull/21
         position: end
-        nodeCreationHandler: 'Flowpack\NodeTemplates\Domain\TemplateNodeCreationHandler'
+        factoryClassName: Flowpack\NodeTemplates\Domain\TemplateNodeCreationHandlerFactory

@@ -237,7 +237,7 @@ class NodeCreationService
     {
         $commands = [];
         foreach ($references as $name => $nodeAggregateIds) {
-            $commands[] = new SetNodeReferences(
+            $commands[] = SetNodeReferences::create(
                 $contentStreamId,
                 $nodeAggregateId,
                 $originDimensionSpacePoint,
