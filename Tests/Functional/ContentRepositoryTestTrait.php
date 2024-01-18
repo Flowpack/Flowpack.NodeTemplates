@@ -6,7 +6,6 @@ use Neos\ContentRepository\Core\ContentRepository;
 use Neos\ContentRepository\Core\Factory\ContentRepositoryId;
 use Neos\ContentRepository\Core\Infrastructure\DbalClientInterface;
 use Neos\ContentRepositoryRegistry\ContentRepositoryRegistry;
-use Neos\EventStore\Exception\CheckpointException;
 use Neos\Flow\Configuration\ConfigurationManager;
 use Neos\Flow\ObjectManagement\ObjectManager;
 use Neos\Flow\Persistence\Doctrine\PersistenceManager;
@@ -20,11 +19,13 @@ trait ContentRepositoryTestTrait
 
     private readonly ContentRepositoryId $contentRepositoryId;
 
+    private static bool $persistenceWasSetup = false;
+
     private static bool $wasContentRepositorySetupCalled = false;
 
     private function initCleanContentRepository(ContentRepositoryId $contentRepositoryId): void
     {
-        if (!self::$wasContentRepositorySetupCalled) {
+        if (!self::$persistenceWasSetup) {
             // TODO super hacky and as we never clean up !!!
             $persistenceManager = $this->objectManager->get(PersistenceManager::class);
             if (is_callable([$persistenceManager, 'compile'])) {
@@ -33,6 +34,7 @@ trait ContentRepositoryTestTrait
                     self::markTestSkipped('Test skipped because setting up the persistence failed.');
                 }
             }
+            self::$persistenceWasSetup = true;
         }
 
         $this->contentRepositoryId = $contentRepositoryId;
@@ -60,22 +62,6 @@ trait ContentRepositoryTestTrait
         // reset events and projections
         $eventTableName = sprintf('cr_%s_events', $this->contentRepositoryId->value);
         $connection->executeStatement('TRUNCATE ' . $eventTableName);
-        try {
-            $this->contentRepository->resetProjectionStates();
-        } catch (CheckpointException $checkpointException) {
-            // Projection Reset may fail because the lock cannot be acquired
-            // see working workaround: https://github.com/neos/neos-development-collection/blob/27f57c6cdec1deaa6a5fba04f85c2638b605f2e1/Neos.ContentRepository.Core/Tests/Behavior/Features/Bootstrap/EventSourcedTrait.php#L226-L304
-            // we don't implement this workaround, since I didn't encounter this state in my simpler tests.
-            if ($checkpointException->getCode() === 1652279016) {
-                // another process is in the critical section; a.k.a.
-                // the lock is acquired already by another process.
-
-                // in case this actually happens, we should implement a retry
-                throw new \RuntimeException('Projection reset failed because the lock cannot be acquired, please implement a retry.', 1686342087789, $checkpointException);
-            } else {
-                // some error error - we re-throw
-                throw $checkpointException;
-            }
-        }
+        $this->contentRepository->resetProjectionStates();
     }
 }
