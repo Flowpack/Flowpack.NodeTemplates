@@ -51,9 +51,10 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 
         $evaluationContext = [
             'data' => $data,
-            // deprectated will be removed in 3.0
+            // deprecated will be removed in 3.0
             'triggeringNode' => $node,
-            'parentNode' => $node->getParent()
+            'site' => $node->getContext()->getCurrentSiteNode(),
+            'parentSourceNode' => $node->getParent(),
         ];
 
         $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');

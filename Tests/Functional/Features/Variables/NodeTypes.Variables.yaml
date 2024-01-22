@@ -1,4 +1,4 @@
-# We test that `parentNode` is accessible in EEL
+# We test that `parentSourceNode` and `site` are accessible in EEL
 ---
 
 'Flowpack.NodeTemplates:Content.Variables':
@@ -10,4 +10,4 @@
   options:
     template:
       properties:
-        text: "${'ParentNodeType is of type ' + parentNode.nodeType.name + ' with name ' + parentNode.name}"
+        text: "${'parentSourceNode(' + parentSourceNode.nodeType.name + ', ' + parentSourceNode.name + ') site(' + site.nodeType.name + ', ' + site.name + ')'}"

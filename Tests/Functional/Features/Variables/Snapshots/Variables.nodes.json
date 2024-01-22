@@ -1,5 +1,5 @@
 {
     "properties": {
-        "text": "ParentNodeType is of type Neos.Neos:ContentCollection with name main"
+        "text": "parentSourceNode(Neos.Neos:ContentCollection, main) site(unstructured, test-site)"
     }
 }

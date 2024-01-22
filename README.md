@@ -162,13 +162,14 @@ There are several variables available in the EEL context for example.
 | Variable name                | Type                   | Description                                                 | Availability            |
 |------------------------------|------------------------|-------------------------------------------------------------|-------------------------|
 | data                         | `array<string, mixed>` | Data from the node creation dialog                          | Global                  |
+| site                         | `Node`                 | The site node where the node creation was triggered         | Global                  |
 | triggeringNode _@deprecated_ | `Node`                 | The main node whose creation triggered template processing  | Global                  |
-| parentNode                   | `Node`                 | The parent of the node the template is initially applied on | Global                  |
+| parentSourceNode             | `Node`                 | The parent of the node the template is initially applied on | Global                  |
 | item                         | `mixed`                | The current item value inside a loop                        | Inside `withItems` loop |
 | key                          | `string`               | The current item key inside a loop                          | Inside `withItems` loop |
 
-> **Warning**
-> The behaviour of `parentNode` changed from version 1.x to 2.x
+> **Notice**
+> `triggeringNode` will be removed with Version 3
 
 ### Additional context
 
