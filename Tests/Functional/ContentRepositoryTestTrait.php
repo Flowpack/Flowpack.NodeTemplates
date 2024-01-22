@@ -64,4 +64,9 @@ trait ContentRepositoryTestTrait
         $connection->executeStatement('TRUNCATE ' . $eventTableName);
         $this->contentRepository->resetProjectionStates();
     }
+
+    final public function getContentRepository(): ContentRepository
+    {
+        return $this->contentRepository;
+    }
 }

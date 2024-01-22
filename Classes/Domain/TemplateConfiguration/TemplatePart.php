@@ -201,7 +201,7 @@ final readonly class TemplatePart
     {
         $isRootTemplate = $this->fullPathToConfiguration === [];
         foreach (array_keys($this->configuration) as $key) {
-            if (!in_array($key, ['type', 'name', 'properties', 'childNodes', 'when', 'withItems', 'withContext'], true)) {
+            if (!in_array($key, ['type', 'name', 'properties', 'childNodes', 'when', 'withItems', 'withContext', 'copyFrom'], true)) {
                 $this->addProcessingErrorForPath(
                     new \InvalidArgumentException(sprintf('Template configuration has illegal key "%s"', $key), 1686150349274),
                     $key

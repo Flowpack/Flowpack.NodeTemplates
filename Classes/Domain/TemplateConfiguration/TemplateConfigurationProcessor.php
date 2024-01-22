@@ -135,11 +135,13 @@ class TemplateConfigurationProcessor
 
         $type = $templatePart->processConfiguration('type');
         $name = $templatePart->processConfiguration('name');
+        $copyFrom = $templatePart->processConfiguration('copyFrom');
         return new Template(
             $type !== null ? NodeTypeName::fromString($type) : null,
             $name !== null ? NodeName::transliterateFromString($name) : null,
             $processedProperties,
-            $childNodeTemplates
+            $childNodeTemplates,
+            $copyFrom
         );
     }
 

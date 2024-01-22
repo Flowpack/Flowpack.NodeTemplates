@@ -68,7 +68,11 @@ trait JsonSerializeNodeTreeTrait
                     $value = $this->serializeValuesInArray($value);
                 }
             } elseif (is_object($value)) {
-                $id = ObjectAccess::getProperty($value, 'Persistence_Object_Identifier', true);
+                try {
+                    $id = ObjectAccess::getProperty($value, 'Persistence_Object_Identifier', true);
+                } catch (\Exception) {
+                    $id = null;
+                }
                 $value = sprintf('object(%s%s)', get_class($value), $id ? (sprintf(', %s', $id)) : '');
             } else {
                 continue;

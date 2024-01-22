@@ -25,16 +25,19 @@ class Template implements \JsonSerializable
 
     private Templates $childNodes;
 
+    private mixed $copyFrom;
+
     /**
      * @internal
      * @param array<string, mixed> $properties
      */
-    public function __construct(?NodeTypeName $type, ?NodeName $name, array $properties, Templates $childNodes)
+    public function __construct(?NodeTypeName $type, ?NodeName $name, array $properties, Templates $childNodes, mixed $copyFrom)
     {
         $this->type = $type;
         $this->name = $name;
         $this->properties = $properties;
         $this->childNodes = $childNodes;
+        $this->copyFrom = $copyFrom;
     }
 
     public function getType(): ?NodeTypeName
@@ -60,13 +63,28 @@ class Template implements \JsonSerializable
         return $this->childNodes;
     }
 
+    public function getCopyFrom(): mixed
+    {
+        return $this->copyFrom;
+    }
+
     public function jsonSerialize(): mixed
     {
+        if ($this->copyFrom) {
+            return [
+                'type' => $this->type,
+                'name' => $this->name,
+                'properties' => $this->properties,
+                'childNodes' => $this->childNodes,
+                'copyFrom' => $this->copyFrom,
+            ];
+        }
+
         return [
             'type' => $this->type,
             'name' => $this->name,
             'properties' => $this->properties,
-            'childNodes' => $this->childNodes
+            'childNodes' => $this->childNodes,
         ];
     }
 }

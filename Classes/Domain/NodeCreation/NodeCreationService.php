@@ -12,6 +12,7 @@ use Neos\ContentRepository\Core\Dimension\ContentDimensionId;
 use Neos\ContentRepository\Core\DimensionSpace\DimensionSpacePoint;
 use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
 use Neos\ContentRepository\Core\Feature\NodeCreation\Command\CreateNodeAggregateWithNode;
+use Neos\ContentRepository\Core\Feature\NodeDuplication\Command\CopyNodesRecursively;
 use Neos\ContentRepository\Core\Feature\NodeModification\Command\SetNodeProperties;
 use Neos\ContentRepository\Core\Feature\NodeModification\Dto\PropertyValuesToWrite;
 use Neos\ContentRepository\Core\Feature\NodeReferencing\Command\SetNodeReferences;
@@ -105,6 +106,27 @@ class NodeCreationService
         );
     }
 
+    private function copyTo(Template $template, TransientNode $node)
+    {
+        if (empty($template->getCopyFrom())) {
+            return;
+        }
+
+        $sources = is_array($template->getCopyFrom()) ? $template->getCopyFrom() : [$template->getCopyFrom()];
+
+        foreach ($sources as $sourceNode) {
+            yield CopyNodesRecursively::createFromSubgraphAndStartNode(
+                $node->subgraph,
+                $sourceNode,
+                $node->originDimensionSpacePoint,
+                $node->nodeAggregateId,
+                null,
+                null
+            );
+        }
+
+    }
+
     private function applyTemplateRecursively(Templates $templates, TransientNode $parentNode, NodeCreationCommands $commands, ProcessingErrors $processingErrors): NodeCreationCommands
     {
         foreach ($templates as $template) {
@@ -138,7 +160,8 @@ class NodeCreationService
                         $node->nodeAggregateId,
                         $parentNode->originDimensionSpacePoint,
                         $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
-                    )
+                    ),
+                    ...iterator_to_array($this->copyTo($template, $node))
                 );
 
                 $commands = $this->applyTemplateRecursively(
@@ -214,7 +237,8 @@ class NodeCreationService
                     $node->nodeAggregateId,
                     $parentNode->originDimensionSpacePoint,
                     $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
-                )
+                ),
+                // todo ...iterator_to_array($this->copyTo($template, $node))
             );
 
 

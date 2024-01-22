@@ -1,0 +1,12 @@
+'Flowpack.NodeTemplates:Content.StaticNodeCopy':
+  superTypes:
+    'Neos.Neos:Content': true
+  childNodes:
+    column0:
+      type: 'Neos.Neos:ContentCollection'
+  options:
+    template:
+      childNodes:
+        column0Tethered:
+          name: column0
+          copyFrom: "${q(parentNode).find('#source-node-main-collection').children().get()}"

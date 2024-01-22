@@ -52,7 +52,7 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
 
     protected Node $homePageMainContentCollectionNode;
 
-    private ContentSubgraphInterface $subgraph;
+    protected ContentSubgraphInterface $subgraph;
 
     private NodeTemplateDumper $nodeTemplateDumper;
 
