@@ -9,8 +9,9 @@ use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationPro
 use Neos\ContentRepository\Core\ContentRepository;
 use Neos\ContentRepository\Core\Projection\ContentGraph\VisibilityConstraints;
 use Neos\Flow\Annotations as Flow;
-use Neos\Neos\Ui\NodeCreationHandler\NodeCreationCommands;
-use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
+use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationCommands;
+use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationElements;
+use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationHandlerInterface;
 
 class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 {
@@ -38,12 +39,10 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 
     /**
      * Create child nodes and change properties upon node creation
-     *
-     * @param array<string|int,mixed> $data incoming data from the creationDialog
      */
     public function handle(
         NodeCreationCommands $commands,
-        array $data
+        NodeCreationElements $elements
     ): NodeCreationCommands {
         $nodeType = $this->contentRepository->getNodeTypeManager()
             ->getNodeType($commands->first->nodeTypeName);
@@ -59,7 +58,8 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
         );
 
         $evaluationContext = [
-            'data' => $data,
+            // todo internal and legacy
+            'data' => $elements->serialized(),
             // todo evaluate which context variables
             'parentNode' => $subgraph->findNodeById($commands->first->parentNodeAggregateId),
             'subgraph' => $subgraph

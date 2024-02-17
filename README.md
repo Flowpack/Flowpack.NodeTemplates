@@ -136,7 +136,7 @@ There are several variables available in the EEL context for example.
 | Variable name  | Type                 | Description                                                | Availability          |
 |----------------|----------------------|------------------------------------------------------------|-----------------------|
 | data           | array<string, mixed> | Data from the node creation dialog                         | Global                |
-| triggeringNode | NodeInterface        | The main node whose creation triggered template processing | Global                |
+| triggeringNode | Node                 | The main node whose creation triggered template processing | Global                |
 | item           | mixed                | The current item inside a withItems loop                   | Inside withItems loop |
 | key            | string               | The current key inside a withItems loop                    | Inside withItems loop |
 

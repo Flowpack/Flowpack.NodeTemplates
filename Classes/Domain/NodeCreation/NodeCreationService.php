@@ -6,7 +6,6 @@ use Behat\Transliterator\Transliterator;
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
-use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Core\Dimension\ContentDimensionId;
 use Neos\ContentRepository\Core\DimensionSpace\DimensionSpacePoint;
@@ -28,7 +27,7 @@ use Neos\Flow\Annotations as Flow;
 use Neos\Flow\I18n\Exception\InvalidLocaleIdentifierException;
 use Neos\Flow\I18n\Locale;
 use Neos\Neos\Service\TransliterationService;
-use Neos\Neos\Ui\NodeCreationHandler\NodeCreationCommands;
+use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationCommands;
 
 /**
  * Declares the steps how to create a node subtree starting from the root template {@see RootTemplate}
