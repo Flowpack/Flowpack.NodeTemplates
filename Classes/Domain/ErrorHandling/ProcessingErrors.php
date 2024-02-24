@@ -2,9 +2,7 @@
 
 namespace Flowpack\NodeTemplates\Domain\ErrorHandling;
 
-use Neos\Flow\Annotations as Flow;
-
-/** @Flow\Proxy(false) */
+/** @implements \IteratorAggregate<int, ProcessingError> */
 class ProcessingErrors implements \IteratorAggregate
 {
     /** @var array<int, ProcessingError> */
@@ -19,6 +17,7 @@ class ProcessingErrors implements \IteratorAggregate
         return new self();
     }
 
+    /** @phpstan-assert-if-true !null $this->first() */
     public function hasError(): bool
     {
         return $this->errors !== [];

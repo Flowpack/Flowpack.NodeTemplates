@@ -47,7 +47,7 @@ class RootTemplate implements \JsonSerializable
         return $this->childNodes;
     }
 
-    public function jsonSerialize(): array
+    public function jsonSerialize(): mixed
     {
         return [
             'properties' => $this->properties,

@@ -8,9 +8,6 @@ use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\NodeTemplateDumper\NodeTemplateDumper;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
-use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Service\ContextFactoryInterface;
-use Neos\ContentRepository\Domain\Service\NodeTypeManager;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 
@@ -24,12 +21,6 @@ class NodeTemplateCommandController extends CommandController
 
     /**
      * @Flow\Inject
-     * @var ContextFactoryInterface
-     */
-    protected $contextFactory;
-
-    /**
-     * @Flow\Inject
      * @var NodeTemplateDumper
      */
     protected $nodeTemplateDumper;
@@ -40,11 +31,6 @@ class NodeTemplateCommandController extends CommandController
      */
     protected $templateConfigurationProcessor;
 
-    /**
-     * @Flow\Inject
-     * @var NodeTypeManager
-     */
-    protected $nodeTypeManager;
 
     /**
      * Dump the node tree structure into a NodeTemplate YAML structure.
@@ -56,10 +42,11 @@ class NodeTemplateCommandController extends CommandController
      */
     public function createFromNodeSubtreeCommand(string $startingNodeId, string $workspaceName = 'live'): void
     {
+        // TODO re-enable
+        throw new \BadMethodCallException('Not implemented.');
         $subgraph = $this->contextFactory->create([
             'workspaceName' => $workspaceName
         ]);
-        /** @var ?NodeInterface $node */
         $node = $subgraph->getNodeByIdentifier($startingNodeId);
         if (!$node) {
             throw new \InvalidArgumentException("Node $startingNodeId doesnt exist in workspace $workspaceName.");
@@ -76,6 +63,8 @@ class NodeTemplateCommandController extends CommandController
      */
     public function validateCommand(): void
     {
+        // TODO re-enable
+        throw new \BadMethodCallException('Not implemented.');
         $templatesChecked = 0;
         /**
          * nodeTypeNames as index

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
 use GuzzleHttp\Psr7\Uri;
-use Neos\ContentRepository\Domain\Model\NodeType;
+use Neos\ContentRepository\Core\NodeType\NodeType;
 use Neos\Flow\Annotations as Flow;
 use Psr\Http\Message\UriInterface;
 
@@ -58,7 +58,7 @@ final class PropertyType
                 sprintf(
                     'Given property "%s" is declared as "reference" in node type "%s" and must be treated as such.',
                     $propertyName,
-                    $nodeType->getName()
+                    $nodeType->name->value
                 ),
                 1685964835205
             );
@@ -70,7 +70,7 @@ final class PropertyType
                     'Given property "%s" is declared as undefined type "%s" in node type "%s"',
                     $propertyName,
                     $declaration,
-                    $nodeType->getName()
+                    $nodeType->name->value
                 ),
                 1685952798732
             );
@@ -173,6 +173,7 @@ final class PropertyType
         return $this->value === self::TYPE_ARRAY;
     }
 
+    /** @phpstan-assert-if-true !null $this->arrayOfType */
     public function isArrayOf(): bool
     {
         return (bool)preg_match(self::PATTERN_ARRAY_OF, $this->value);
@@ -206,7 +207,7 @@ final class PropertyType
         return \mb_substr($this->value, 6, -1);
     }
 
-    public function isMatchedBy($propertyValue): bool
+    public function isMatchedBy(mixed $propertyValue): bool
     {
         if (is_null($propertyValue)) {
             return true;

@@ -8,6 +8,7 @@ class ErrorHandlingConfiguration
 {
     /**
      * @Flow\InjectConfiguration(package="Flowpack.NodeTemplates", path="errorHandling")
+     * @var array<mixed>
      */
     protected array $configuration;
 

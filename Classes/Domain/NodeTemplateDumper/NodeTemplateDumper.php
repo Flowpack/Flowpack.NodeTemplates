@@ -91,7 +91,7 @@ class NodeTemplateDumper
             }
 
             if ($isDocumentNode) {
-                if ($node->isAutoCreated()) {
+                if ($node->isTethered()) {
                     $documentNodeTemplates[$node->getLabel() ?: $node->getName()] = array_merge([
                         'name' => $node->getName()
                     ], $templatePart);
@@ -104,7 +104,7 @@ class NodeTemplateDumper
                 continue;
             }
 
-            if ($node->isAutoCreated()) {
+            if ($node->isTethered()) {
                 $contentNodeTemplates[$node->getLabel() ?: $node->getName()] = array_merge([
                     'name' => $node->getName()
                 ], $templatePart);

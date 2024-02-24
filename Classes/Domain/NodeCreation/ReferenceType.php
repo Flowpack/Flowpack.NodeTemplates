@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
-use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Model\NodeType;
-use Neos\ContentRepository\Domain\NodeAggregate\NodeAggregateIdentifier;
+use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateIds;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -42,7 +43,7 @@ final class ReferenceType
             sprintf(
                 'Given property "%s" is not declared as "reference" in node type "%s" and must be treated as such.',
                 $propertyName,
-                $nodeType->getName()
+                $nodeType->name->value
             ),
             1685964955964
         );
@@ -73,16 +74,16 @@ final class ReferenceType
         return $this->value;
     }
 
-    public function toNodeAggregateId($referenceValue): ?NodeAggregateIdentifier
+    public function toNodeAggregateId(mixed $referenceValue): ?NodeAggregateId
     {
         if ($referenceValue === null) {
             return null;
         }
-        if ($referenceValue instanceof NodeInterface) {
-            return NodeAggregateIdentifier::fromString($referenceValue->getIdentifier());
+        if ($referenceValue instanceof Node) {
+            return $referenceValue->nodeAggregateId;
         }
         try {
-            return NodeAggregateIdentifier::fromString($referenceValue);
+            return NodeAggregateId::fromString($referenceValue);
         } catch (\Throwable $exception) {
             throw new InvalidReferenceException(
                 sprintf(
@@ -94,14 +95,10 @@ final class ReferenceType
         }
     }
 
-    /**
-     * @param mixed $referenceValue
-     * @return array<int, NodeAggregateIdentifier>
-     */
-    public function toNodeAggregateIds($referenceValue): array
+    public function toNodeAggregateIds(mixed $referenceValue): NodeAggregateIds
     {
         if ($referenceValue === null) {
-            return [];
+            return NodeAggregateIds::createEmpty();
         }
 
         if (is_array($referenceValue) === false) {
@@ -116,12 +113,12 @@ final class ReferenceType
 
         $nodeAggregateIds = [];
         foreach ($referenceValue as $singleNodeAggregateOrId) {
-            if ($singleNodeAggregateOrId instanceof NodeInterface) {
-                $nodeAggregateIds[] = NodeAggregateIdentifier::fromString($singleNodeAggregateOrId->getIdentifier());
+            if ($singleNodeAggregateOrId instanceof Node) {
+                $nodeAggregateIds[] = $singleNodeAggregateOrId->nodeAggregateId;
                 continue;
             }
             try {
-                $nodeAggregateIds[] = NodeAggregateIdentifier::fromString($singleNodeAggregateOrId);
+                $nodeAggregateIds[] = NodeAggregateId::fromString($singleNodeAggregateOrId);
             } catch (\Throwable $exception) {
                 throw new InvalidReferenceException(
                     sprintf(
@@ -132,6 +129,6 @@ final class ReferenceType
                 );
             }
         }
-        return $nodeAggregateIds;
+        return NodeAggregateIds::fromArray($nodeAggregateIds);
     }
 }

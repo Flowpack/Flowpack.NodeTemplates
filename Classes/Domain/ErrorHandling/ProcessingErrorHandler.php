@@ -2,7 +2,8 @@
 
 namespace Flowpack\NodeTemplates\Domain\ErrorHandling;
 
-use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Log\ThrowableStorageInterface;
 use Neos\Flow\Log\Utility\LogEnvironment;
@@ -39,7 +40,7 @@ class ProcessingErrorHandler
     /**
      * @return bool if to continue or abort
      */
-    public function handleAfterTemplateConfigurationProcessing(ProcessingErrors $processingErrors, NodeInterface $node): bool
+    public function handleAfterTemplateConfigurationProcessing(ProcessingErrors $processingErrors, NodeType $nodeType, NodeAggregateId $nodeAggregateId): bool
     {
         if (!$processingErrors->hasError()) {
             return true;
@@ -49,9 +50,8 @@ class ProcessingErrorHandler
             return true;
         }
 
-        assert(method_exists($node, '__toString'));
         $templateNotCreatedException = new TemplateNotCreatedException(
-            sprintf('Template for "%s" was not applied. Only %s was created.', $node->getNodeType()->getLabel(), (string)$node),
+            sprintf('Template for "%s" was not applied. Only %s was created.', $nodeType->getLabel(), $nodeAggregateId->value),
             1686135532992,
             $processingErrors->first()->getException(),
         );
@@ -64,15 +64,14 @@ class ProcessingErrorHandler
     /**
      * @return bool if to continue or abort
      */
-    public function handleAfterNodeCreation(ProcessingErrors $processingErrors, NodeInterface $node): bool
+    public function handleAfterNodeCreation(ProcessingErrors $processingErrors, NodeType $nodeType, NodeAggregateId $nodeAggregateId): bool
     {
         if (!$processingErrors->hasError()) {
             return true;
         }
 
-        assert(method_exists($node, '__toString'));
         $templatePartiallyCreatedException = new TemplatePartiallyCreatedException(
-            sprintf('Template for "%s" only partially applied. Please check the newly created nodes beneath %s.', $node->getNodeType()->getLabel(), (string)$node),
+            sprintf('Template for "%s" only partially applied. Please check the newly created nodes beneath %s.', $nodeType->getLabel(), $nodeAggregateId->value),
             1686135564160,
             $processingErrors->first()->getException(),
         );

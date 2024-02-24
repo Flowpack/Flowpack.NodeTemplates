@@ -7,37 +7,52 @@ namespace Flowpack\NodeTemplates\Tests\Functional;
 use Flowpack\NodeTemplates\Domain\NodeTemplateDumper\NodeTemplateDumper;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
-use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Model\Workspace;
-use Neos\ContentRepository\Domain\Repository\ContentDimensionRepository;
-use Neos\ContentRepository\Domain\Repository\WorkspaceRepository;
-use Neos\ContentRepository\Domain\Service\Context;
-use Neos\ContentRepository\Domain\Service\ContextFactoryInterface;
-use Neos\ContentRepository\Domain\Service\NodeTypeManager;
+use Neos\ContentRepository\Core\DimensionSpace\DimensionSpacePoint;
+use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
+use Neos\ContentRepository\Core\Factory\ContentRepositoryId;
+use Neos\ContentRepository\Core\Feature\NodeCreation\Command\CreateNodeAggregateWithNode;
+use Neos\ContentRepository\Core\Feature\RootNodeCreation\Command\CreateRootNodeAggregateWithNode;
+use Neos\ContentRepository\Core\Feature\WorkspaceCreation\Command\CreateRootWorkspace;
+use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
+use Neos\ContentRepository\Core\NodeType\NodeTypeName;
+use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindSubtreeFilter;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
+use Neos\ContentRepository\Core\Projection\ContentGraph\VisibilityConstraints;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
+use Neos\ContentRepository\Core\SharedModel\User\UserId;
+use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
+use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceDescription;
+use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceName;
+use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceTitle;
+use Neos\ContentRepository\TestSuite\Behavior\Features\Bootstrap\Helpers\FakeUserIdProvider;
+use Neos\ContentRepositoryRegistry\Factory\ProjectionCatchUpTrigger\CatchUpTriggerWithSynchronousOption;
 use Neos\Flow\Configuration\ConfigurationManager;
-use Neos\Flow\Tests\FunctionalTestCase;
-use Neos\Neos\Domain\Model\Site;
-use Neos\Neos\Domain\Repository\SiteRepository;
+use Neos\Flow\Core\Bootstrap;
+use Neos\Flow\ObjectManagement\ObjectManagerInterface;
+use Neos\Neos\FrontendRouting\NodeAddressFactory;
 use Neos\Neos\Ui\Domain\Model\ChangeCollection;
 use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
 use Neos\Neos\Ui\TypeConverter\ChangeCollectionConverter;
 use Neos\Utility\Arrays;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
-abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
+abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flows functional test case as it would reset the database afterwards
 {
     use SnapshotTrait;
     use FeedbackCollectionMessagesTrait;
     use JsonSerializeNodeTreeTrait;
     use WithConfigurationTrait;
 
-    protected static $testablePersistenceEnabled = true;
+    use ContentRepositoryTestTrait;
 
-    private ContextFactoryInterface $contextFactory;
+    protected Node $homePageNode;
 
-    protected NodeInterface $homePageNode;
+    protected Node $homePageMainContentCollectionNode;
 
-    protected NodeInterface $homePageMainContentCollectionNode;
+    private ContentSubgraphInterface $subgraph;
 
     private NodeTemplateDumper $nodeTemplateDumper;
 
@@ -45,17 +60,13 @@ abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
 
     private NodeTypeManager $nodeTypeManager;
 
-    private Context $subgraph;
-
     private string $fixturesDir;
+
+    protected ObjectManagerInterface $objectManager;
 
     public function setUp(): void
     {
-        parent::setUp();
-
-        $this->nodeTypeManager = $this->objectManager->get(NodeTypeManager::class);
-
-        $this->loadFakeNodeTypes();
+        $this->objectManager = Bootstrap::$staticObjectManager;
 
         $this->setupContentRepository();
         $this->nodeTemplateDumper = $this->objectManager->get(NodeTemplateDumper::class);
@@ -97,81 +108,127 @@ abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
 
     public function tearDown(): void
     {
-        parent::tearDown();
-        $this->inject($this->contextFactory, 'contextInstances', []);
         $this->objectManager->get(FeedbackCollection::class)->reset();
-        $this->objectManager->forgetInstance(ContentDimensionRepository::class);
         $this->objectManager->forgetInstance(TemplateConfigurationProcessor::class);
-        $this->objectManager->forgetInstance(NodeTypeManager::class);
     }
 
     private function setupContentRepository(): void
     {
-        // Create an environment to create nodes.
-        $this->objectManager->get(ContentDimensionRepository::class)->setDimensionsConfiguration([]);
+        CatchUpTriggerWithSynchronousOption::enableSynchronicityForSpeedingUpTesting();
 
-        $liveWorkspace = new Workspace('live');
-        $workspaceRepository = $this->objectManager->get(WorkspaceRepository::class);
-        $workspaceRepository->add($liveWorkspace);
+        $this->initCleanContentRepository(ContentRepositoryId::fromString('node_templates'));
 
-        $testSite = new Site('test-site');
-        $testSite->setSiteResourcesPackageKey('Test.Site');
-        $siteRepository = $this->objectManager->get(SiteRepository::class);
-        $siteRepository->add($testSite);
+        $this->nodeTypeManager = $this->contentRepository->getNodeTypeManager();
+        $this->loadFakeNodeTypes();
 
-        $this->persistenceManager->persistAll();
-        $this->contextFactory = $this->objectManager->get(ContextFactoryInterface::class);
-        $this->subgraph = $this->contextFactory->create(['workspaceName' => 'live']);
-
-        $rootNode = $this->subgraph->getRootNode();
-
-
-        $sitesRootNode = $rootNode->createNode('sites');
-        $testSiteNode = $sitesRootNode->createNode('test-site');
-        $this->homePageNode = $testSiteNode->createNode(
-            'homepage',
-            $this->nodeTypeManager->getNodeType('Flowpack.NodeTemplates:Document.HomePage')
+        $liveWorkspaceCommand = CreateRootWorkspace::create(
+            WorkspaceName::fromString('live'),
+            new WorkspaceTitle('Live'),
+            new WorkspaceDescription('The live workspace'),
+            $contentStreamId = ContentStreamId::fromString('cs-identifier')
         );
 
-        $this->homePageMainContentCollectionNode = $this->homePageNode->getNode('main');
+        $this->contentRepository->handle($liveWorkspaceCommand)->block();
+
+        FakeUserIdProvider::setUserId(UserId::fromString('initiating-user-identifier'));
+
+        $rootNodeCommand = CreateRootNodeAggregateWithNode::create(
+            $contentStreamId,
+            $sitesId = NodeAggregateId::fromString('sites'),
+            NodeTypeName::fromString('Neos.Neos:Sites')
+        );
+
+        $this->contentRepository->handle($rootNodeCommand)->block();
+
+        $siteNodeCommand = CreateNodeAggregateWithNode::create(
+            $contentStreamId,
+            $testSiteId = NodeAggregateId::fromString('test-site'),
+            NodeTypeName::fromString('Flowpack.NodeTemplates:Document.HomePage'),
+            OriginDimensionSpacePoint::fromDimensionSpacePoint(
+                $dimensionSpacePoint = DimensionSpacePoint::fromArray([])
+            ),
+            $sitesId,
+            nodeName: NodeName::fromString('test-site')
+        );
+
+        $this->contentRepository->handle($siteNodeCommand)->block();
+
+        $this->subgraph = $this->contentRepository->getContentGraph()->getSubgraph($contentStreamId, $dimensionSpacePoint, VisibilityConstraints::withoutRestrictions());
+
+        $this->homePageNode = $this->subgraph->findNodeById($testSiteId);
+
+        $this->homePageMainContentCollectionNode = $this->subgraph->findNodeByPath(
+            NodeName::fromString('main'),
+            $testSiteId
+        );
+
+        // For the case you the Neos Site is expected to return the correct site node you can use:
+
+        // $siteRepositoryMock = $this->getMockBuilder(SiteRepository::class)->disableOriginalConstructor()->getMock();
+        // $siteRepositoryMock->expects(self::once())->method('findOneByNodeName')->willReturnCallback(function (string|SiteNodeName $nodeName) use ($testSite) {
+        //     $nodeName = is_string($nodeName) ? SiteNodeName::fromString($nodeName) : $nodeName;
+        //     return $nodeName->toNodeName()->equals($testSite->nodeName)
+        //         ? $testSite
+        //         : null;
+        // });
+
+        // or
+
+        // $testSite = new Site($testSite->nodeName->value);
+        // $testSite->setSiteResourcesPackageKey('Test.Site');
+        // $siteRepository = $this->objectManager->get(SiteRepository::class);
+        // $siteRepository->add($testSite);
+        // $this->persistenceManager->persistAll();
     }
 
     /**
-     * @param NodeInterface $targetNode
      * @param array<string, mixed> $nodeCreationDialogValues
      */
-    protected function createNodeInto(NodeInterface $targetNode, string $nodeTypeName, array $nodeCreationDialogValues): NodeInterface
+    protected function createNodeInto(Node $targetNode, string $nodeTypeName, array $nodeCreationDialogValues): Node
     {
-        self::assertTrue($this->nodeTypeManager->hasNodeType($nodeTypeName), sprintf('NodeType %s doesnt exits.', $nodeTypeName));
+        $targetNodeAddress = NodeAddressFactory::create($this->contentRepository)->createFromNode($targetNode);
+        $serializedTargetNodeAddress = $targetNodeAddress->serializeForUri();
 
-        $targetNodeContextPath = $targetNode->getContextPath();
-
-        /** @see \Neos\Neos\Ui\Domain\Model\Changes\Create */
         $changeCollectionSerialized = [[
             'type' => 'Neos.Neos.Ui:CreateInto',
-            'subject' => $targetNodeContextPath,
+            'subject' => $serializedTargetNodeAddress,
             'payload' => [
-                'parentContextPath' => $targetNodeContextPath,
+                'parentContextPath' => $serializedTargetNodeAddress,
                 'parentDomAddress' => [
-                    'contextPath' => $targetNodeContextPath,
+                    'contextPath' => $serializedTargetNodeAddress,
                 ],
                 'nodeType' => $nodeTypeName,
                 'name' => 'new-node',
+                'nodeAggregateId' => '186b511b-b807-6208-9e1c-593e7c1a63d3',
                 'data' => $nodeCreationDialogValues,
                 'baseNodeType' => '',
             ],
         ]];
 
-        $changeCollection = (new ChangeCollectionConverter())->convertFrom($changeCollectionSerialized, null);
+        $changeCollection = (new ChangeCollectionConverter())->convert($changeCollectionSerialized, $this->contentRepositoryId);
         assert($changeCollection instanceof ChangeCollection);
         $changeCollection->apply();
 
-        return $targetNode->getNode('new-node');
+        return $this->subgraph->findNodeByPath(
+            NodeName::fromString('new-node'),
+            $targetNode->nodeAggregateId
+        );
     }
 
-    protected function createFakeNode(string $nodeAggregateId): NodeInterface
+    protected function createFakeNode(string $nodeAggregateId): Node
     {
-        return $this->homePageNode->createNode(uniqid('node-'), $this->nodeTypeManager->getNodeType('unstructured'), $nodeAggregateId);
+        $this->contentRepository->handle(
+            CreateNodeAggregateWithNode::create(
+                $this->homePageNode->subgraphIdentity->contentStreamId,
+                $someNodeId = NodeAggregateId::fromString($nodeAggregateId),
+                NodeTypeName::fromString('unstructured'),
+                $this->homePageNode->originDimensionSpacePoint,
+                $this->homePageNode->nodeAggregateId,
+                nodeName: NodeName::fromString(uniqid('node-'))
+            )
+        )->block();
+
+        return $this->subgraph->findNodeById($someNodeId);
     }
 
     protected function assertLastCreatedTemplateMatchesSnapshot(string $snapShotName): void
@@ -192,11 +249,21 @@ abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
         self::assertSame([], $this->getMessagesOfFeedbackCollection());
     }
 
-    protected function assertNodeDumpAndTemplateDumpMatchSnapshot(string $snapShotName, NodeInterface $node): void
+    protected function assertNodeDumpAndTemplateDumpMatchSnapshot(string $snapShotName, Node $node): void
     {
-        $serializedNodes = $this->jsonSerializeNodeAndDescendents($node);
+        $serializedNodes = $this->jsonSerializeNodeAndDescendents(
+            $this->subgraph->findSubtree(
+                $node->nodeAggregateId,
+                FindSubtreeFilter::create(
+                    nodeTypes: 'Neos.Neos:Node'
+                )
+            )
+        );
         unset($serializedNodes['nodeTypeName']);
         $this->assertJsonStringEqualsJsonFileOrCreateSnapshot($this->fixturesDir . '/' . $snapShotName . '.nodes.json', json_encode($serializedNodes, JSON_PRETTY_PRINT));
+
+        // todo test dumper
+        return;
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($node);
 

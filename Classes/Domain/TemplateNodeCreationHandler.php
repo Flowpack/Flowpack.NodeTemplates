@@ -6,10 +6,12 @@ use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrorHandler;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
-use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Service\NodeTypeManager;
+use Neos\ContentRepository\Core\ContentRepository;
+use Neos\ContentRepository\Core\Projection\ContentGraph\VisibilityConstraints;
 use Neos\Flow\Annotations as Flow;
-use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
+use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationCommands;
+use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationElements;
+use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationHandlerInterface;
 
 class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 {
@@ -18,12 +20,6 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
      * @Flow\Inject
      */
     protected $nodeCreationService;
-
-    /**
-     * @var NodeTypeManager
-     * @Flow\Inject
-     */
-    protected $nodeTypeManager;
 
     /**
      * @var TemplateConfigurationProcessor
@@ -37,42 +33,53 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
      */
     protected $processingErrorHandler;
 
+    public function __construct(private readonly ContentRepository $contentRepository)
+    {
+    }
+
     /**
      * Create child nodes and change properties upon node creation
-     *
-     * @param NodeInterface $node The newly created node
-     * @param array $data incoming data from the creationDialog
      */
-    public function handle(NodeInterface $node, array $data): void
-    {
-        if (!$node->getNodeType()->hasConfiguration('options.template')) {
-            return;
+    public function handle(
+        NodeCreationCommands $commands,
+        NodeCreationElements $elements
+    ): NodeCreationCommands {
+        $nodeType = $this->contentRepository->getNodeTypeManager()
+            ->getNodeType($commands->first->nodeTypeName);
+        $templateConfiguration = $nodeType->getOptions()['template'] ?? null;
+        if (!$templateConfiguration) {
+            return $commands;
         }
+
+        $subgraph = $this->contentRepository->getContentGraph()->getSubgraph(
+            $commands->first->contentStreamId,
+            $commands->first->originDimensionSpacePoint->toDimensionSpacePoint(),
+            VisibilityConstraints::frontend()
+        );
 
         $evaluationContext = [
-            'data' => $data,
-            'triggeringNode' => $node,
+            // todo internal and legacy
+            'data' => iterator_to_array($elements->serialized()),
+            // todo evaluate which context variables
+            'parentNode' => $subgraph->findNodeById($commands->first->parentNodeAggregateId),
+            'subgraph' => $subgraph
         ];
 
-        $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');
-
         $processingErrors = ProcessingErrors::create();
-
         $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $processingErrors);
-        $shouldContinue = $this->processingErrorHandler->handleAfterTemplateConfigurationProcessing($processingErrors, $node);
+        $shouldContinue = $this->processingErrorHandler->handleAfterTemplateConfigurationProcessing($processingErrors, $nodeType, $commands->first->nodeAggregateId);
 
         if (!$shouldContinue) {
-            return;
+            return $commands;
         }
 
-        $nodeMutators = $this->nodeCreationService->createMutatorsForRootTemplate($template, $node->getNodeType(), $this->nodeTypeManager, $node->getContext(), $processingErrors);
-
-        $shouldContinue = $this->processingErrorHandler->handleAfterNodeCreation($processingErrors, $node);
+        $additionalCommands = $this->nodeCreationService->apply($template, $commands, $this->contentRepository->getNodeTypeManager(), $subgraph, $processingErrors);
+        $shouldContinue = $this->processingErrorHandler->handleAfterNodeCreation($processingErrors, $nodeType, $commands->first->nodeAggregateId);
 
         if (!$shouldContinue) {
-            return;
+            return $commands;
         }
 
-        $nodeMutators->executeWithStartingNode($node);
+        return $additionalCommands;
     }
 }

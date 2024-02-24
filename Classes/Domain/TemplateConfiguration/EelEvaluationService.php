@@ -20,15 +20,17 @@ class EelEvaluationService
 
     /**
      * @Flow\InjectConfiguration(path="defaultEelContext")
+     * @var array<string, string>
      */
     protected array $defaultContextConfiguration;
 
+    /** @var array<string, mixed> */
     protected ?array $defaultContextVariables = null;
 
     /**
      * Evaluate an Eel expression.
      *
-     * @param $contextVariables array<string, mixed> additional context for eel expressions
+     * @param array<string, mixed> $contextVariables additional context for eel expressions
      * @return mixed The result of the evaluated Eel expression
      * @throws ParserException|\Exception
      */

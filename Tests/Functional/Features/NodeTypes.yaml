@@ -2,7 +2,7 @@
 ---
 'Flowpack.NodeTemplates:Document.HomePage':
   superTypes:
-    'Neos.Neos:Document': true
+    'Neos.Neos:Site': true
   constraints:
     nodeTypes:
       unstructured: true
@@ -35,3 +35,8 @@
   constraints:
     nodeTypes:
       '*': false
+
+'unstructured': {}
+
+# todo remove me
+'Neos.ContentRepository:Root': {}
