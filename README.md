@@ -89,7 +89,7 @@ You can also access data from the node creation dialog if you use the
       ui:
         showInCreationDialog: true
     'cardTitle':
-      type: string:
+      type: string
       label: 'Card Title'
   options:
     template:
