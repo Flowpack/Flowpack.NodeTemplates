@@ -1,0 +1,15 @@
+{
+    "properties": [],
+    "childNodes": [
+        {
+            "type": null,
+            "name": "column0",
+            "properties": [],
+            "childNodes": [],
+            "copyFrom": [
+                "Node(source-node-text-1, Flowpack.NodeTemplates:Content.Text)",
+                "Node(source-node-text-2, Flowpack.NodeTemplates:Content.Text)"
+            ]
+        }
+    ]
+}

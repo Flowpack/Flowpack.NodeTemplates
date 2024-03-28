@@ -1,0 +1,22 @@
+{
+    "childNodes": [
+        {
+            "nodeTypeName": "Neos.Neos:ContentCollection",
+            "nodeName": "column0",
+            "childNodes": [
+                {
+                    "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+                    "properties": {
+                        "text": "Lorem ipsum 1"
+                    }
+                },
+                {
+                    "nodeTypeName": "Flowpack.NodeTemplates:Content.Text",
+                    "properties": {
+                        "text": "Lorem ipsum 2"
+                    }
+                }
+            ]
+        }
+    ]
+}
