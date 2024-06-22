@@ -1,14 +1,17 @@
 {
+    "disabled": false,
     "properties": [],
     "childNodes": [
         {
             "type": null,
             "name": "container",
+            "disabled": false,
             "properties": [],
             "childNodes": [
                 {
                     "type": null,
                     "name": "text",
+                    "disabled": false,
                     "properties": {
                         "text": "nested text"
                     },

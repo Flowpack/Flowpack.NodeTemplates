@@ -1,4 +1,5 @@
 {
+    "disabled": false,
     "properties": {
         "text": "parentNode(Neos.Neos:ContentCollection, main) site(unstructured, test-site)"
     },

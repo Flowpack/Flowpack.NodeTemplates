@@ -29,7 +29,7 @@ class NodeMutatorCollection
         return new self(...$items);
     }
 
-    public static function empty(): self
+    public static function createEmpty(): self
     {
         return new self();
     }

@@ -1,9 +1,11 @@
 {
+    "disabled": false,
     "properties": [],
     "childNodes": [
         {
             "type": null,
             "name": "my-node",
+            "disabled": false,
             "properties": {
                 "text": "legalNodeName"
             },
@@ -12,6 +14,7 @@
         {
             "type": null,
             "name": "foobar",
+            "disabled": false,
             "properties": {
                 "text": "capitalsInName"
             },
@@ -20,6 +23,7 @@
         {
             "type": null,
             "name": "o",
+            "disabled": false,
             "properties": {
                 "text": "\u00f6 - was soll das"
             },
@@ -28,6 +32,7 @@
         {
             "type": null,
             "name": "ablabei-jing-ss-ha",
+            "disabled": false,
             "properties": {
                 "text": "everythingMixedTogether"
             },
@@ -36,6 +41,7 @@
         {
             "type": null,
             "name": "node-d41d8cd98f00b204e9800998ecf8427e",
+            "disabled": false,
             "properties": {
                 "text": "emptyString"
             },

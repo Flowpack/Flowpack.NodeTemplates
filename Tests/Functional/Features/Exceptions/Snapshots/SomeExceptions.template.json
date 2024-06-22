@@ -1,4 +1,5 @@
 {
+    "disabled": false,
     "properties": {
         "_hidden": true,
         "_hiddenAfterDateTime": 123,
@@ -15,6 +16,7 @@
         {
             "type": "Flowpack.NodeTemplates:Content.Text",
             "name": null,
+            "disabled": false,
             "properties": {
                 "text": "bar"
             },
@@ -23,12 +25,14 @@
         {
             "type": "Neos.Neos:Node",
             "name": null,
+            "disabled": false,
             "properties": [],
             "childNodes": []
         },
         {
             "type": "Flowpack.NodeTemplates:Document.Page",
             "name": "illegal",
+            "disabled": false,
             "properties": {
                 "text": "huhu"
             },
@@ -37,6 +41,7 @@
         {
             "type": "Flowpack.NodeTemplates:Content.Text",
             "name": null,
+            "disabled": false,
             "properties": {
                 "text": "123"
             },
@@ -45,6 +50,7 @@
         {
             "type": "Flowpack.NodeTemplates:Content.Text",
             "name": null,
+            "disabled": false,
             "properties": {
                 "text": "foo"
             },
@@ -53,18 +59,21 @@
         {
             "type": null,
             "name": null,
+            "disabled": false,
             "properties": [],
             "childNodes": []
         },
         {
             "type": "Flowpack.NodeTemplates:InvalidNodeType",
             "name": null,
+            "disabled": false,
             "properties": [],
             "childNodes": []
         },
         {
             "type": "Flowpack.NodeTemplates:Content.SomeExceptions",
             "name": "type-cant-mutate",
+            "disabled": false,
             "properties": [],
             "childNodes": []
         }

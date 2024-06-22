@@ -139,7 +139,7 @@ class TemplateConfigurationProcessor
         return new Template(
             $type !== null ? NodeTypeName::fromString($type) : null,
             $name !== null ? NodeName::fromString(Utility::renderValidNodeName($name)) : null,
-            $templatePart->hasConfiguration('disabled') ? (bool)$templatePart->processConfiguration('disabled') : null,
+            (bool)$templatePart->processConfiguration('disabled'),
             $processedProperties,
             $childNodeTemplates
         );

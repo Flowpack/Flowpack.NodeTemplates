@@ -95,7 +95,7 @@ class PropertiesProcessor
         if ($propertyName[0] === '_') {
             $lowerPropertyName = strtolower($propertyName);
             if ($lowerPropertyName === '_hidden') {
-                throw new PropertyIgnoredException('Using "_hidden" as property declaration was removed. Please use "disabled" on the first level instead.');
+                throw new PropertyIgnoredException('Using "_hidden" as property declaration was removed. Please use "disabled" on the first level instead.', 1719079679);
             }
             foreach ($legacyInternalProperties as $legacyInternalProperty) {
                 if ($lowerPropertyName === strtolower($legacyInternalProperty)) {

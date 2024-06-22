@@ -53,12 +53,9 @@ class NodeCreationService
             $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
         );
 
-        if ($template->getDisabled() === true) {
-            $node->setHidden(true);
-        }
-
         return NodeMutatorCollection::from(
             NodeMutator::setProperties($validProperties),
+            NodeMutator::setDisabled($template->getDisabled()),
             $this->createMutatorForUriPathSegment($template->getProperties()),
         )->merge(
             $this->createMutatorsForChildNodeTemplates(
@@ -71,7 +68,7 @@ class NodeCreationService
 
     private function createMutatorsForChildNodeTemplates(Templates $templates, TransientNode $parentNode, ProcessingErrors $processingErrors): NodeMutatorCollection
     {
-        $nodeMutators = NodeMutatorCollection::empty();
+        $nodeMutators = NodeMutatorCollection::createEmpty();
 
         // `hasAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
         // https://github.com/neos/neos-ui/issues/3527
@@ -157,6 +154,7 @@ class NodeCreationService
                     NodeMutatorCollection::from(
                         NodeMutator::createAndSelectNode($template->getType(), $template->getName()),
                         NodeMutator::setProperties($validProperties),
+                        NodeMutator::setDisabled($template->getDisabled()),
                         $this->createMutatorForUriPathSegment($template->getProperties())
                     )->merge($this->createMutatorsForChildNodeTemplates(
                         $template->getChildNodes(),
@@ -166,10 +164,6 @@ class NodeCreationService
                 )
             );
 
-        }
-
-        if ($template->getDisabled() === true) {
-            $node->setHidden(true);
         }
 
         return $nodeMutators;

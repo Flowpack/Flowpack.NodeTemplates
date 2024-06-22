@@ -1,14 +1,17 @@
 {
+    "disabled": false,
     "properties": [],
     "childNodes": [
         {
             "type": null,
             "name": "main",
+            "disabled": false,
             "properties": [],
             "childNodes": [
                 {
                     "type": "Flowpack.NodeTemplates:Content.Text",
                     "name": null,
+                    "disabled": false,
                     "properties": {
                         "text": "textOnPage1"
                     },
@@ -19,6 +22,7 @@
         {
             "type": "Flowpack.NodeTemplates:Document.Page",
             "name": null,
+            "disabled": false,
             "properties": {
                 "title": "Page2"
             },
@@ -26,11 +30,13 @@
                 {
                     "type": null,
                     "name": "main",
+                    "disabled": false,
                     "properties": [],
                     "childNodes": [
                         {
                             "type": "Flowpack.NodeTemplates:Content.Text",
                             "name": null,
+                            "disabled": false,
                             "properties": {
                                 "text": "textOnPage2"
                             },
@@ -41,6 +47,7 @@
                 {
                     "type": "Flowpack.NodeTemplates:Document.Page",
                     "name": null,
+                    "disabled": false,
                     "properties": {
                         "title": "Page3",
                         "uriPathSegment": "page3"
@@ -49,11 +56,13 @@
                         {
                             "type": null,
                             "name": "main",
+                            "disabled": false,
                             "properties": [],
                             "childNodes": [
                                 {
                                     "type": "Flowpack.NodeTemplates:Content.Text",
                                     "name": null,
+                                    "disabled": false,
                                     "properties": {
                                         "text": "textOnPage3"
                                     },
@@ -68,6 +77,7 @@
         {
             "type": "Flowpack.NodeTemplates:Document.Page",
             "name": null,
+            "disabled": false,
             "properties": {
                 "title": "Page4"
             },
@@ -75,11 +85,13 @@
                 {
                     "type": null,
                     "name": "main",
+                    "disabled": false,
                     "properties": [],
                     "childNodes": [
                         {
                             "type": "Flowpack.NodeTemplates:Content.Text",
                             "name": null,
+                            "disabled": false,
                             "properties": {
                                 "text": "textOnPage4"
                             },

@@ -28,6 +28,8 @@ abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
     use WithConfigurationTrait;
     use FakeNodeTypeManagerTrait;
 
+    protected static bool $showDisabledNodesInSubgraph = false;
+
     protected static $testablePersistenceEnabled = true;
 
     private ContextFactoryInterface $contextFactory;
@@ -44,21 +46,21 @@ abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
 
     private string $fixturesDir;
 
-    /** @deprecated please use {@see self::getObject()} instead */
+    /** @internal please use {@see self::getObject()} instead */
     protected $objectManager;
 
     public function setUp(): void
     {
         parent::setUp();
 
-        $this->nodeTypeManager = $this->objectManager->get(NodeTypeManager::class);
+        $this->nodeTypeManager = $this->getObject(NodeTypeManager::class);
 
         $this->loadFakeNodeTypes();
 
         $this->setupContentRepository();
-        $this->nodeTemplateDumper = $this->objectManager->get(NodeTemplateDumper::class);
+        $this->nodeTemplateDumper = $this->getObject(NodeTemplateDumper::class);
 
-        $templateFactory = $this->objectManager->get(TemplateConfigurationProcessor::class);
+        $templateFactory = $this->getObject(TemplateConfigurationProcessor::class);
 
         $templateFactoryMock = $this->getMockBuilder(TemplateConfigurationProcessor::class)->disableOriginalConstructor()->getMock();
         $templateFactoryMock->expects(self::once())->method('processTemplateConfiguration')->willReturnCallback(function (...$args) use($templateFactory) {
@@ -76,7 +78,7 @@ abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
     {
         parent::tearDown();
         $this->inject($this->contextFactory, 'contextInstances', []);
-        $this->objectManager->get(FeedbackCollection::class)->reset();
+        $this->getObject(FeedbackCollection::class)->reset();
         $this->objectManager->forgetInstance(ContentDimensionRepository::class);
         $this->objectManager->forgetInstance(TemplateConfigurationProcessor::class);
         $this->objectManager->forgetInstance(NodeTypeManager::class);
@@ -96,20 +98,20 @@ abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
     private function setupContentRepository(): void
     {
         // Create an environment to create nodes.
-        $this->objectManager->get(ContentDimensionRepository::class)->setDimensionsConfiguration([]);
+        $this->getObject(ContentDimensionRepository::class)->setDimensionsConfiguration([]);
 
         $liveWorkspace = new Workspace('live');
-        $workspaceRepository = $this->objectManager->get(WorkspaceRepository::class);
+        $workspaceRepository = $this->getObject(WorkspaceRepository::class);
         $workspaceRepository->add($liveWorkspace);
 
         $testSite = new Site('test-site');
         $testSite->setSiteResourcesPackageKey('Test.Site');
-        $siteRepository = $this->objectManager->get(SiteRepository::class);
+        $siteRepository = $this->getObject(SiteRepository::class);
         $siteRepository->add($testSite);
 
         $this->persistenceManager->persistAll();
-        $this->contextFactory = $this->objectManager->get(ContextFactoryInterface::class);
-        $subgraph = $this->contextFactory->create(['workspaceName' => 'live']);
+        $this->contextFactory = $this->getObject(ContextFactoryInterface::class);
+        $subgraph = $this->contextFactory->create(['workspaceName' => 'live', 'invisibleContentShown' => static::$showDisabledNodesInSubgraph]);
 
         $rootNode = $subgraph->getRootNode();
 
@@ -153,7 +155,11 @@ abstract class AbstractNodeTemplateTestCase extends FunctionalTestCase
         assert($changeCollection instanceof ChangeCollection);
         $changeCollection->apply();
 
-        return $targetNode->getNode('new-node');
+        $newNode = $targetNode->getNode('new-node');
+        if (!$newNode) {
+            throw new \RuntimeException('New node not found at expected location. Try settting $showDisabledNodesInSubgraph.', 1719079419);
+        }
+        return $newNode;
     }
 
     protected function createFakeNode(string $nodeAggregateId): NodeInterface

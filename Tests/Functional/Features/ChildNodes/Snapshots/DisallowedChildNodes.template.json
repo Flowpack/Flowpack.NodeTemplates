@@ -1,14 +1,17 @@
 {
+    "disabled": false,
     "properties": [],
     "childNodes": [
         {
             "type": null,
             "name": "content",
+            "disabled": false,
             "properties": [],
             "childNodes": [
                 {
                     "type": "Flowpack.NodeTemplates:Content.Text",
                     "name": null,
+                    "disabled": false,
                     "properties": {
                         "text": "Text"
                     },
@@ -19,6 +22,7 @@
         {
             "type": "Flowpack.NodeTemplates:Document.Page",
             "name": "illegal-node-1",
+            "disabled": false,
             "properties": [],
             "childNodes": []
         }

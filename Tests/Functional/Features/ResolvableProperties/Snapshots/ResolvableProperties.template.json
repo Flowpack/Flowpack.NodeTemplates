@@ -1,4 +1,5 @@
 {
+    "disabled": false,
     "properties": {
         "asset": "c228200e-7472-4290-9936-4454a5b5692a",
         "reference": "some-node-id",
