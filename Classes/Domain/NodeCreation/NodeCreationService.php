@@ -53,6 +53,10 @@ class NodeCreationService
             $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
         );
 
+        if ($template->getDisabled() === true) {
+            $node->setHidden(true);
+        }
+
         return NodeMutatorCollection::from(
             NodeMutator::setProperties($validProperties),
             $this->createMutatorForUriPathSegment($template->getProperties()),
@@ -162,6 +166,10 @@ class NodeCreationService
                 )
             );
 
+        }
+
+        if ($template->getDisabled() === true) {
+            $node->setHidden(true);
         }
 
         return $nodeMutators;
