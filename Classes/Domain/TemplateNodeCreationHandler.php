@@ -9,34 +9,19 @@ use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationPro
 use Neos\ContentRepository\Core\ContentRepository;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindClosestNodeFilter;
 use Neos\ContentRepository\Core\Projection\ContentGraph\VisibilityConstraints;
-use Neos\Flow\Annotations as Flow;
 use Neos\Neos\Domain\Service\NodeTypeNameFactory;
 use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationCommands;
 use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationElements;
 use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationHandlerInterface;
 
-class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
+final readonly class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 {
-    /**
-     * @var NodeCreationService
-     * @Flow\Inject
-     */
-    protected $nodeCreationService;
-
-    /**
-     * @var TemplateConfigurationProcessor
-     * @Flow\Inject
-     */
-    protected $templateConfigurationProcessor;
-
-    /**
-     * @var ProcessingErrorHandler
-     * @Flow\Inject
-     */
-    protected $processingErrorHandler;
-
-    public function __construct(private readonly ContentRepository $contentRepository)
-    {
+    public function __construct(
+        private ContentRepository $contentRepository,
+        private NodeCreationService $nodeCreationService,
+        private TemplateConfigurationProcessor $templateConfigurationProcessor,
+        private ProcessingErrorHandler $processingErrorHandler
+    ) {
     }
 
     /**
@@ -49,11 +34,7 @@ class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
         $nodeType = $this->contentRepository->getNodeTypeManager()
             ->getNodeType($commands->first->nodeTypeName);
 
-        if (!$nodeType) {
-            throw new \RuntimeException(sprintf('Initial NodeType "%s" does not exist anymore.', $commands->first->nodeTypeName->value), 1718950358);
-        }
-
-        $templateConfiguration = $nodeType->getOptions()['template'] ?? null;
+        $templateConfiguration = $nodeType?->getOptions()['template'] ?? null;
         if (!$templateConfiguration) {
             return $commands;
         }
