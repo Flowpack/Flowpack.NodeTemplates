@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Flowpack\NodeTemplates\Tests\Functional\Features\Disabled;
+namespace Flowpack\NodeTemplates\Tests\Functional\Features\DisabledTag;
 
 use Flowpack\NodeTemplates\Tests\Functional\AbstractNodeTemplateTestCase;
 
-class DisabledTest extends AbstractNodeTemplateTestCase
+class DisabledTagTest extends AbstractNodeTemplateTestCase
 {
     protected static bool $showDisabledNodesInSubgraph = true;
 
@@ -15,13 +15,13 @@ class DisabledTest extends AbstractNodeTemplateTestCase
     {
         $createdNode = $this->createNodeInto(
             $this->homePageMainContentCollectionNode,
-            'Flowpack.NodeTemplates:Content.Disabled',
+            'Flowpack.NodeTemplates:Content.DisabledTag',
             []
         );
 
-        $this->assertLastCreatedTemplateMatchesSnapshot('Disabled');
-
         $this->assertNoExceptionsWereCaught();
-        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('Disabled', $createdNode);
+
+        $this->assertLastCreatedTemplateMatchesSnapshot('DisabledTag');
+        $this->assertNodeDumpAndTemplateDumpMatchSnapshot('DisabledTag', $createdNode);
     }
 }

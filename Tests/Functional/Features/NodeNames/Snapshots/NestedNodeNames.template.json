@@ -1,20 +1,20 @@
 {
-    "disabled": false,
     "properties": [],
+    "tags": [],
     "childNodes": [
         {
             "type": null,
             "name": "container",
-            "disabled": false,
             "properties": [],
+            "tags": [],
             "childNodes": [
                 {
                     "type": null,
                     "name": "text",
-                    "disabled": false,
                     "properties": {
                         "text": "nested text"
                     },
+                    "tags": [],
                     "childNodes": []
                 }
             ]

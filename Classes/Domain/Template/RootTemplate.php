@@ -12,12 +12,12 @@ use Neos\Flow\Annotations as Flow;
  */
 class RootTemplate implements \JsonSerializable
 {
-    private bool $disabled;
-
     /**
      * @var array<string, mixed>
      */
     private array $properties;
+
+    private SubtreeTags $tags;
 
     private Templates $childNodes;
 
@@ -25,21 +25,16 @@ class RootTemplate implements \JsonSerializable
      * @internal
      * @param array<string, mixed> $properties
      */
-    public function __construct(bool $disabled, array $properties, Templates $childNodes)
+    public function __construct(array $properties, SubtreeTags $tags, Templates $childNodes)
     {
-        $this->disabled = $disabled;
         $this->properties = $properties;
+        $this->tags = $tags;
         $this->childNodes = $childNodes;
     }
 
     public static function empty(): self
     {
-        return new RootTemplate(false, [], Templates::empty());
-    }
-
-    public function getDisabled(): bool
-    {
-        return $this->disabled;
+        return new RootTemplate([], SubtreeTags::createEmpty(), Templates::empty());
     }
 
     /**
@@ -50,6 +45,11 @@ class RootTemplate implements \JsonSerializable
         return $this->properties;
     }
 
+    public function getTags(): SubtreeTags
+    {
+        return $this->tags;
+    }
+
     public function getChildNodes(): Templates
     {
         return $this->childNodes;
@@ -58,8 +58,8 @@ class RootTemplate implements \JsonSerializable
     public function jsonSerialize(): array
     {
         return [
-            'disabled' => $this->disabled,
             'properties' => $this->properties,
+            'tags' => $this->tags,
             'childNodes' => $this->childNodes
         ];
     }

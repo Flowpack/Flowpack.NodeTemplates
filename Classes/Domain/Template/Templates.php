@@ -50,8 +50,8 @@ class Templates implements \IteratorAggregate, \JsonSerializable
         }
         foreach ($this->items as $first) {
             return new RootTemplate(
-                $first->getDisabled(),
                 $first->getProperties(),
+                $first->getTags(),
                 $first->getChildNodes()
             );
         }

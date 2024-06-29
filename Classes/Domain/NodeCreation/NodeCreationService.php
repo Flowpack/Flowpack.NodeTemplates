@@ -55,7 +55,7 @@ class NodeCreationService
 
         return NodeMutatorCollection::from(
             NodeMutator::setProperties($validProperties),
-            NodeMutator::setDisabled($template->getDisabled()),
+            NodeMutator::setDisabled($template->getTags()->isDisabled()),
             $this->createMutatorForUriPathSegment($template->getProperties()),
         )->merge(
             $this->createMutatorsForChildNodeTemplates(
@@ -154,7 +154,7 @@ class NodeCreationService
                     NodeMutatorCollection::from(
                         NodeMutator::createAndSelectNode($template->getType(), $template->getName()),
                         NodeMutator::setProperties($validProperties),
-                        NodeMutator::setDisabled($template->getDisabled()),
+                        NodeMutator::setDisabled($template->getTags()->isDisabled()),
                         $this->createMutatorForUriPathSegment($template->getProperties())
                     )->merge($this->createMutatorsForChildNodeTemplates(
                         $template->getChildNodes(),

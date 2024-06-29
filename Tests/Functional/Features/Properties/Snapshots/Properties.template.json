@@ -1,5 +1,4 @@
 {
-    "disabled": false,
     "properties": {
         "text": "abc",
         "isEnchanted": false,
@@ -8,5 +7,6 @@
         "nullValue": null,
         "unsetValueWithDefault": null
     },
+    "tags": [],
     "childNodes": []
 }

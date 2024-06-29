@@ -18,12 +18,12 @@ class Template implements \JsonSerializable
 
     private ?NodeName $name;
 
-    private bool $disabled;
-
     /**
      * @var array<string, mixed>
      */
     private array $properties;
+
+    private SubtreeTags $tags;
 
     private Templates $childNodes;
 
@@ -31,12 +31,12 @@ class Template implements \JsonSerializable
      * @internal
      * @param array<string, mixed> $properties
      */
-    public function __construct(?NodeTypeName $type, ?NodeName $name, bool $disabled, array $properties, Templates $childNodes)
+    public function __construct(?NodeTypeName $type, ?NodeName $name, array $properties, SubtreeTags $tags, Templates $childNodes)
     {
         $this->type = $type;
         $this->name = $name;
-        $this->disabled = $disabled;
         $this->properties = $properties;
+        $this->tags = $tags;
         $this->childNodes = $childNodes;
     }
 
@@ -50,17 +50,17 @@ class Template implements \JsonSerializable
         return $this->name;
     }
 
-    public function getDisabled(): bool
-    {
-        return $this->disabled;
-    }
-
     /**
      * @return array<string, string>
      */
     public function getProperties(): array
     {
         return $this->properties;
+    }
+
+    public function getTags(): SubtreeTags
+    {
+        return $this->tags;
     }
 
     public function getChildNodes(): Templates
@@ -73,8 +73,8 @@ class Template implements \JsonSerializable
         return [
             'type' => $this->type,
             'name' => $this->name,
-            'disabled' => $this->disabled,
             'properties' => $this->properties,
+            'tags' => $this->tags,
             'childNodes' => $this->childNodes
         ];
     }

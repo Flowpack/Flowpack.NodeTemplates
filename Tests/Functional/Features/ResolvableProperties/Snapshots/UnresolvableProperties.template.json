@@ -1,5 +1,4 @@
 {
-    "disabled": false,
     "properties": {
         "someString": [
             "foo"
@@ -13,5 +12,6 @@
             "non-existing"
         ]
     },
+    "tags": [],
     "childNodes": []
 }

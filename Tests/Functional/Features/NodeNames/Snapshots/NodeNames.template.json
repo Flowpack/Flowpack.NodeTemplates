@@ -1,50 +1,50 @@
 {
-    "disabled": false,
     "properties": [],
+    "tags": [],
     "childNodes": [
         {
             "type": null,
             "name": "my-node",
-            "disabled": false,
             "properties": {
                 "text": "legalNodeName"
             },
+            "tags": [],
             "childNodes": []
         },
         {
             "type": null,
             "name": "foobar",
-            "disabled": false,
             "properties": {
                 "text": "capitalsInName"
             },
+            "tags": [],
             "childNodes": []
         },
         {
             "type": null,
             "name": "o",
-            "disabled": false,
             "properties": {
                 "text": "\u00f6 - was soll das"
             },
+            "tags": [],
             "childNodes": []
         },
         {
             "type": null,
             "name": "ablabei-jing-ss-ha",
-            "disabled": false,
             "properties": {
                 "text": "everythingMixedTogether"
             },
+            "tags": [],
             "childNodes": []
         },
         {
             "type": null,
             "name": "node-d41d8cd98f00b204e9800998ecf8427e",
-            "disabled": false,
             "properties": {
                 "text": "emptyString"
             },
+            "tags": [],
             "childNodes": []
         }
     ]

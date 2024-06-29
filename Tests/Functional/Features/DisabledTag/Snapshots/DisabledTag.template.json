@@ -1,5 +1,7 @@
 {
-    "disabled": true,
     "properties": [],
+    "tags": [
+        "disabled"
+    ],
     "childNodes": []
 }

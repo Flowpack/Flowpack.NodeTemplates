@@ -1,7 +1,0 @@
-
-'Flowpack.NodeTemplates:Content.Disabled':
-  superTypes:
-    'Neos.Neos:Content': true
-  options:
-    template:
-      disabled: true

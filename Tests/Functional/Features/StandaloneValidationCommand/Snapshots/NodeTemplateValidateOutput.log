@@ -42,7 +42,7 @@ Flowpack.NodeTemplates:Content.SomeExceptions
 
   Configuration "childNodes.invalidOption.crazy" | InvalidArgumentException(Template configuration has illegal key "crazy", 1686150349274)
 
-  Property "_hidden" in NodeType "Flowpack.NodeTemplates:Content.SomeExceptions" | PropertyIgnoredException(Using "_hidden" as property declaration was removed. Please use "disabled" on the first level instead., 1719079679)
+  Property "_hidden" in NodeType "Flowpack.NodeTemplates:Content.SomeExceptions" | PropertyIgnoredException(Using "_hidden" as property declaration was removed. Please use "tags.disabled" instead., 1719079679)
 
   Property "_hiddenAfterDateTime" in NodeType "Flowpack.NodeTemplates:Content.SomeExceptions" | PropertyIgnoredException(Because internal legacy property "_hiddenAfterDateTime" not implement., 1686149513158)
 

@@ -1,23 +1,23 @@
 {
-    "disabled": false,
     "properties": {
         "title": "Page1",
         "uriPathSegment": "page1"
     },
+    "tags": [],
     "childNodes": [
         {
             "type": null,
             "name": "main",
-            "disabled": false,
             "properties": [],
+            "tags": [],
             "childNodes": [
                 {
                     "type": "Flowpack.NodeTemplates:Content.Text",
                     "name": null,
-                    "disabled": false,
                     "properties": {
                         "text": "textOnPage1"
                     },
+                    "tags": [],
                     "childNodes": []
                 }
             ]
@@ -25,25 +25,25 @@
         {
             "type": "Flowpack.NodeTemplates:Document.Page",
             "name": null,
-            "disabled": false,
             "properties": {
                 "title": "Page2",
                 "uriPathSegment": "page2"
             },
+            "tags": [],
             "childNodes": [
                 {
                     "type": null,
                     "name": "main",
-                    "disabled": false,
                     "properties": [],
+                    "tags": [],
                     "childNodes": [
                         {
                             "type": "Flowpack.NodeTemplates:Content.Text",
                             "name": null,
-                            "disabled": false,
                             "properties": {
                                 "text": "textOnPage2"
                             },
+                            "tags": [],
                             "childNodes": []
                         }
                     ]
@@ -51,25 +51,25 @@
                 {
                     "type": "Flowpack.NodeTemplates:Document.Page",
                     "name": null,
-                    "disabled": false,
                     "properties": {
                         "title": "Page3",
                         "uriPathSegment": "page3"
                     },
+                    "tags": [],
                     "childNodes": [
                         {
                             "type": null,
                             "name": "main",
-                            "disabled": false,
                             "properties": [],
+                            "tags": [],
                             "childNodes": [
                                 {
                                     "type": "Flowpack.NodeTemplates:Content.Text",
                                     "name": null,
-                                    "disabled": false,
                                     "properties": {
                                         "text": "textOnPage3"
                                     },
+                                    "tags": [],
                                     "childNodes": []
                                 }
                             ]
@@ -81,25 +81,25 @@
         {
             "type": "Flowpack.NodeTemplates:Document.Page",
             "name": null,
-            "disabled": false,
             "properties": {
                 "title": "Page4",
                 "uriPathSegment": "page4"
             },
+            "tags": [],
             "childNodes": [
                 {
                     "type": null,
                     "name": "main",
-                    "disabled": false,
                     "properties": [],
+                    "tags": [],
                     "childNodes": [
                         {
                             "type": "Flowpack.NodeTemplates:Content.Text",
                             "name": null,
-                            "disabled": false,
                             "properties": {
                                 "text": "textOnPage4"
                             },
+                            "tags": [],
                             "childNodes": []
                         }
                     ]
