@@ -11,6 +11,7 @@
         "working": "working",
         "nonDeclaredProperty": "hi"
     },
+    "tags": [],
     "childNodes": [
         {
             "type": "Flowpack.NodeTemplates:Content.Text",
@@ -18,12 +19,14 @@
             "properties": {
                 "text": "bar"
             },
+            "tags": [],
             "childNodes": []
         },
         {
             "type": "Neos.Neos:Node",
             "name": null,
             "properties": [],
+            "tags": [],
             "childNodes": []
         },
         {
@@ -32,6 +35,7 @@
             "properties": {
                 "text": "huhu"
             },
+            "tags": [],
             "childNodes": []
         },
         {
@@ -40,6 +44,7 @@
             "properties": {
                 "text": "123"
             },
+            "tags": [],
             "childNodes": []
         },
         {
@@ -48,24 +53,28 @@
             "properties": {
                 "text": "foo"
             },
+            "tags": [],
             "childNodes": []
         },
         {
             "type": null,
             "name": null,
             "properties": [],
+            "tags": [],
             "childNodes": []
         },
         {
             "type": "Flowpack.NodeTemplates:InvalidNodeType",
             "name": null,
             "properties": [],
+            "tags": [],
             "childNodes": []
         },
         {
             "type": "Flowpack.NodeTemplates:Content.SomeExceptions",
             "name": "type-cant-mutate",
             "properties": [],
+            "tags": [],
             "childNodes": []
         }
     ]

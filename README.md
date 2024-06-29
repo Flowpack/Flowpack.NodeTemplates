@@ -155,6 +155,22 @@ The following example creates three different text child nodes in the main conte
 We call conditions ``when`` and loops ``withItems`` (instead of ``if`` and ``forEach``),
 because it inspires a more declarative mood. The naming is inspired by Ansible.
 
+## Disable / Hide nodes (`tags.disabled`)
+> In version 1.0 available via the magic property `"_hidden"`
+
+To disable a node one can set the `"disabled"` tag to `true`. Either explicitly or by the result of an EEL expression.
+> Note that other custom tags are not supported by Neos 8.3 but will be with Neos 9.0
+
+The following example disables a newly created node:
+
+```yaml
+'Neos.NodeTypes:Page':
+  options:
+    template:
+      tags:
+        disabled: true
+```
+
 ## EEL context variables
 
 There are several variables available in the EEL context for example.

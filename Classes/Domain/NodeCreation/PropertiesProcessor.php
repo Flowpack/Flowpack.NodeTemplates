@@ -94,6 +94,9 @@ class PropertiesProcessor
         }
         if ($propertyName[0] === '_') {
             $lowerPropertyName = strtolower($propertyName);
+            if ($lowerPropertyName === '_hidden') {
+                throw new PropertyIgnoredException('Using "_hidden" as property declaration was removed. Please use "tags.disabled" instead.', 1719079679);
+            }
             foreach ($legacyInternalProperties as $legacyInternalProperty) {
                 if ($lowerPropertyName === strtolower($legacyInternalProperty)) {
                     throw new PropertyIgnoredException(sprintf('Because internal legacy property "%s" not implement.', $propertyName), 1686149513158);

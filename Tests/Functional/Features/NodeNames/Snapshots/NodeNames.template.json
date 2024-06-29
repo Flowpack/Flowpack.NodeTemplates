@@ -1,5 +1,6 @@
 {
     "properties": [],
+    "tags": [],
     "childNodes": [
         {
             "type": null,
@@ -7,6 +8,7 @@
             "properties": {
                 "text": "legalNodeName"
             },
+            "tags": [],
             "childNodes": []
         },
         {
@@ -15,6 +17,7 @@
             "properties": {
                 "text": "capitalsInName"
             },
+            "tags": [],
             "childNodes": []
         },
         {
@@ -23,6 +26,7 @@
             "properties": {
                 "text": "\u00f6 - was soll das"
             },
+            "tags": [],
             "childNodes": []
         },
         {
@@ -31,6 +35,7 @@
             "properties": {
                 "text": "everythingMixedTogether"
             },
+            "tags": [],
             "childNodes": []
         },
         {
@@ -39,6 +44,7 @@
             "properties": {
                 "text": "emptyString"
             },
+            "tags": [],
             "childNodes": []
         }
     ]

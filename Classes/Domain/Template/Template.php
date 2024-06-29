@@ -23,17 +23,20 @@ class Template implements \JsonSerializable
      */
     private array $properties;
 
+    private SubtreeTags $tags;
+
     private Templates $childNodes;
 
     /**
      * @internal
      * @param array<string, mixed> $properties
      */
-    public function __construct(?NodeTypeName $type, ?NodeName $name, array $properties, Templates $childNodes)
+    public function __construct(?NodeTypeName $type, ?NodeName $name, array $properties, SubtreeTags $tags, Templates $childNodes)
     {
         $this->type = $type;
         $this->name = $name;
         $this->properties = $properties;
+        $this->tags = $tags;
         $this->childNodes = $childNodes;
     }
 
@@ -55,6 +58,11 @@ class Template implements \JsonSerializable
         return $this->properties;
     }
 
+    public function getTags(): SubtreeTags
+    {
+        return $this->tags;
+    }
+
     public function getChildNodes(): Templates
     {
         return $this->childNodes;
@@ -66,6 +74,7 @@ class Template implements \JsonSerializable
             'type' => $this->type,
             'name' => $this->name,
             'properties' => $this->properties,
+            'tags' => $this->tags,
             'childNodes' => $this->childNodes
         ];
     }

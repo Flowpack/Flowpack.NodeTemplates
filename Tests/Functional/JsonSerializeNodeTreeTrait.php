@@ -29,8 +29,8 @@ trait JsonSerializeNodeTreeTrait
         return array_filter([
             'nodeTypeName' => $node->getNodeType()->getName(),
             'nodeName' => $node->isAutoCreated() ? $node->getName() : null,
-            'isDisabled' => $node->isHidden(),
             'properties' => $this->serializeValuesInArray($properties),
+            'tags' => $node->isHidden() ? ['disabled'] : [],
             'references' => $this->serializeValuesInArray($references),
             'childNodes' => array_map(
                 fn ($node) => $this->jsonSerializeNodeAndDescendents($node),

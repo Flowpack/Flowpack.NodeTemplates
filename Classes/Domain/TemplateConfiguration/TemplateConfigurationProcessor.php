@@ -4,6 +4,7 @@ namespace Flowpack\NodeTemplates\Domain\TemplateConfiguration;
 
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
+use Flowpack\NodeTemplates\Domain\Template\SubtreeTags;
 use Flowpack\NodeTemplates\Domain\Template\Template;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
 use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
@@ -119,6 +120,30 @@ class TemplateConfigurationProcessor
             }
         }
 
+        // process the tags (in Neos 8.3 only tags.disabled is allowed)
+        $isDisabled = false;
+        foreach ($templatePart->getRawConfiguration('tags') ?? [] as $tagName => $value) {
+            if (!is_string($value) && !is_bool($value) && !is_null($value)) {
+                $templatePart->addProcessingErrorForPath(
+                    new \RuntimeException(sprintf('Template configuration tags can only hold string|bool|null. Tag "%s" has type "%s"', $tagName, gettype($value)), 1719653856),
+                    ['tags', $tagName]
+                );
+                continue;
+            }
+            if ($tagName !== 'disabled') {
+                $templatePart->addProcessingErrorForPath(
+                    new \RuntimeException('Template configuration only allows "disabled" tag to hide Nodes in Neos 8.3', 1719653919),
+                    ['tags', $tagName]
+                );
+                continue;
+            }
+            try {
+                $isDisabled = $templatePart->processConfiguration(['tags', 'disabled']);
+            } catch (StopBuildingTemplatePartException $e) {
+            }
+        }
+        $processedTags = $isDisabled === true ? SubtreeTags::createDisabled() : SubtreeTags::createEmpty();
+
         // process the childNodes
         $childNodeTemplates = Templates::empty();
         foreach ($templatePart->getRawConfiguration('childNodes') ?? [] as $childNodeConfigurationPath => $childNodeConfiguration) {
@@ -140,6 +165,7 @@ class TemplateConfigurationProcessor
             $type !== null ? NodeTypeName::fromString($type) : null,
             $name !== null ? NodeName::fromString(Utility::renderValidNodeName($name)) : null,
             $processedProperties,
+            $processedTags,
             $childNodeTemplates
         );
     }

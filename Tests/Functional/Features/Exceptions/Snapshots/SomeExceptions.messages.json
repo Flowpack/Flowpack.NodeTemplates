@@ -52,7 +52,7 @@
         "severity": "ERROR"
     },
     {
-        "message": "Property \"_hidden\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | PropertyIgnoredException(Because internal legacy property \"_hidden\" not implement., 1686149513158)",
+        "message": "Property \"_hidden\" in NodeType \"Flowpack.NodeTemplates:Content.SomeExceptions\" | PropertyIgnoredException(Using \"_hidden\" as property declaration was removed. Please use \"tags.disabled\" instead., 1719079679)",
         "severity": "ERROR"
     },
     {

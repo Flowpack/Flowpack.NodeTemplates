@@ -17,21 +17,24 @@ class RootTemplate implements \JsonSerializable
      */
     private array $properties;
 
+    private SubtreeTags $tags;
+
     private Templates $childNodes;
 
     /**
      * @internal
      * @param array<string, mixed> $properties
      */
-    public function __construct(array $properties, Templates $childNodes)
+    public function __construct(array $properties, SubtreeTags $tags, Templates $childNodes)
     {
         $this->properties = $properties;
+        $this->tags = $tags;
         $this->childNodes = $childNodes;
     }
 
     public static function empty(): self
     {
-        return new RootTemplate([], Templates::empty());
+        return new RootTemplate([], SubtreeTags::createEmpty(), Templates::empty());
     }
 
     /**
@@ -40,6 +43,11 @@ class RootTemplate implements \JsonSerializable
     public function getProperties(): array
     {
         return $this->properties;
+    }
+
+    public function getTags(): SubtreeTags
+    {
+        return $this->tags;
     }
 
     public function getChildNodes(): Templates
@@ -51,6 +59,7 @@ class RootTemplate implements \JsonSerializable
     {
         return [
             'properties' => $this->properties,
+            'tags' => $this->tags,
             'childNodes' => $this->childNodes
         ];
     }

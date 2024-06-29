@@ -49,6 +49,19 @@ class NodeMutator
     }
 
     /**
+     * Queues to disable the current node.
+     *
+     * Preserves the current node pointer.
+     */
+    public static function setDisabled(bool $disabled): self
+    {
+        return new self(function (NodeInterface $nodePointer) use ($disabled) {
+            $nodePointer->setHidden($disabled);
+            return null;
+        });
+    }
+
+    /**
      * Queues to execute the collection {@see NodeMutatorCollection} on the current node.
      * Any selections made in the collection {@see self::selectChildNode()} won't change the pointer to $this current node.
      *

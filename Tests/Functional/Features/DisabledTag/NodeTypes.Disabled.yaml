@@ -1,0 +1,8 @@
+
+'Flowpack.NodeTemplates:Content.DisabledTag':
+  superTypes:
+    'Neos.Neos:Content': true
+  options:
+    template:
+      tags:
+        disabled: true

@@ -1,10 +1,12 @@
 {
     "properties": [],
+    "tags": [],
     "childNodes": [
         {
             "type": null,
             "name": "main",
             "properties": [],
+            "tags": [],
             "childNodes": [
                 {
                     "type": "Flowpack.NodeTemplates:Content.Text",
@@ -12,6 +14,7 @@
                     "properties": {
                         "text": "textOnPage1"
                     },
+                    "tags": [],
                     "childNodes": []
                 }
             ]
@@ -22,11 +25,13 @@
             "properties": {
                 "title": "Page2"
             },
+            "tags": [],
             "childNodes": [
                 {
                     "type": null,
                     "name": "main",
                     "properties": [],
+                    "tags": [],
                     "childNodes": [
                         {
                             "type": "Flowpack.NodeTemplates:Content.Text",
@@ -34,6 +39,7 @@
                             "properties": {
                                 "text": "textOnPage2"
                             },
+                            "tags": [],
                             "childNodes": []
                         }
                     ]
@@ -45,11 +51,13 @@
                         "title": "Page3",
                         "uriPathSegment": "page3"
                     },
+                    "tags": [],
                     "childNodes": [
                         {
                             "type": null,
                             "name": "main",
                             "properties": [],
+                            "tags": [],
                             "childNodes": [
                                 {
                                     "type": "Flowpack.NodeTemplates:Content.Text",
@@ -57,6 +65,7 @@
                                     "properties": {
                                         "text": "textOnPage3"
                                     },
+                                    "tags": [],
                                     "childNodes": []
                                 }
                             ]
@@ -71,11 +80,13 @@
             "properties": {
                 "title": "Page4"
             },
+            "tags": [],
             "childNodes": [
                 {
                     "type": null,
                     "name": "main",
                     "properties": [],
+                    "tags": [],
                     "childNodes": [
                         {
                             "type": "Flowpack.NodeTemplates:Content.Text",
@@ -83,6 +94,7 @@
                             "properties": {
                                 "text": "textOnPage4"
                             },
+                            "tags": [],
                             "childNodes": []
                         }
                     ]
