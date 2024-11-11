@@ -16,7 +16,6 @@ use Neos\ContentRepository\Core\SharedModel\ContentRepository\ContentRepositoryI
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateClassification;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
-use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceName;
 use Symfony\Component\Serializer\Serializer;
 
@@ -40,8 +39,6 @@ trait NodeMockTrait
             NodeTags::createEmpty(),
             Timestamps::create($now = new \DateTimeImmutable(), $now, null, null),
             VisibilityConstraints::withoutRestrictions(),
-            null,
-            ContentStreamId::fromString("cs")
         );
     }
 }

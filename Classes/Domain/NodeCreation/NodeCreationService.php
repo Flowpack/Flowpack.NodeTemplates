@@ -14,6 +14,7 @@ use Neos\ContentRepository\Core\Feature\NodeCreation\Command\CreateNodeAggregate
 use Neos\ContentRepository\Core\Feature\NodeModification\Command\SetNodeProperties;
 use Neos\ContentRepository\Core\Feature\NodeModification\Dto\PropertyValuesToWrite;
 use Neos\ContentRepository\Core\Feature\NodeReferencing\Command\SetNodeReferences;
+use Neos\ContentRepository\Core\Feature\NodeReferencing\Dto\NodeReferencesForName;
 use Neos\ContentRepository\Core\Feature\NodeReferencing\Dto\NodeReferencesToWrite;
 use Neos\ContentRepository\Core\NodeType\NodeType;
 use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
@@ -102,17 +103,21 @@ class NodeCreationService
             $initialProperties
         );
 
+        $commands = $commands->withInitialPropertyValues($initialProperties);
+        $setReferences = $this->createReferencesCommand(
+            $commands->first->workspaceName,
+            $commands->first->nodeAggregateId,
+            $commands->first->originDimensionSpacePoint,
+            $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
+        );
+        if ($setReferences) {
+            $commands = $commands->withAdditionalCommands($setReferences);
+        }
+
         return $this->applyTemplateRecursively(
             $template->getChildNodes(),
             $node,
-            $commands->withInitialPropertyValues($initialProperties)->withAdditionalCommands(
-                ...$this->createReferencesCommands(
-                    $commands->first->workspaceName,
-                    $commands->first->nodeAggregateId,
-                    $commands->first->originDimensionSpacePoint,
-                    $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
-                )
-            ),
+            $commands,
             $processingErrors
         );
     }
@@ -136,7 +141,7 @@ class NodeCreationService
                     $template->getProperties()
                 );
 
-                $commands = $commands->withAdditionalCommands(
+                $commands = $commands->withAdditionalCommands(...array_filter([
                     SetNodeProperties::create(
                         $parentNode->workspaceName,
                         $node->aggregateId,
@@ -145,13 +150,13 @@ class NodeCreationService
                             $this->propertiesProcessor->processAndValidateProperties($node, $processingErrors)
                         )
                     ),
-                    ...$this->createReferencesCommands(
+                    $this->createReferencesCommand(
                         $parentNode->workspaceName,
                         $node->aggregateId,
                         $parentNode->originDimensionSpacePoint,
                         $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
                     )
-                );
+                ]));
 
                 $commands = $this->applyTemplateRecursively(
                     $template->getChildNodes(),
@@ -198,7 +203,7 @@ class NodeCreationService
 
             $node = $parentNode->forRegularChildNode(NodeAggregateId::create(), $nodeType, $template->getProperties());
 
-            $nodeName = $template->getName() ?? NodeName::fromString(uniqid('node-', false));
+            $nodeName = $template->getName();
 
             $initialProperties = PropertyValuesToWrite::fromArray(
                 $this->propertiesProcessor->processAndValidateProperties($node, $processingErrors)
@@ -211,24 +216,27 @@ class NodeCreationService
                 $initialProperties
             );
 
-            $commands = $commands->withAdditionalCommands(
-                CreateNodeAggregateWithNode::create(
-                    $parentNode->workspaceName,
-                    $node->aggregateId,
-                    $template->getType(),
-                    $parentNode->originDimensionSpacePoint,
-                    $parentNode->aggregateId,
-                    nodeName: $nodeName,
-                    initialPropertyValues: $initialProperties
-                )->withTetheredDescendantNodeAggregateIds($node->tetheredNodeAggregateIds),
-                ...$this->createReferencesCommands(
+            $createNode = CreateNodeAggregateWithNode::create(
+                $parentNode->workspaceName,
+                $node->aggregateId,
+                $template->getType(),
+                $parentNode->originDimensionSpacePoint,
+                $parentNode->aggregateId,
+                initialPropertyValues: $initialProperties
+            )->withTetheredDescendantNodeAggregateIds($node->tetheredNodeAggregateIds);
+            if ($nodeName) {
+                $createNode = $createNode->withNodeName($nodeName);
+            }
+
+            $commands = $commands->withAdditionalCommands(...array_filter([
+                $createNode,
+                $this->createReferencesCommand(
                     $parentNode->workspaceName,
                     $node->aggregateId,
                     $parentNode->originDimensionSpacePoint,
                     $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
                 )
-            );
-
+            ]));
 
             $commands = $this->applyTemplateRecursively(
                 $template->getChildNodes(),
@@ -243,21 +251,28 @@ class NodeCreationService
 
     /**
      * @param array<string, NodeAggregateIds> $references
-     * @return list<SetNodeReferences>
      */
-    private function createReferencesCommands(WorkspaceName $workspaceName, NodeAggregateId $nodeAggregateId, OriginDimensionSpacePoint $originDimensionSpacePoint, array $references): array
-    {
-        $commands = [];
+    private function createReferencesCommand(
+        WorkspaceName $workspaceName,
+        NodeAggregateId $nodeAggregateId,
+        OriginDimensionSpacePoint $originDimensionSpacePoint,
+        array $references
+    ): ?SetNodeReferences {
+        $referencesForName = [];
         foreach ($references as $name => $nodeAggregateIds) {
-            $commands[] = SetNodeReferences::create(
+            $referencesForName[] = NodeReferencesForName::fromTargets(
+                ReferenceName::fromString($name),
+                $nodeAggregateIds,
+            );
+        }
+        return empty($referencesForName)
+            ? null
+            : SetNodeReferences::create(
                 $workspaceName,
                 $nodeAggregateId,
                 $originDimensionSpacePoint,
-                ReferenceName::fromString($name),
-                NodeReferencesToWrite::fromNodeAggregateIds($nodeAggregateIds)
+                NodeReferencesToWrite::create(...$referencesForName)
             );
-        }
-        return $commands;
     }
 
     /**
