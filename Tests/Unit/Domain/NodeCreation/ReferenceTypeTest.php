@@ -25,6 +25,8 @@ class ReferenceTypeTest extends TestCase
 
     /**
      * @dataProvider declarationAndValueProvider
+     * @param array<mixed> $validValues,
+     * @param array<mixed> $invalidValues
      */
     public function testIsMatchedBy(string $declarationType, array $validValues, array $invalidValues): void
     {
@@ -57,6 +59,9 @@ class ReferenceTypeTest extends TestCase
         }
     }
 
+    /**
+     * @return array<int,array<mixed>>
+     */
     public function declarationAndValueProvider(): array
     {
         $int = 13;

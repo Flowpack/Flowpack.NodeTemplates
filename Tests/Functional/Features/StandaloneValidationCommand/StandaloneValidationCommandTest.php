@@ -21,9 +21,7 @@ use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
 use Neos\ContentRepository\Core\SharedModel\User\UserId;
 use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
-use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceDescription;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceName;
-use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceTitle;
 use Neos\ContentRepository\TestSuite\Behavior\Features\Bootstrap\Helpers\FakeUserIdProvider;
 use Neos\Flow\Cli\Exception\StopCommandException;
 use Neos\Flow\Cli\Response;
@@ -61,7 +59,7 @@ final class StandaloneValidationCommandTest extends TestCase // we don't use Flo
         $this->setupContentRepository();
 
         $ref = new \ReflectionClass($this);
-        $this->fixturesDir = dirname($ref->getFileName()) . '/Snapshots';
+        $this->fixturesDir = dirname($ref->getFileName() ?: '') . '/Snapshots';
     }
 
     public function tearDown(): void
@@ -90,8 +88,6 @@ final class StandaloneValidationCommandTest extends TestCase // we don't use Flo
 
         $liveWorkspaceCommand = CreateRootWorkspace::create(
             $workspaceName = WorkspaceName::fromString('live'),
-            new WorkspaceTitle('Live'),
-            new WorkspaceDescription('The live workspace'),
             ContentStreamId::fromString('cs-identifier')
         );
 
@@ -115,14 +111,13 @@ final class StandaloneValidationCommandTest extends TestCase // we don't use Flo
                 DimensionSpacePoint::fromArray([])
             ),
             $sitesId,
-            nodeName: NodeName::fromString(self::TEST_SITE_NAME)
-        );
+        )->withNodeName(NodeName::fromString(self::TEST_SITE_NAME));
 
         $this->contentRepository->handle($siteNodeCommand);
     }
 
     /** @test */
-    public function itMatchesSnapshot()
+    public function itMatchesSnapshot(): void
     {
         $commandController = $this->getObject(NodeTemplateCommandController::class);
 

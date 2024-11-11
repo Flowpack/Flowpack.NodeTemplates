@@ -13,6 +13,9 @@ trait JsonSerializeNodeTreeTrait
 {
     private readonly ContentRepository $contentRepository;
 
+    /**
+     * @return array<string,mixed>
+     */
     private function jsonSerializeNodeAndDescendents(Subtree $subtree): array
     {
         $node = $subtree->node;
@@ -48,6 +51,10 @@ trait JsonSerializeNodeTreeTrait
         ]);
     }
 
+    /**
+     * @param array<mixed> $array
+     * @return array<mixed>
+     */
     private function serializeValuesInArray(array $array): array
     {
         foreach ($array as $key => $value) {

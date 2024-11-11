@@ -6,6 +6,7 @@ use Doctrine\DBAL\Connection;
 use Neos\ContentRepository\Core\ContentRepository;
 use Neos\ContentRepository\Core\SharedModel\ContentRepository\ContentRepositoryId;
 use Neos\ContentRepositoryRegistry\ContentRepositoryRegistry;
+use Neos\ContentRepositoryRegistry\SubgraphCachingInMemory\SubgraphCachePool;
 use Neos\Flow\Configuration\ConfigurationManager;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 
@@ -37,7 +38,8 @@ trait ContentRepositoryTestTrait
 
         $contentRepositoryRegistry = new ContentRepositoryRegistry(
             $registrySettings,
-            $this->getObject(ObjectManagerInterface::class)
+            $this->getObject(ObjectManagerInterface::class),
+            new SubgraphCachePool(),
         );
 
         $this->contentRepository = $contentRepositoryRegistry->get($this->contentRepositoryId);

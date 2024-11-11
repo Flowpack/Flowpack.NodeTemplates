@@ -36,6 +36,9 @@ class PropertyTypeTest extends TestCase
 {
     /**
      * @dataProvider declarationAndValueProvider
+     * @param array<mixed> $declarationsByType,
+     * @param array<mixed> $validValues,
+     * @param array<mixed> $invalidValues,
      */
     public function testIsMatchedBy(array $declarationsByType, array $validValues, array $invalidValues): void
     {
@@ -64,6 +67,9 @@ class PropertyTypeTest extends TestCase
         }
     }
 
+    /**
+     * @return array<int,array<mixed>>
+     */
     public function declarationAndValueProvider(): array
     {
         $bool = true;
@@ -148,7 +154,7 @@ class PropertyTypeTest extends TestCase
 
     /**
      * @dataProvider declarationTypeProvider
-     * @param array $declaredTypes
+     * @param array<mixed> $declaredTypes
      * @param string $expectedSerializationType
      */
     public function testGetValue(array $declaredTypes, string $expectedSerializationType): void
@@ -178,6 +184,9 @@ class PropertyTypeTest extends TestCase
         }
     }
 
+    /**
+     * @return array<int,array<mixed>>
+     */
     public function declarationTypeProvider(): array
     {
         return [

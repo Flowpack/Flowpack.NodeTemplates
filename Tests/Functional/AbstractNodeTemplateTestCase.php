@@ -18,8 +18,10 @@ use Neos\ContentRepository\Core\NodeType\NodeTypeName;
 use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindSubtreeFilter;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Subtree;
 use Neos\ContentRepository\Core\Projection\ContentGraph\VisibilityConstraints;
 use Neos\ContentRepository\Core\SharedModel\ContentRepository\ContentRepositoryId;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAddress;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
 use Neos\ContentRepository\Core\SharedModel\User\UserId;
@@ -82,7 +84,7 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
         $this->objectManager->setInstance(TemplateConfigurationProcessor::class, $templateFactoryMock);
 
         $ref = new \ReflectionClass($this);
-        $this->fixturesDir = dirname($ref->getFileName()) . '/Snapshots';
+        $this->fixturesDir = dirname($ref->getFileName() ?: '') . '/Snapshots';
     }
 
     public function tearDown(): void
@@ -112,8 +114,6 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
 
         $liveWorkspaceCommand = CreateRootWorkspace::create(
             $workspaceName = WorkspaceName::fromString('live'),
-            new WorkspaceTitle('Live'),
-            new WorkspaceDescription('The live workspace'),
             ContentStreamId::fromString('cs-identifier')
         );
 
@@ -137,19 +137,22 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
                 $dimensionSpacePoint = DimensionSpacePoint::fromArray([])
             ),
             $sitesId,
-            nodeName: NodeName::fromString('test-site')
-        );
+        )->withNodeName(NodeName::fromString('test-site'));
 
         $this->contentRepository->handle($siteNodeCommand);
 
         $this->subgraph = $this->contentRepository->getContentGraph($workspaceName)->getSubgraph($dimensionSpacePoint, VisibilityConstraints::withoutRestrictions());
 
-        $this->homePageNode = $this->subgraph->findNodeById($testSiteId);
+        $homePage = $this->subgraph->findNodeById($testSiteId);
+        assert($homePage instanceof Node);
+        $this->homePageNode = $homePage;
 
-        $this->homePageMainContentCollectionNode = $this->subgraph->findNodeByPath(
+        $homePageMainCollection = $this->subgraph->findNodeByPath(
             NodeName::fromString('main'),
             $testSiteId
         );
+        assert($homePageMainCollection instanceof Node);
+        $this->homePageMainContentCollectionNode = $homePageMainCollection;
 
         // For the case you the Neos Site is expected to return the correct site node you can use:
 
@@ -175,8 +178,8 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
      */
     protected function createNodeInto(Node $targetNode, string $nodeTypeName, array $nodeCreationDialogValues): Node
     {
-        $targetNodeAddress = NodeAddressFactory::create($this->contentRepository)->createFromNode($targetNode);
-        $serializedTargetNodeAddress = $targetNodeAddress->serializeForUri();
+        $targetNodeAddress = NodeAddress::fromNode($targetNode);
+        $serializedTargetNodeAddress = $targetNodeAddress->toJson();
 
         $changeCollectionSerialized = [[
             'type' => 'Neos.Neos.Ui:CreateInto',
@@ -198,10 +201,12 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
         assert($changeCollection instanceof ChangeCollection);
         $changeCollection->apply();
 
-        return $this->subgraph->findNodeByPath(
+        $node = $this->subgraph->findNodeByPath(
             NodeName::fromString('new-node'),
             $targetNode->aggregateId
         );
+        assert($node instanceof Node);
+        return $node;
     }
 
     protected function createFakeNode(string $nodeAggregateId): Node
@@ -213,11 +218,12 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
                 NodeTypeName::fromString('unstructured'),
                 $this->homePageNode->originDimensionSpacePoint,
                 $this->homePageNode->aggregateId,
-                nodeName: NodeName::fromString(uniqid('node-'))
-            )
+            )->withNodeName(NodeName::fromString(uniqid('node-')))
         );
 
-        return $this->subgraph->findNodeById($someNodeId);
+        $node = $this->subgraph->findNodeById($someNodeId);
+        assert($node instanceof Node);
+        return $node;
     }
 
     protected function assertLastCreatedTemplateMatchesSnapshot(string $snapShotName): void
@@ -225,12 +231,12 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
         $lastCreatedTemplate = $this->serializeValuesInArray(
             $this->lastCreatedRootTemplate->jsonSerialize()
         );
-        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot($this->fixturesDir . '/' . $snapShotName . '.template.json', json_encode($lastCreatedTemplate, JSON_PRETTY_PRINT));
+        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot($this->fixturesDir . '/' . $snapShotName . '.template.json', json_encode($lastCreatedTemplate, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
     }
 
     protected function assertCaughtExceptionsMatchesSnapshot(string $snapShotName): void
     {
-        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot($this->fixturesDir . '/' . $snapShotName . '.messages.json', json_encode($this->getMessagesOfFeedbackCollection(), JSON_PRETTY_PRINT));
+        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot($this->fixturesDir . '/' . $snapShotName . '.messages.json', json_encode($this->getMessagesOfFeedbackCollection(), JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
     }
 
     protected function assertNoExceptionsWereCaught(): void
@@ -240,16 +246,16 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
 
     protected function assertNodeDumpAndTemplateDumpMatchSnapshot(string $snapShotName, Node $node): void
     {
-        $serializedNodes = $this->jsonSerializeNodeAndDescendents(
-            $this->subgraph->findSubtree(
-                $node->aggregateId,
-                FindSubtreeFilter::create(
-                    nodeTypes: 'Neos.Neos:Node'
-                )
+        $subtree = $this->subgraph->findSubtree(
+            $node->aggregateId,
+            FindSubtreeFilter::create(
+                nodeTypes: 'Neos.Neos:Node'
             )
         );
+        assert($subtree instanceof Subtree);
+        $serializedNodes = $this->jsonSerializeNodeAndDescendents($subtree);
         unset($serializedNodes['nodeTypeName']);
-        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot($this->fixturesDir . '/' . $snapShotName . '.nodes.json', json_encode($serializedNodes, JSON_PRETTY_PRINT));
+        $this->assertJsonStringEqualsJsonFileOrCreateSnapshot($this->fixturesDir . '/' . $snapShotName . '.nodes.json', json_encode($serializedNodes, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
 
         $dumpedYamlTemplate = $this->nodeTemplateDumper->createNodeTemplateYamlDumpFromSubtree($node, $this->contentRepository);
 

@@ -159,11 +159,12 @@ class TransientNodeTest extends TestCase
     /** @test */
     public function splitPropertiesAndReferencesByTypeDeclaration(): void
     {
+        $nodeType = $this->getNodeType('A:ContentWithProperties');
         $node = TransientNode::forRegular(
             NodeAggregateId::fromString('na'),
             WorkspaceName::fromString('ws'),
             OriginDimensionSpacePoint::fromArray([]),
-            $this->getNodeType('A:ContentWithProperties'),
+            $nodeType,
             NodeAggregateIdsByNodePaths::createEmpty(),
             new NodeTypeManager(fn () => []),
             $this->getMockBuilder(ContentSubgraphInterface::class)->disableOriginalConstructor()->getMock(),
@@ -213,8 +214,13 @@ class TransientNodeTest extends TestCase
     /**
      * Return a nodetype built from the nodeTypesFixture
      */
-    private function getNodeType(string $nodeTypeName): ?NodeType
+    private function getNodeType(string $nodeTypeName): NodeType
     {
-        return $this->nodeTypeManager->getNodeType($nodeTypeName);
+        $nodeType = $this->nodeTypeManager->getNodeType($nodeTypeName);
+        if (!$nodeType) {
+            throw new \Exception('Unknown node type ' . $nodeTypeName);
+        }
+
+        return $nodeType;
     }
 }
