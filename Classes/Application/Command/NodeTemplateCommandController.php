@@ -80,7 +80,7 @@ class NodeTemplateCommandController extends CommandController
         // default context? https://github.com/neos/neos-development-collection/issues/5113
         $subgraph = $contentRepository->getContentGraph(WorkspaceName::fromString($workspaceName))->getSubgraph(
             $siteConfiguration->defaultDimensionSpacePoint,
-            VisibilityConstraints::frontend()
+            VisibilityConstraints::default()
         );
 
         $node = $subgraph->findNodeById(NodeAggregateId::fromString($startingNodeId));
@@ -123,7 +123,7 @@ class NodeTemplateCommandController extends CommandController
         // default context? https://github.com/neos/neos-development-collection/issues/5113
         $subgraph = $contentRepository->getContentGraph(WorkspaceName::forLive())->getSubgraph(
             $siteConfiguration->defaultDimensionSpacePoint,
-            VisibilityConstraints::frontend()
+            VisibilityConstraints::default()
         );
 
         $sitesNode = $subgraph->findRootNodeByType(NodeTypeNameFactory::forSites());

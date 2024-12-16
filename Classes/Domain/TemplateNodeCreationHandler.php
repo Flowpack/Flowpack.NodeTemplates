@@ -41,7 +41,7 @@ final readonly class TemplateNodeCreationHandler implements NodeCreationHandlerI
 
         $subgraph = $this->contentRepository->getContentGraph($commands->first->workspaceName)->getSubgraph(
             $commands->first->originDimensionSpacePoint->toDimensionSpacePoint(),
-            VisibilityConstraints::frontend()
+            VisibilityConstraints::default()
         );
 
         $evaluationContext = [
