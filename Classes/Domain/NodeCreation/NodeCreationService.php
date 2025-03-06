@@ -141,14 +141,16 @@ class NodeCreationService
                     $template->getProperties()
                 );
 
+                $propertiesToWrite = PropertyValuesToWrite::fromArray(
+                    $this->propertiesProcessor->processAndValidateProperties($node, $processingErrors)
+                );
+
                 $commands = $commands->withAdditionalCommands(...array_filter([
-                    SetNodeProperties::create(
+                    $propertiesToWrite->isEmpty() ? null : SetNodeProperties::create(
                         $parentNode->workspaceName,
                         $node->aggregateId,
                         $parentNode->originDimensionSpacePoint,
-                        PropertyValuesToWrite::fromArray(
-                            $this->propertiesProcessor->processAndValidateProperties($node, $processingErrors)
-                        )
+                        $propertiesToWrite
                     ),
                     $this->createReferencesCommand(
                         $parentNode->workspaceName,
