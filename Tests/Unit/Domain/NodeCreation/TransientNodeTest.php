@@ -72,7 +72,7 @@ class TransientNodeTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->nodeTypeManager = new NodeTypeManager(fn () => Yaml::parse(self::NODE_TYPE_FIXTURES));
+        $this->nodeTypeManager = NodeTypeManager::createFromArrayConfiguration(Yaml::parse(self::NODE_TYPE_FIXTURES));
     }
 
     /** @test */
@@ -166,7 +166,7 @@ class TransientNodeTest extends TestCase
             OriginDimensionSpacePoint::fromArray([]),
             $nodeType,
             NodeAggregateIdsByNodePaths::createEmpty(),
-            new NodeTypeManager(fn () => []),
+            NodeTypeManager::createFromArrayConfiguration([]),
             $this->getMockBuilder(ContentSubgraphInterface::class)->disableOriginalConstructor()->getMock(),
             [
                 'property-string' => '',
