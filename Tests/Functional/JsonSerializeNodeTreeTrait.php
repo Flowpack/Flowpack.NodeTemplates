@@ -3,10 +3,10 @@
 namespace Flowpack\NodeTemplates\Tests\Functional;
 
 use Neos\ContentRepository\Core\ContentRepository;
-use Neos\ContentRepository\Core\Feature\SubtreeTagging\Dto\SubtreeTag;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindReferencesFilter;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Subtree;
+use Neos\Neos\Domain\SubtreeTagging\NeosSubtreeTag;
 use Neos\Utility\ObjectAccess;
 
 trait JsonSerializeNodeTreeTrait
@@ -39,14 +39,14 @@ trait JsonSerializeNodeTreeTrait
         return array_filter([
             'nodeTypeName' => $node->nodeTypeName,
             'nodeName' =>  $node->classification->isTethered() ? $node->name : null,
-            'isDisabled' => $node->tags->contain(SubtreeTag::disabled()),
+            'isDisabled' => $node->tags->contain(NeosSubtreeTag::disabled()),
             'properties' => $this->serializeValuesInArray(
                 iterator_to_array($node->properties->getIterator())
             ),
             'references' => $referencesArray,
             'childNodes' => array_map(
                 fn ($subtree) => $this->jsonSerializeNodeAndDescendents($subtree),
-                $subtree->children
+                iterator_to_array($subtree->children)
             )
         ]);
     }

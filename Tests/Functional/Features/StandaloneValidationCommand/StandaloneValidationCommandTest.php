@@ -14,15 +14,14 @@ use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
 use Neos\ContentRepository\Core\Feature\NodeCreation\Command\CreateNodeAggregateWithNode;
 use Neos\ContentRepository\Core\Feature\RootNodeCreation\Command\CreateRootNodeAggregateWithNode;
 use Neos\ContentRepository\Core\Feature\WorkspaceCreation\Command\CreateRootWorkspace;
-use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
 use Neos\ContentRepository\Core\NodeType\NodeTypeName;
 use Neos\ContentRepository\Core\SharedModel\ContentRepository\ContentRepositoryId;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
-use Neos\ContentRepository\Core\SharedModel\User\UserId;
 use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceName;
-use Neos\ContentRepository\TestSuite\Behavior\Features\Bootstrap\Helpers\FakeUserIdProvider;
+use Neos\ContentRepository\TestSuite\Fakes\FakeContentDimensionSourceFactory;
+use Neos\ContentRepository\TestSuite\Fakes\FakeNodeTypeManagerFactory;
 use Neos\Flow\Cli\Exception\StopCommandException;
 use Neos\Flow\Cli\Response;
 use Neos\Flow\Core\Bootstrap;
@@ -45,8 +44,6 @@ final class StandaloneValidationCommandTest extends TestCase // we don't use Flo
      * Matching configuration in Neos.Neos.sites.node-templates-site
      */
     private const TEST_SITE_NAME = 'node-templates-site';
-
-    private NodeTypeManager $nodeTypeManager;
 
     private string $fixturesDir;
 
@@ -80,11 +77,12 @@ final class StandaloneValidationCommandTest extends TestCase // we don't use Flo
 
     private function setupContentRepository(): void
     {
+        $nodeTypeConfiguration = $this->getTestingNodeTypeConfiguration();
+        FakeNodeTypeManagerFactory::setConfiguration($nodeTypeConfiguration);
+        FakeContentDimensionSourceFactory::setWithoutDimensions();
+
         $this->initCleanContentRepository(ContentRepositoryId::fromString('node_templates'));
         $this->truncateAndSetupFlowEntities();
-
-        $this->nodeTypeManager = $this->contentRepository->getNodeTypeManager();
-        $this->loadFakeNodeTypes();
 
         $liveWorkspaceCommand = CreateRootWorkspace::create(
             $workspaceName = WorkspaceName::fromString('live'),
@@ -92,8 +90,6 @@ final class StandaloneValidationCommandTest extends TestCase // we don't use Flo
         );
 
         $this->contentRepository->handle($liveWorkspaceCommand);
-
-        FakeUserIdProvider::setUserId(UserId::fromString('initiating-user-identifier'));
 
         $rootNodeCommand = CreateRootNodeAggregateWithNode::create(
             $workspaceName,

@@ -2,13 +2,11 @@
 
 namespace Flowpack\NodeTemplates\Tests\Functional;
 
-use Doctrine\DBAL\Connection;
 use Neos\ContentRepository\Core\ContentRepository;
+use Neos\ContentRepository\Core\Service\ContentRepositoryMaintainer;
+use Neos\ContentRepository\Core\Service\ContentRepositoryMaintainerFactory;
 use Neos\ContentRepository\Core\SharedModel\ContentRepository\ContentRepositoryId;
 use Neos\ContentRepositoryRegistry\ContentRepositoryRegistry;
-use Neos\ContentRepositoryRegistry\SubgraphCachingInMemory\SubgraphCachePool;
-use Neos\Flow\Configuration\ConfigurationManager;
-use Neos\Flow\ObjectManagement\ObjectManagerInterface;
 
 trait ContentRepositoryTestTrait
 {
@@ -30,30 +28,18 @@ trait ContentRepositoryTestTrait
     {
         $this->contentRepositoryId = $contentRepositoryId;
 
-        $configurationManager = $this->getObject(ConfigurationManager::class);
-        $registrySettings = $configurationManager->getConfiguration(
-            ConfigurationManager::CONFIGURATION_TYPE_SETTINGS,
-            'Neos.ContentRepositoryRegistry'
-        );
-
-        $contentRepositoryRegistry = new ContentRepositoryRegistry(
-            $registrySettings,
-            $this->getObject(ObjectManagerInterface::class),
-            new SubgraphCachePool(),
-        );
+        $contentRepositoryRegistry = $this->getObject(ContentRepositoryRegistry::class);
+        $contentRepositoryRegistry->resetFactoryInstance($contentRepositoryId);
 
         $this->contentRepository = $contentRepositoryRegistry->get($this->contentRepositoryId);
+        /** @var ContentRepositoryMaintainer $contentRepositoryMaintainer */
+        $contentRepositoryMaintainer = $contentRepositoryRegistry->buildService($contentRepositoryId, new ContentRepositoryMaintainerFactory());
         // Performance optimization: only run the setup once
         if (!self::$wasContentRepositorySetupCalled) {
-            $this->contentRepository->setUp();
+            $contentRepositoryMaintainer->setUp();
             self::$wasContentRepositorySetupCalled = true;
         }
 
-        $connection = $this->getObject(Connection::class);
-
-        // reset events and projections
-        $eventTableName = sprintf('cr_%s_events', $this->contentRepositoryId->value);
-        $connection->executeStatement('TRUNCATE ' . $eventTableName);
-        $this->contentRepository->resetProjectionStates();
+        $contentRepositoryMaintainer->prune();
     }
 }

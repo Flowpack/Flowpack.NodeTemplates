@@ -13,7 +13,6 @@ use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
 use Neos\ContentRepository\Core\Feature\NodeCreation\Command\CreateNodeAggregateWithNode;
 use Neos\ContentRepository\Core\Feature\RootNodeCreation\Command\CreateRootNodeAggregateWithNode;
 use Neos\ContentRepository\Core\Feature\WorkspaceCreation\Command\CreateRootWorkspace;
-use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
 use Neos\ContentRepository\Core\NodeType\NodeTypeName;
 use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
 use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindSubtreeFilter;
@@ -24,15 +23,12 @@ use Neos\ContentRepository\Core\SharedModel\ContentRepository\ContentRepositoryI
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAddress;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
-use Neos\ContentRepository\Core\SharedModel\User\UserId;
 use Neos\ContentRepository\Core\SharedModel\Workspace\ContentStreamId;
-use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceDescription;
 use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceName;
-use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceTitle;
-use Neos\ContentRepository\TestSuite\Behavior\Features\Bootstrap\Helpers\FakeUserIdProvider;
+use Neos\ContentRepository\TestSuite\Fakes\FakeContentDimensionSourceFactory;
+use Neos\ContentRepository\TestSuite\Fakes\FakeNodeTypeManagerFactory;
 use Neos\Flow\Core\Bootstrap;
 use Neos\Flow\ObjectManagement\ObjectManagerInterface;
-use Neos\Neos\FrontendRouting\NodeAddressFactory;
 use Neos\Neos\Ui\Domain\Model\ChangeCollection;
 use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
 use Neos\Neos\Ui\TypeConverter\ChangeCollectionConverter;
@@ -59,11 +55,8 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
 
     private RootTemplate $lastCreatedRootTemplate;
 
-    private NodeTypeManager $nodeTypeManager;
-
     private string $fixturesDir;
 
-    /** @deprecated please use {@see self::getObject()} instead */
     protected ObjectManagerInterface $objectManager;
 
     public function setUp(): void
@@ -106,11 +99,12 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
 
     private function setupContentRepository(): void
     {
+        $nodeTypeConfiguration = $this->getTestingNodeTypeConfiguration();
+        FakeNodeTypeManagerFactory::setConfiguration($nodeTypeConfiguration);
+        FakeContentDimensionSourceFactory::setWithoutDimensions();
+
         $this->initCleanContentRepository(ContentRepositoryId::fromString('node_templates'));
         $this->truncateAndSetupFlowEntities();
-
-        $this->nodeTypeManager = $this->contentRepository->getNodeTypeManager();
-        $this->loadFakeNodeTypes();
 
         $liveWorkspaceCommand = CreateRootWorkspace::create(
             $workspaceName = WorkspaceName::fromString('live'),
@@ -118,8 +112,6 @@ abstract class AbstractNodeTemplateTestCase extends TestCase // we don't use Flo
         );
 
         $this->contentRepository->handle($liveWorkspaceCommand);
-
-        FakeUserIdProvider::setUserId(UserId::fromString('initiating-user-identifier'));
 
         $rootNodeCommand = CreateRootNodeAggregateWithNode::create(
             $workspaceName,

@@ -3,12 +3,14 @@ Neos:
     contentRepositories:
       node_templates:
         preset: default
-        contentDimensions: []
-        userIdProvider:
-          factoryObjectName: Neos\ContentRepository\BehavioralTests\TestSuite\Behavior\FakeUserIdProviderFactory
+        authProvider:
+          factoryObjectName: Neos\ContentRepository\TestSuite\Fakes\FakeAuthProviderFactory
         clock:
-          factoryObjectName: Neos\ContentRepository\BehavioralTests\TestSuite\Behavior\FakeClockFactory
-
+          factoryObjectName: Neos\ContentRepository\TestSuite\Fakes\FakeClockFactory
+        nodeTypeManager:
+          factoryObjectName: Neos\ContentRepository\TestSuite\Fakes\FakeNodeTypeManagerFactory
+        contentDimensionSource:
+          factoryObjectName: Neos\ContentRepository\TestSuite\Fakes\FakeContentDimensionSourceFactory
   Neos:
     sites:
       'node-templates-site':
