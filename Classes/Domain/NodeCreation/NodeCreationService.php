@@ -7,6 +7,7 @@ use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingError;
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\Template\RootTemplate;
 use Flowpack\NodeTemplates\Domain\Template\Templates;
+use Neos\ContentRepository\Core\CommandHandler\Commands;
 use Neos\ContentRepository\Core\Dimension\ContentDimensionId;
 use Neos\ContentRepository\Core\DimensionSpace\DimensionSpacePoint;
 use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
@@ -89,7 +90,7 @@ class NodeCreationService
                     array_fill_keys(array_map(fn (PropertyName $name) => $name->value, $defaultPropertiesToUnset), null)
                 )
             );
-            $commands = $commands->withAdditionalCommands($setDefaultPropertiesToNull);
+            $commands = $commands->withAdditionalCommands(Commands::create($setDefaultPropertiesToNull));
         }
 
         $initialProperties = $commands->first->initialPropertyValues;
@@ -111,18 +112,20 @@ class NodeCreationService
             $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
         );
         if ($setReferences) {
-            $commands = $commands->withAdditionalCommands($setReferences);
+            $commands = $commands->withInitialReferences($setReferences->references);
         }
 
-        return $this->applyTemplateRecursively(
+        $childNodeCommands = $this->applyTemplateRecursively(
             $template->getChildNodes(),
             $node,
-            $commands,
+            Commands::createEmpty(),
             $processingErrors
         );
+
+        return $commands->withAdditionalCommands($childNodeCommands);
     }
 
-    private function applyTemplateRecursively(Templates $templates, TransientNode $parentNode, NodeCreationCommands $commands, ProcessingErrors $processingErrors): NodeCreationCommands
+    private function applyTemplateRecursively(Templates $templates, TransientNode $parentNode, Commands $commands, ProcessingErrors $processingErrors): Commands
     {
         foreach ($templates as $template) {
             if ($template->getName() && $parentNode->nodeType->tetheredNodeTypeDefinitions->contain($template->getName())) {
@@ -145,7 +148,7 @@ class NodeCreationService
                     $this->propertiesProcessor->processAndValidateProperties($node, $processingErrors)
                 );
 
-                $commands = $commands->withAdditionalCommands(...array_filter([
+                $commands = $commands->merge(Commands::fromArray(array_filter([
                     $propertiesToWrite->isEmpty() ? null : SetNodeProperties::create(
                         $parentNode->workspaceName,
                         $node->aggregateId,
@@ -158,7 +161,7 @@ class NodeCreationService
                         $parentNode->originDimensionSpacePoint,
                         $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
                     )
-                ]));
+                ])));
 
                 $commands = $this->applyTemplateRecursively(
                     $template->getChildNodes(),
@@ -230,7 +233,7 @@ class NodeCreationService
                 $createNode = $createNode->withNodeName($nodeName);
             }
 
-            $commands = $commands->withAdditionalCommands(...array_filter([
+            $commands = $commands->merge(Commands::fromArray(array_filter([
                 $createNode,
                 $this->createReferencesCommand(
                     $parentNode->workspaceName,
@@ -238,7 +241,7 @@ class NodeCreationService
                     $parentNode->originDimensionSpacePoint,
                     $this->referencesProcessor->processAndValidateReferences($node, $processingErrors)
                 )
-            ]));
+            ])));
 
             $commands = $this->applyTemplateRecursively(
                 $template->getChildNodes(),
