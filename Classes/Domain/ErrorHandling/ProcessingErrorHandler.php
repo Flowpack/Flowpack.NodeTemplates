@@ -8,6 +8,7 @@ use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Log\ThrowableStorageInterface;
 use Neos\Flow\Log\Utility\LogEnvironment;
 use Neos\Neos\Ui\Domain\Model\Feedback\Messages\Error;
+use Neos\Neos\Ui\Domain\Model\Feedback\Messages\Warning;
 use Neos\Neos\Ui\Domain\Model\FeedbackCollection;
 use Psr\Log\LoggerInterface;
 
@@ -105,10 +106,10 @@ class ProcessingErrorHandler
         );
 
         foreach ($messages as $message) {
-            $error = new Error();
-            $error->setMessage($message);
+            $warning = new Warning();
+            $warning->setMessage($message);
             $this->feedbackCollection->add(
-                $error
+                $warning
             );
         }
     }

@@ -5,10 +5,10 @@
     },
     {
         "message": "NodeConstraintException(Node type \"Flowpack.NodeTemplates:Content.Text\" is not allowed below tethered child nodes \"content\" of nodes of type \"Flowpack.NodeTemplates:Content.DisallowedChildNodes\", 1687541480146)",
-        "severity": "ERROR"
+        "severity": "WARNING"
     },
     {
         "message": "NodeConstraintException(Node type \"Flowpack.NodeTemplates:Document.Page\" is not allowed for child nodes of type Flowpack.NodeTemplates:Content.DisallowedChildNodes, 1686417627173)",
-        "severity": "ERROR"
+        "severity": "WARNING"
     }
 ]
