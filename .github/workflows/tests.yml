@@ -102,9 +102,6 @@ jobs:
       - name: Run Functional tests
         run: |
           cd ${FLOW_PATH_ROOT}
-          # we have to doctrine migrate and setup the cr here as otherwise a transaction error will occur:
-          # see also https://github.com/neos/neos-development-collection/pull/5005
-          FLOW_CONTEXT=Testing ./flow doctrine:migrate --quiet; FLOW_CONTEXT=Testing ./flow cr:setup --content-repository node_templates
           bin/phpunit -c Build/BuildEssentials/PhpUnit/FunctionalTests.xml Packages/Application/Flowpack.NodeTemplates/Tests/Functional
 
       - name: Show log on failure
@@ -112,3 +109,7 @@ jobs:
         run: |
           cd ${FLOW_PATH_ROOT}
           cat Data/Logs/System_Testing.log
+          for file in Data/Logs/Exceptions/*; do
+            echo $file
+            cat $file
+          done
