@@ -1,6 +1,5 @@
 {
     "properties": {
-        "unsetValueWithDefault": null,
         "someValueWithDefault": true,
         "text": "abc",
         "isEnchanted": false,

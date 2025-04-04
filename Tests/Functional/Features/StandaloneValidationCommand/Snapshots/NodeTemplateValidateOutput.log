@@ -1,4 +1,4 @@
-10 of 15 NodeType template validated. 5 could not be build standalone.
+Content repository "node_templates": 10 of 15 NodeType template validated. 5 could not be build standalone.
 
 Flowpack.NodeTemplates:Content.DisallowedChildNodes
   NodeConstraintException(Node type "Flowpack.NodeTemplates:Content.Text" is not allowed below tethered child nodes "content" of nodes of type "Flowpack.NodeTemplates:Content.DisallowedChildNodes", 1687541480146)

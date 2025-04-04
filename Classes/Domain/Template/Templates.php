@@ -2,12 +2,10 @@
 
 namespace Flowpack\NodeTemplates\Domain\Template;
 
-use Neos\Flow\Annotations as Flow;
-
 /**
  * A collection of child templates {@see Template}
  *
- * @Flow\Proxy(false)
+ * @implements \IteratorAggregate<int|string, Template>
  */
 class Templates implements \IteratorAggregate, \JsonSerializable
 {
@@ -57,7 +55,7 @@ class Templates implements \IteratorAggregate, \JsonSerializable
         return RootTemplate::empty();
     }
 
-    public function jsonSerialize(): array
+    public function jsonSerialize(): mixed
     {
         return $this->items;
     }

@@ -18,6 +18,9 @@ trait FeedbackCollectionMessagesTrait
      */
     abstract protected function getObject(string $className): object;
 
+    /**
+     * @return array<int,mixed>
+     */
     private function getMessagesOfFeedbackCollection(): array
     {
         /** @var FeedbackInterface[] $allFeedbacks */

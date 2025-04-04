@@ -164,12 +164,11 @@ There are several variables available in the EEL context for example.
 | data             | `array<string, mixed>` | Data from the node creation dialog                                            | Global                  |
 | site             | `Node`                 | The site node in which the new node be created in                             | Global                  |
 | parentNode       | `Node`                 | The node where the new utmost node will be created inside                     | Global                  |
-| ~triggeringNode~ | `Node`                 | _Deprecated:_ The new node itself which is triggering the template processing | Global                  |
 | item             | `mixed`                | The current item value inside a loop                                          | Inside `withItems` loop |
 | key              | `string`               | The current item key inside a loop                                            | Inside `withItems` loop |
 
 > **Notice**
-> `triggeringNode` will be removed with version 3.0
+> `triggeringNode` was removed with version 3.0. Please use `site` or `parentNode` instead.
 
 > **Warning**
 > The behaviour of `parentNode` changed from version 1.x to version 2.2
@@ -240,15 +239,18 @@ It behaves similar with properties: In case a property value doesn't match its d
 It might be tedious to validate that all your templates are working especially in a larger project. To validate the ones that are not dependent on data from the node creation dialog (less complex templates) you can utilize this command:
 
 ```sh
-flow nodetemplate:validate
+flow nodetemplate:validate [<options>]
 ```
+
+**options:**
+- `--site`: the Neos site, which determines the content repository. Defaults to the first available one.
 
 In case everything is okay it will succeed with `X NodeType templates validated.`.
 
 But in case you either have a syntax error in your template or the template does not match the node structure (illegal properties) you will be warned:
 
 ```
-76 of 78 NodeType template validated. 2 could not be build standalone.
+Content repository "default": 76 of 78 NodeType template validated. 2 could not be build standalone.
 
 My.NodeType:Bing
  Property "someLegacyProperty" in NodeType "My.NodeType:Bing" | PropertyIgnoredException(Because property is not declared in NodeType. Got value `"bg-gray-100"`., 1685869035209)
@@ -267,12 +269,13 @@ When creating a more complex node template (to create multiple pages and content
 For this case you can use the command:
 
 ```sh
-flow nodeTemplate:createFromNodeSubtree <starting node id>
+flow nodeTemplate:createFromNodeSubtree <starting node id> [<options>]
 ```
 
 - `--starting-node-id`: specified root node of the node tree
 
 **options:**
+- `--site`: the Neos site, which determines the content repository. Defaults to the first available one.
 - `--workspace-name`: custom workspace to dump from. Defaults to 'live'.
 
 It will give you the output similar to the yaml example above.

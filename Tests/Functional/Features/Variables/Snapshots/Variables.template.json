@@ -1,6 +1,6 @@
 {
     "properties": {
-        "text": "parentNode(Neos.Neos:ContentCollection, main) site(unstructured, test-site)"
+        "text": "parentNode(Neos.Neos:ContentCollection, main) site(Flowpack.NodeTemplates:Document.HomePage, test-site)"
     },
     "childNodes": []
 }

@@ -2,50 +2,66 @@
 
 namespace Flowpack\NodeTemplates\Tests\Functional;
 
-use Neos\ContentRepository\Domain\Model\NodeInterface;
+use Neos\ContentRepository\Core\ContentRepository;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindReferencesFilter;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Subtree;
+use Neos\Neos\Domain\SubtreeTagging\NeosSubtreeTag;
 use Neos\Utility\ObjectAccess;
 
 trait JsonSerializeNodeTreeTrait
 {
-    private function jsonSerializeNodeAndDescendents(NodeInterface $node): array
+    private readonly ContentRepository $contentRepository;
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function jsonSerializeNodeAndDescendents(Subtree $subtree): array
     {
-        $nodeType = $node->getNodeType();
-        $references = [];
-        $properties = [];
-        foreach ($node->getProperties() as $propertyName => $propertyValue) {
-            $declaration = $nodeType->getPropertyType($propertyName);
-            if ($declaration === 'reference' || $declaration === 'references') {
-                $references[$propertyName] = [];
-                foreach ($declaration === 'reference' ? [$propertyValue] : $propertyValue as $reference) {
-                    $references[$propertyName][] = array_filter([
-                        'node' => $reference,
-                        'properties' => []
-                    ]);
-                }
-                continue;
-            }
-            $properties[$propertyName] = $propertyValue;
+        $node = $subtree->node;
+
+        $subgraph = $this->contentRepository->getContentGraph($node->workspaceName)->getSubgraph(
+            $node->dimensionSpacePoint,
+            $node->visibilityConstraints
+        );
+
+        $references = $subgraph->findReferences($node->aggregateId, FindReferencesFilter::create());
+
+        $referencesArray = [];
+        foreach ($references as $reference) {
+            $referencesArray[$reference->name->value] ??= [];
+            $referencesArray[$reference->name->value][] = array_filter([
+                'node' => sprintf('Node(%s, %s)', $reference->node->aggregateId->value, $reference->node->nodeTypeName->value),
+                'properties' => iterator_to_array($reference->properties ?? [])
+            ]);
         }
+
         return array_filter([
-            'nodeTypeName' => $node->getNodeType()->getName(),
-            'nodeName' => $node->isAutoCreated() ? $node->getName() : null,
-            'isDisabled' => $node->isHidden(),
-            'properties' => $this->serializeValuesInArray($properties),
-            'references' => $this->serializeValuesInArray($references),
+            'nodeTypeName' => $node->nodeTypeName,
+            'nodeName' =>  $node->classification->isTethered() ? $node->name : null,
+            'isDisabled' => $node->tags->contain(NeosSubtreeTag::disabled()),
+            'properties' => $this->serializeValuesInArray(
+                iterator_to_array($node->properties->getIterator())
+            ),
+            'references' => $referencesArray,
             'childNodes' => array_map(
-                fn ($node) => $this->jsonSerializeNodeAndDescendents($node),
-                $node->getChildNodes('Neos.Neos:Node')
+                fn ($subtree) => $this->jsonSerializeNodeAndDescendents($subtree),
+                iterator_to_array($subtree->children)
             )
         ]);
     }
 
+    /**
+     * @param array<mixed> $array
+     * @return array<mixed>
+     */
     private function serializeValuesInArray(array $array): array
     {
         foreach ($array as $key => $value) {
             if (is_array($value)) {
                 $value = $this->serializeValuesInArray($value);
-            } elseif ($value instanceof NodeInterface) {
-                $value = sprintf('Node(%s, %s)', $value->getIdentifier(), $value->getNodeType()->getName());
+            } elseif ($value instanceof Node) {
+                $value = sprintf('Node(%s, %s)', $value->aggregateId->value, $value->nodeTypeName->value);
             } elseif ($value instanceof \JsonSerializable) {
                 $value = $value->jsonSerialize();
                 if (is_array($value)) {

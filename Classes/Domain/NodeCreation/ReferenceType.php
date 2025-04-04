@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
-use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Model\NodeType;
-use Neos\ContentRepository\Domain\NodeAggregate\NodeAggregateIdentifier;
+use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Node;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateIds;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -28,24 +29,25 @@ final class ReferenceType
     }
 
     public static function fromPropertyOfNodeType(
-        string $propertyName,
+        string $referenceName,
         NodeType $nodeType
     ): self {
-        $declaration = $nodeType->getPropertyType($propertyName);
-        if ($declaration === 'reference') {
+        if (!$nodeType->hasReference($referenceName)) {
+            throw new \DomainException(
+                sprintf(
+                    'Given reference "%s" is not declared in node type "%s".',
+                    $referenceName,
+                    $nodeType->name->value
+                ),
+                1685964955964
+            );
+        }
+
+        $maxItems = $nodeType->getReferences()[$referenceName]['constraints']['maxItems'] ?? null;
+        if ($maxItems === 1) {
             return self::reference();
         }
-        if ($declaration === 'references') {
-            return self::references();
-        }
-        throw new \DomainException(
-            sprintf(
-                'Given property "%s" is not declared as "reference" in node type "%s" and must be treated as such.',
-                $propertyName,
-                $nodeType->getName()
-            ),
-            1685964955964
-        );
+        return self::references();
     }
 
     public static function reference(): self
@@ -73,16 +75,16 @@ final class ReferenceType
         return $this->value;
     }
 
-    public function toNodeAggregateId($referenceValue): ?NodeAggregateIdentifier
+    public function toNodeAggregateId(mixed $referenceValue): ?NodeAggregateId
     {
         if ($referenceValue === null) {
             return null;
         }
-        if ($referenceValue instanceof NodeInterface) {
-            return NodeAggregateIdentifier::fromString($referenceValue->getIdentifier());
+        if ($referenceValue instanceof Node) {
+            return $referenceValue->aggregateId;
         }
         try {
-            return NodeAggregateIdentifier::fromString($referenceValue);
+            return NodeAggregateId::fromString($referenceValue);
         } catch (\Throwable $exception) {
             throw new InvalidReferenceException(
                 sprintf(
@@ -94,14 +96,10 @@ final class ReferenceType
         }
     }
 
-    /**
-     * @param mixed $referenceValue
-     * @return array<int, NodeAggregateIdentifier>
-     */
-    public function toNodeAggregateIds($referenceValue): array
+    public function toNodeAggregateIds(mixed $referenceValue): NodeAggregateIds
     {
         if ($referenceValue === null) {
-            return [];
+            return NodeAggregateIds::createEmpty();
         }
 
         if (is_array($referenceValue) === false) {
@@ -116,12 +114,12 @@ final class ReferenceType
 
         $nodeAggregateIds = [];
         foreach ($referenceValue as $singleNodeAggregateOrId) {
-            if ($singleNodeAggregateOrId instanceof NodeInterface) {
-                $nodeAggregateIds[] = NodeAggregateIdentifier::fromString($singleNodeAggregateOrId->getIdentifier());
+            if ($singleNodeAggregateOrId instanceof Node) {
+                $nodeAggregateIds[] = $singleNodeAggregateOrId->aggregateId;
                 continue;
             }
             try {
-                $nodeAggregateIds[] = NodeAggregateIdentifier::fromString($singleNodeAggregateOrId);
+                $nodeAggregateIds[] = NodeAggregateId::fromString($singleNodeAggregateOrId);
             } catch (\Throwable $exception) {
                 throw new InvalidReferenceException(
                     sprintf(
@@ -132,6 +130,6 @@ final class ReferenceType
                 );
             }
         }
-        return $nodeAggregateIds;
+        return NodeAggregateIds::fromArray($nodeAggregateIds);
     }
 }

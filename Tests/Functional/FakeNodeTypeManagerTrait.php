@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace Flowpack\NodeTemplates\Tests\Functional;
 
-use Neos\ContentRepository\Domain\Service\NodeTypeManager;
+use Neos\ContentRepositoryRegistry\Configuration\NodeTypeEnrichmentService;
 use Neos\Flow\Configuration\ConfigurationManager;
 use Neos\Utility\Arrays;
 use Symfony\Component\Yaml\Yaml;
 
-/**
- * @property NodeTypeManager $nodeTypeManager
- */
 trait FakeNodeTypeManagerTrait
 {
     /**
@@ -22,7 +19,7 @@ trait FakeNodeTypeManagerTrait
      */
     abstract protected function getObject(string $className): object;
 
-    private function loadFakeNodeTypes(): void
+    private function getTestingNodeTypeConfiguration(): array
     {
         $configuration = $this->getObject(ConfigurationManager::class)->getConfiguration('NodeTypes');
 
@@ -40,6 +37,11 @@ trait FakeNodeTypeManagerTrait
             );
         }
 
-        $this->nodeTypeManager->overrideNodeTypes($configuration);
+        // hack, we use the service here to expand the `i18n` magic label
+        $finalConfiguration = $this->objectManager->get(NodeTypeEnrichmentService::class)->enrichNodeTypeLabelsConfiguration(
+            $configuration
+        );
+
+        return $finalConfiguration;
     }
 }

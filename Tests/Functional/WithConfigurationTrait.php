@@ -13,7 +13,7 @@ trait WithConfigurationTrait
      * WARNING: If you activate Singletons during this transaction they will later still have a reference to the mocked object manger, so you might need to call
      * {@see ObjectManagerInterface::forgetInstance()}. An alternative would be also to hack the protected $this->settings of the manager.
      *
-     * @param array $additionalSettings settings that are merged onto the the current testing configuration
+     * @param array<string,mixed> $additionalSettings settings that are merged onto the the current testing configuration
      * @param callable $fn test code that is executed in the modified context
      */
     private function withMockedConfigurationSettings(array $additionalSettings, callable $fn): void

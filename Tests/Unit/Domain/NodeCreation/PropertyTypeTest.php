@@ -14,7 +14,8 @@ namespace Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation;
 use Flowpack\NodeTemplates\Domain\NodeCreation\PropertyType;
 use Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation\Fixture\PostalAddress;
 use GuzzleHttp\Psr7\Uri;
-use Neos\ContentRepository\Domain\Model\NodeType;
+use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\NodeType\NodeTypeName;
 use Neos\Flow\ResourceManagement\PersistentResource;
 use Neos\Media\Domain\Model\Asset;
 use Neos\Media\Domain\Model\Image;
@@ -35,12 +36,24 @@ class PropertyTypeTest extends TestCase
 {
     /**
      * @dataProvider declarationAndValueProvider
+     * @param array<mixed> $declarationsByType,
+     * @param array<mixed> $validValues,
+     * @param array<mixed> $invalidValues,
      */
     public function testIsMatchedBy(array $declarationsByType, array $validValues, array $invalidValues): void
     {
         foreach ($declarationsByType as $declaration) {
-            $nodeTypeMock = $this->getMockBuilder(NodeType::class)->disableOriginalConstructor()->getMock();
-            $nodeTypeMock->expects(self::once())->method('getPropertyType')->with('test')->willReturn($declaration);
+            $nodeTypeMock = new NodeType(
+                NodeTypeName::fromString('Foo:Bar'),
+                [],
+                [
+                    'properties' => [
+                        'test' => [
+                            'type' => $declaration,
+                        ]
+                    ]
+                ]
+            );
             $subject = PropertyType::fromPropertyOfNodeType(
                 'test',
                 $nodeTypeMock,
@@ -54,6 +67,9 @@ class PropertyTypeTest extends TestCase
         }
     }
 
+    /**
+     * @return array<int,array<mixed>>
+     */
     public function declarationAndValueProvider(): array
     {
         $bool = true;
@@ -138,14 +154,23 @@ class PropertyTypeTest extends TestCase
 
     /**
      * @dataProvider declarationTypeProvider
-     * @param array $declaredTypes
+     * @param array<mixed> $declaredTypes
      * @param string $expectedSerializationType
      */
     public function testGetValue(array $declaredTypes, string $expectedSerializationType): void
     {
         foreach ($declaredTypes as $declaredType) {
-            $nodeTypeMock = $this->getMockBuilder(NodeType::class)->disableOriginalConstructor()->getMock();
-            $nodeTypeMock->expects(self::once())->method('getPropertyType')->with('test')->willReturn($declaredType);
+            $nodeTypeMock = new NodeType(
+                NodeTypeName::fromString('Foo:Bar'),
+                [],
+                [
+                    'properties' => [
+                        'test' => [
+                            'type' => $declaredType,
+                        ]
+                    ]
+                ]
+            );
             $subject = PropertyType::fromPropertyOfNodeType(
                 'test',
                 $nodeTypeMock,
@@ -159,6 +184,9 @@ class PropertyTypeTest extends TestCase
         }
     }
 
+    /**
+     * @return array<int,array<mixed>>
+     */
     public function declarationTypeProvider(): array
     {
         return [

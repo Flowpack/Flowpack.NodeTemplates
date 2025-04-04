@@ -2,10 +2,16 @@
 
 namespace Flowpack\NodeTemplates\Domain\NodeCreation;
 
-use Neos\ContentRepository\Domain\Model\NodeType;
-use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
-use Neos\ContentRepository\Domain\Service\Context;
-use Neos\ContentRepository\Domain\Service\NodeTypeManager;
+use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
+use Neos\ContentRepository\Core\Feature\NodeCreation\Dto\NodeAggregateIdsByNodePaths;
+use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
+use Neos\ContentRepository\Core\NodeType\NodeTypeName;
+use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
+use Neos\ContentRepository\Core\Projection\ContentGraph\NodePath;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
+use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceName;
 use Neos\Flow\Annotations as Flow;
 
 /**
@@ -23,70 +29,130 @@ use Neos\Flow\Annotations as Flow;
  *
  * @Flow\Proxy(false)
  */
-class TransientNode
+final readonly class TransientNode
 {
-    private NodeType $nodeType;
+    /** @var array<string, mixed> */
+    public array $properties;
 
-    private ?NodeName $tetheredNodeName;
+    /** @var array<string, mixed> */
+    public array $references;
 
-    private ?NodeType $tetheredParentNodeType;
-
-    private NodeTypeManager $nodeTypeManager;
-
-    private Context $subgraph;
-
-    private array $properties;
-
-    private array $references;
-
-    private function __construct(NodeType $nodeType, ?NodeName $tetheredNodeName, ?NodeType $tetheredParentNodeType, NodeTypeManager $nodeTypeManager, Context $subgraph, array $rawProperties)
-    {
-        $this->nodeType = $nodeType;
-        $this->tetheredNodeName = $tetheredNodeName;
-        $this->tetheredParentNodeType = $tetheredParentNodeType;
-        if ($tetheredNodeName !== null) {
-            assert($tetheredParentNodeType !== null);
+    /** @param array<string, mixed> $rawProperties */
+    private function __construct(
+        public NodeAggregateId $aggregateId,
+        public WorkspaceName $workspaceName,
+        public OriginDimensionSpacePoint $originDimensionSpacePoint,
+        public NodeType $nodeType,
+        public NodeAggregateIdsByNodePaths $tetheredNodeAggregateIds,
+        private ?NodeName $tetheredNodeName,
+        private ?NodeType $tetheredParentNodeType,
+        public NodeTypeManager $nodeTypeManager,
+        public ContentSubgraphInterface $subgraph,
+        array $rawProperties
+    ) {
+        if ($this->tetheredNodeName !== null) {
+            assert($this->tetheredParentNodeType !== null);
         }
-        $this->nodeTypeManager = $nodeTypeManager;
-        $this->subgraph = $subgraph;
 
         // split properties and references by type declaration
         $properties = [];
         $references = [];
         foreach ($rawProperties as $propertyName => $propertyValue) {
-            // TODO: remove the next line to initialise the nodeType, once https://github.com/neos/neos-development-collection/issues/4333 is fixed
-            $this->nodeType->getFullConfiguration();
-            $declaration = $this->nodeType->getPropertyType($propertyName);
-            if ($declaration === 'reference' || $declaration === 'references') {
+            if ($this->nodeType->hasReference($propertyName)) {
                 $references[$propertyName] = $propertyValue;
                 continue;
             }
+            // invalid properties (!hasProperty) will be filtered out in the PropertiesProcessor
             $properties[$propertyName] = $propertyValue;
         }
         $this->properties = $properties;
         $this->references = $references;
     }
 
-    public static function forRegular(NodeType $nodeType, NodeTypeManager $nodeTypeManager,  Context $subgraph, array $rawProperties): self
-    {
-        return new self($nodeType, null, null, $nodeTypeManager, $subgraph, $rawProperties);
+    /** @param array<string, mixed> $rawProperties */
+    public static function forRegular(
+        NodeAggregateId $nodeAggregateId,
+        WorkspaceName $workspaceName,
+        OriginDimensionSpacePoint $originDimensionSpacePoint,
+        NodeType $nodeType,
+        NodeAggregateIdsByNodePaths $tetheredNodeAggregateIds,
+        NodeTypeManager $nodeTypeManager,
+        ContentSubgraphInterface $subgraph,
+        array $rawProperties
+    ): self {
+        return new self(
+            $nodeAggregateId,
+            $workspaceName,
+            $originDimensionSpacePoint,
+            $nodeType,
+            $tetheredNodeAggregateIds,
+            null,
+            null,
+            $nodeTypeManager,
+            $subgraph,
+            $rawProperties
+        );
     }
 
+    /** @param array<string, mixed> $rawProperties */
     public function forTetheredChildNode(NodeName $nodeName, array $rawProperties): self
     {
-        // `getTypeOfAutoCreatedChildNode` actually has a bug; it looks up the NodeName parameter against the raw configuration instead of the transliterated NodeName
-        // https://github.com/neos/neos-ui/issues/3527
-        $parentNodesAutoCreatedChildNodes = $this->nodeType->getAutoCreatedChildNodes();
-        $childNodeType = $parentNodesAutoCreatedChildNodes[$nodeName->__toString()] ?? null;
-        if (!$childNodeType instanceof NodeType) {
+        $nodeAggregateId = $this->tetheredNodeAggregateIds->getNodeAggregateId(NodePath::fromNodeNames($nodeName));
+
+        $tetheredNodeTypeDefinition = $this->nodeType->tetheredNodeTypeDefinitions->get($nodeName);
+
+        if (!$nodeAggregateId || !$tetheredNodeTypeDefinition) {
             throw new \InvalidArgumentException('forTetheredChildNode only works for tethered nodes.');
         }
-        return new self($childNodeType, $nodeName, $this->nodeType, $this->nodeTypeManager, $this->subgraph, $rawProperties);
+
+        $childNodeType = $this->nodeTypeManager->getNodeType($tetheredNodeTypeDefinition->nodeTypeName);
+        if (!$childNodeType) {
+            throw new \InvalidArgumentException(sprintf('NodeType "%s" for tethered node "%s" does not exist.', $tetheredNodeTypeDefinition->nodeTypeName->value, $nodeName->value), 1718950833);
+        }
+
+        $descendantTetheredNodeAggregateIds = NodeAggregateIdsByNodePaths::createEmpty();
+        foreach ($this->tetheredNodeAggregateIds->getNodeAggregateIds() as $stringNodePath => $descendantNodeAggregateId) {
+            $nodePath = NodePath::fromString($stringNodePath);
+            $pathParts = $nodePath->getParts();
+            $firstPart = array_shift($pathParts);
+            if ($firstPart?->equals($nodeName) && count($pathParts)) {
+                $descendantTetheredNodeAggregateIds = $descendantTetheredNodeAggregateIds->add(
+                    NodePath::fromNodeNames(...$pathParts),
+                    $descendantNodeAggregateId
+                );
+            }
+        }
+
+        return new self(
+            $nodeAggregateId,
+            $this->workspaceName,
+            $this->originDimensionSpacePoint,
+            $childNodeType,
+            $descendantTetheredNodeAggregateIds,
+            $nodeName,
+            $this->nodeType,
+            $this->nodeTypeManager,
+            $this->subgraph,
+            $rawProperties
+        );
     }
 
-    public function forRegularChildNode(NodeType $nodeType, array $rawProperties): self
+    /** @param array<string, mixed> $rawProperties */
+    public function forRegularChildNode(NodeAggregateId $nodeAggregateId, NodeType $nodeType, array $rawProperties): self
     {
-        return new self($nodeType, null, null, $this->nodeTypeManager, $this->subgraph, $rawProperties);
+        $tetheredNodeAggregateIds = NodeAggregateIdsByNodePaths::createForNodeType($nodeType->name, $this->nodeTypeManager);
+        return new self(
+            $nodeAggregateId,
+            $this->workspaceName,
+            $this->originDimensionSpacePoint,
+            $nodeType,
+            $tetheredNodeAggregateIds,
+            null,
+            null,
+            $this->nodeTypeManager,
+            $this->subgraph,
+            $rawProperties
+        );
     }
 
     /**
@@ -94,36 +160,11 @@ class TransientNode
      */
     public function requireConstraintsImposedByAncestorsToBeMet(NodeType $childNodeType): void
     {
-        if ($this->tetheredNodeName) {
-            self::requireNodeTypeConstraintsImposedByGrandparentToBeMet($this->tetheredParentNodeType, $this->tetheredNodeName, $childNodeType);
+        if ($this->isTethered()) {
+            $this->requireNodeTypeConstraintsImposedByGrandparentToBeMet($this->tetheredParentNodeType->name, $this->tetheredNodeName, $childNodeType->name);
         } else {
             self::requireNodeTypeConstraintsImposedByParentToBeMet($this->nodeType, $childNodeType);
         }
-    }
-
-    public function getNodeType(): NodeType
-    {
-        return $this->nodeType;
-    }
-
-    public function getNodeTypeManager(): NodeTypeManager
-    {
-        return $this->nodeTypeManager;
-    }
-
-    public function getSubgraph(): Context
-    {
-        return $this->subgraph;
-    }
-
-    public function getProperties(): array
-    {
-        return $this->properties;
-    }
-
-    public function getReferences(): array
-    {
-        return $this->references;
     }
 
     private static function requireNodeTypeConstraintsImposedByParentToBeMet(NodeType $parentNodeType, NodeType $nodeType): void
@@ -132,26 +173,35 @@ class TransientNode
             throw new NodeConstraintException(
                 sprintf(
                     'Node type "%s" is not allowed for child nodes of type %s',
-                    $nodeType->getName(),
-                    $parentNodeType->getName()
+                    $nodeType->name->value,
+                    $parentNodeType->name->value
                 ),
                 1686417627173
             );
         }
     }
 
-    private static function requireNodeTypeConstraintsImposedByGrandparentToBeMet(NodeType $grandParentNodeType, NodeName $nodeName, NodeType $nodeType): void
+    private function requireNodeTypeConstraintsImposedByGrandparentToBeMet(NodeTypeName $parentNodeTypeName, NodeName $tetheredNodeName, NodeTypeName $nodeTypeNameToCheck): void
     {
-        if (!$grandParentNodeType->allowsGrandchildNodeType($nodeName->__toString(), $nodeType)) {
+        if (!$this->nodeTypeManager->isNodeTypeAllowedAsChildToTetheredNode($parentNodeTypeName, $tetheredNodeName, $nodeTypeNameToCheck)) {
             throw new NodeConstraintException(
                 sprintf(
                     'Node type "%s" is not allowed below tethered child nodes "%s" of nodes of type "%s"',
-                    $nodeType->getName(),
-                    $nodeName->__toString(),
-                    $grandParentNodeType->getName()
+                    $nodeTypeNameToCheck->value,
+                    $tetheredNodeName->value,
+                    $parentNodeTypeName->value
                 ),
                 1687541480146
             );
         }
+    }
+
+    /**
+     * @phpstan-assert-if-true !null $this->tetheredNodeName
+     * @phpstan-assert-if-true !null $this->tetheredParentNodeType
+     */
+    private function isTethered(): bool
+    {
+        return $this->tetheredNodeName !== null;
     }
 }

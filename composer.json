@@ -4,9 +4,8 @@
     "name": "flowpack/nodetemplates",
     "license": "GPL-3.0+",
     "require": {
-        "php": ">=7.4",
-        "neos/neos": "^7.3 || ^8.0",
-        "neos/neos-ui": "~7.3.18 || ~8.0.13 || ~8.1.10 || ~8.2.10 || ~8.3.1 || ~8.4.0"
+        "neos/neos": "^9.0",
+        "neos/neos-ui": "^9.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^1.10"

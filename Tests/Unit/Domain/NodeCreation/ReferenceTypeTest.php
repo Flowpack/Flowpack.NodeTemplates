@@ -6,9 +6,11 @@ namespace Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation;
 
 use Flowpack\NodeTemplates\Domain\NodeCreation\InvalidReferenceException;
 use Flowpack\NodeTemplates\Domain\NodeCreation\ReferenceType;
+use Flowpack\NodeTemplates\Tests\Unit\NodeMockTrait;
 use GuzzleHttp\Psr7\Uri;
-use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Model\NodeType;
+use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\NodeType\NodeTypeName;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
 use Neos\Flow\ResourceManagement\PersistentResource;
 use Neos\Media\Domain\Model\Asset;
 use Neos\Media\Domain\Model\Image;
@@ -16,16 +18,29 @@ use PHPUnit\Framework\TestCase;
 
 class ReferenceTypeTest extends TestCase
 {
+    use NodeMockTrait;
+
     private const VALID_NODE_ID_1 = '123';
     private const VALID_NODE_ID_2 = '456';
 
     /**
      * @dataProvider declarationAndValueProvider
+     * @param array<mixed> $validValues,
+     * @param array<mixed> $invalidValues
      */
     public function testIsMatchedBy(string $declarationType, array $validValues, array $invalidValues): void
     {
-        $nodeTypeMock = $this->getMockBuilder(NodeType::class)->disableOriginalConstructor()->getMock();
-        $nodeTypeMock->expects(self::once())->method('getPropertyType')->with('test')->willReturn($declarationType);
+        $nodeTypeMock = new NodeType(
+            NodeTypeName::fromString('Foo:Bar'),
+            [],
+            [
+                'properties' => [
+                    'test' => [
+                        'type' => $declarationType,
+                    ]
+                ]
+            ]
+        );
         $subject = ReferenceType::fromPropertyOfNodeType(
             'test',
             $nodeTypeMock,
@@ -44,6 +59,9 @@ class ReferenceTypeTest extends TestCase
         }
     }
 
+    /**
+     * @return array<int,array<mixed>>
+     */
     public function declarationAndValueProvider(): array
     {
         $int = 13;
@@ -55,11 +73,8 @@ class ReferenceTypeTest extends TestCase
         $date = \DateTimeImmutable::createFromFormat(\DateTimeInterface::W3C, '2020-08-20T18:56:15+00:00');
         $uri = new Uri('https://www.neos.io');
 
-        $nodeMock1 = $this->getMockBuilder(NodeInterface::class)->getMock();
-        $nodeMock1->method('getIdentifier')->willReturn(self::VALID_NODE_ID_1);
-
-        $nodeMock2 = $this->getMockBuilder(NodeInterface::class)->getMock();
-        $nodeMock2->method('getIdentifier')->willReturn(self::VALID_NODE_ID_2);
+        $nodeMock1 = $this->createNodeMock(NodeAggregateId::fromString(self::VALID_NODE_ID_1));
+        $nodeMock2 = $this->createNodeMock(NodeAggregateId::fromString(self::VALID_NODE_ID_2));
 
         return [
             [

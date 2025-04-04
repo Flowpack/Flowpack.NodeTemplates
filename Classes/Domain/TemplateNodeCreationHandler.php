@@ -6,80 +6,65 @@ use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrors;
 use Flowpack\NodeTemplates\Domain\ErrorHandling\ProcessingErrorHandler;
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeCreationService;
 use Flowpack\NodeTemplates\Domain\TemplateConfiguration\TemplateConfigurationProcessor;
-use Neos\ContentRepository\Domain\Model\NodeInterface;
-use Neos\ContentRepository\Domain\Service\NodeTypeManager;
-use Neos\Flow\Annotations as Flow;
-use Neos\Neos\Domain\Service\ContentContext;
-use Neos\Neos\Ui\NodeCreationHandler\NodeCreationHandlerInterface;
+use Neos\ContentRepository\Core\ContentRepository;
+use Neos\ContentRepository\Core\Projection\ContentGraph\Filter\FindClosestNodeFilter;
+use Neos\ContentRepository\Core\Projection\ContentGraph\VisibilityConstraints;
+use Neos\Neos\Domain\Service\NodeTypeNameFactory;
+use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationCommands;
+use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationElements;
+use Neos\Neos\Ui\Domain\NodeCreation\NodeCreationHandlerInterface;
 
-class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
+final readonly class TemplateNodeCreationHandler implements NodeCreationHandlerInterface
 {
-    /**
-     * @var NodeCreationService
-     * @Flow\Inject
-     */
-    protected $nodeCreationService;
-
-    /**
-     * @var NodeTypeManager
-     * @Flow\Inject
-     */
-    protected $nodeTypeManager;
-
-    /**
-     * @var TemplateConfigurationProcessor
-     * @Flow\Inject
-     */
-    protected $templateConfigurationProcessor;
-
-    /**
-     * @var ProcessingErrorHandler
-     * @Flow\Inject
-     */
-    protected $processingErrorHandler;
+    public function __construct(
+        private ContentRepository $contentRepository,
+        private NodeCreationService $nodeCreationService,
+        private TemplateConfigurationProcessor $templateConfigurationProcessor,
+        private ProcessingErrorHandler $processingErrorHandler
+    ) {
+    }
 
     /**
      * Create child nodes and change properties upon node creation
-     *
-     * @param NodeInterface $node The newly created node
-     * @param array $data incoming data from the creationDialog
      */
-    public function handle(NodeInterface $node, array $data): void
-    {
-        if (!$node->getNodeType()->hasConfiguration('options.template')) {
-            return;
+    public function handle(
+        NodeCreationCommands $commands,
+        NodeCreationElements $elements
+    ): NodeCreationCommands {
+        $nodeType = $this->contentRepository->getNodeTypeManager()
+            ->getNodeType($commands->first->nodeTypeName);
+
+        $templateConfiguration = $nodeType?->getOptions()['template'] ?? null;
+        if (!$templateConfiguration) {
+            return $commands;
         }
 
-        /** @var ContentContext $contentContext */
-        $contentContext = $node->getContext();
+        $subgraph = $this->contentRepository->getContentGraph($commands->first->workspaceName)->getSubgraph(
+            $commands->first->originDimensionSpacePoint->toDimensionSpacePoint(),
+            VisibilityConstraints::default()
+        );
 
         $evaluationContext = [
-            'data' => $data,
-            // triggeringNode is deprecated and will be removed in 3.0
-            'triggeringNode' => $node,
-            'site' => $contentContext->getCurrentSiteNode(),
-            'parentNode' => $node->getParent(),
+            'data' => iterator_to_array($elements->serialized()),
+            'site' => $subgraph->findClosestNode($commands->first->parentNodeAggregateId, FindClosestNodeFilter::create(NodeTypeNameFactory::NAME_SITE)),
+            'parentNode' => $subgraph->findNodeById($commands->first->parentNodeAggregateId)
         ];
 
-        $templateConfiguration = $node->getNodeType()->getConfiguration('options.template');
-
         $processingErrors = ProcessingErrors::create();
-
         $template = $this->templateConfigurationProcessor->processTemplateConfiguration($templateConfiguration, $evaluationContext, $processingErrors);
-        $shouldContinue = $this->processingErrorHandler->handleAfterTemplateConfigurationProcessing($processingErrors, $node);
+        $shouldContinue = $this->processingErrorHandler->handleAfterTemplateConfigurationProcessing($processingErrors, $nodeType, $commands->first->nodeAggregateId);
 
         if (!$shouldContinue) {
-            return;
+            return $commands;
         }
 
-        $nodeMutators = $this->nodeCreationService->createMutatorsForRootTemplate($template, $node->getNodeType(), $this->nodeTypeManager, $node->getContext(), $processingErrors);
-
-        $shouldContinue = $this->processingErrorHandler->handleAfterNodeCreation($processingErrors, $node);
+        $additionalCommands = $this->nodeCreationService->apply($template, $commands, $this->contentRepository->getNodeTypeManager(), $subgraph, $nodeType, $processingErrors);
+        $shouldContinue = $this->processingErrorHandler->handleAfterNodeCreation($processingErrors, $nodeType, $commands->first->nodeAggregateId);
 
         if (!$shouldContinue) {
-            return;
+            return $commands;
         }
 
-        $nodeMutators->executeWithStartingNode($node);
+        return $additionalCommands;
     }
 }

@@ -1,0 +1,21 @@
+Neos:
+  ContentRepositoryRegistry:
+    contentRepositories:
+      node_templates:
+        preset: default
+        authProvider:
+          factoryObjectName: Neos\ContentRepository\TestSuite\Fakes\FakeAuthProviderFactory
+        clock:
+          factoryObjectName: Neos\ContentRepository\TestSuite\Fakes\FakeClockFactory
+        nodeTypeManager:
+          factoryObjectName: Neos\ContentRepository\TestSuite\Fakes\FakeNodeTypeManagerFactory
+        contentDimensionSource:
+          factoryObjectName: Neos\ContentRepository\TestSuite\Fakes\FakeContentDimensionSourceFactory
+  Neos:
+    sites:
+      'node-templates-site':
+        uriPathSuffix: '.html'
+        contentRepository: node_templates
+        contentDimensions:
+          resolver:
+            factoryClassName: Neos\Neos\FrontendRouting\DimensionResolution\Resolver\AutoUriPathResolverFactory

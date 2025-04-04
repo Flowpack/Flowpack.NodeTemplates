@@ -10,4 +10,4 @@
   options:
     template:
       properties:
-        text: "${'parentNode(' + parentNode.nodeType.name + ', ' + parentNode.name + ') site(' + site.nodeType.name + ', ' + site.name + ')'}"
+        text: "${'parentNode(' + parentNode.nodeTypeName.value + ', ' + parentNode.name.value + ') site(' + site.nodeTypeName.value + ', ' + site.name.value + ')'}"

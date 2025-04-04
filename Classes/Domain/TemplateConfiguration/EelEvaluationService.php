@@ -20,9 +20,11 @@ class EelEvaluationService
 
     /**
      * @Flow\InjectConfiguration(path="defaultEelContext")
+     * @var array<string, string>
      */
     protected array $defaultContextConfiguration;
 
+    /** @var array<string, mixed> */
     protected ?array $defaultContextVariables = null;
 
     /**

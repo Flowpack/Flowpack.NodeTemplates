@@ -6,11 +6,14 @@ namespace Flowpack\NodeTemplates\Tests\Unit\Domain\NodeCreation;
 
 use Flowpack\NodeTemplates\Domain\NodeCreation\NodeConstraintException;
 use Flowpack\NodeTemplates\Domain\NodeCreation\TransientNode;
-use Neos\ContentRepository\Domain\Model\NodeType;
-use Neos\ContentRepository\Domain\NodeAggregate\NodeName;
-use Neos\ContentRepository\Domain\Service\Context;
-use Neos\ContentRepository\Domain\Service\NodeTypeManager;
-use Neos\Utility\ObjectAccess;
+use Neos\ContentRepository\Core\DimensionSpace\OriginDimensionSpacePoint;
+use Neos\ContentRepository\Core\Feature\NodeCreation\Dto\NodeAggregateIdsByNodePaths;
+use Neos\ContentRepository\Core\NodeType\NodeType;
+use Neos\ContentRepository\Core\NodeType\NodeTypeManager;
+use Neos\ContentRepository\Core\Projection\ContentGraph\ContentSubgraphInterface;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeAggregateId;
+use Neos\ContentRepository\Core\SharedModel\Node\NodeName;
+use Neos\ContentRepository\Core\SharedModel\Workspace\WorkspaceName;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
@@ -69,15 +72,14 @@ class TransientNodeTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->nodeTypeManager = new NodeTypeManager();
-        $this->nodeTypeManager->overrideNodeTypes(Yaml::parse(self::NODE_TYPE_FIXTURES));
+        $this->nodeTypeManager = NodeTypeManager::createFromArrayConfiguration(Yaml::parse(self::NODE_TYPE_FIXTURES));
     }
 
     /** @test */
     public function fromRegularAllowedChildNode(): void
     {
         $parentNode = $this->createFakeRegularTransientNode('A:Content1');
-        self::assertSame($this->getNodeType('A:Content1'), $parentNode->getNodeType());
+        self::assertSame($this->getNodeType('A:Content1'), $parentNode->nodeType);
         $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content2'));
     }
 
@@ -87,7 +89,7 @@ class TransientNodeTest extends TestCase
         $grandParentNode = $this->createFakeRegularTransientNode('A:WithContent1AllowedCollectionAsChildNode');
 
         $parentNode = $grandParentNode->forTetheredChildNode(NodeName::fromString('collection'), []);
-        self::assertSame($this->getNodeType('A:Collection.Allowed'), $parentNode->getNodeType());
+        self::assertSame($this->getNodeType('A:Collection.Allowed'), $parentNode->nodeType);
 
         $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content1'));
     }
@@ -98,7 +100,7 @@ class TransientNodeTest extends TestCase
         $grandParentNode = $this->createFakeRegularTransientNode('A:WithContent1AllowedCollectionAsChildNodeViaOverride');
 
         $parentNode = $grandParentNode->forTetheredChildNode(NodeName::fromString('collection'), []);
-        self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());
+        self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->nodeType);
 
         $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content1'));
     }
@@ -108,8 +110,8 @@ class TransientNodeTest extends TestCase
     {
         $grandParentNode = $this->createFakeRegularTransientNode('A:Content1');
 
-        $parentNode = $grandParentNode->forRegularChildNode($this->getNodeType('A:Content2'), []);
-        self::assertSame($this->getNodeType('A:Content2'), $parentNode->getNodeType());
+        $parentNode = $grandParentNode->forRegularChildNode(NodeAggregateId::fromString('child'), $this->getNodeType('A:Content2'), []);
+        self::assertSame($this->getNodeType('A:Content2'), $parentNode->nodeType);
 
         $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content3'));
     }
@@ -121,7 +123,7 @@ class TransientNodeTest extends TestCase
         $this->expectExceptionMessage('Node type "A:Content1" is not allowed for child nodes of type A:Collection.Disallowed');
 
         $parentNode = $this->createFakeRegularTransientNode('A:Collection.Disallowed');
-        self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());
+        self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->nodeType);
 
         $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content1'));
     }
@@ -135,7 +137,7 @@ class TransientNodeTest extends TestCase
         $grandParentNode = $this->createFakeRegularTransientNode('A:WithDisallowedCollectionAsChildNode');
 
         $parentNode = $grandParentNode->forTetheredChildNode(NodeName::fromString('collection'), []);
-        self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());
+        self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->nodeType);
 
         $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content1'));
     }
@@ -148,8 +150,8 @@ class TransientNodeTest extends TestCase
 
         $grandParentNode = $this->createFakeRegularTransientNode('A:Content2');
 
-        $parentNode = $grandParentNode->forRegularChildNode($this->getNodeType('A:Collection.Disallowed'), []);
-        self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->getNodeType());
+        $parentNode = $grandParentNode->forRegularChildNode(NodeAggregateId::fromString('child'), $this->getNodeType('A:Collection.Disallowed'), []);
+        self::assertSame($this->getNodeType('A:Collection.Disallowed'), $parentNode->nodeType);
 
         $parentNode->requireConstraintsImposedByAncestorsToBeMet($this->getNodeType('A:Content1'));
     }
@@ -157,10 +159,15 @@ class TransientNodeTest extends TestCase
     /** @test */
     public function splitPropertiesAndReferencesByTypeDeclaration(): void
     {
+        $nodeType = $this->getNodeType('A:ContentWithProperties');
         $node = TransientNode::forRegular(
-            $this->getNodeType('A:ContentWithProperties'),
-            $this->nodeTypeManager,
-            $this->getMockBuilder(Context::class)->disableOriginalConstructor()->getMock(),
+            NodeAggregateId::fromString('na'),
+            WorkspaceName::fromString('ws'),
+            OriginDimensionSpacePoint::fromArray([]),
+            $nodeType,
+            NodeAggregateIdsByNodePaths::createEmpty(),
+            NodeTypeManager::createFromArrayConfiguration([]),
+            $this->getMockBuilder(ContentSubgraphInterface::class)->disableOriginalConstructor()->getMock(),
             [
                 'property-string' => '',
                 'property-integer' => '',
@@ -176,7 +183,7 @@ class TransientNodeTest extends TestCase
                 'property-integer' => '',
                 'undeclared-property' => ''
             ],
-            $node->getProperties()
+            $node->properties
         );
 
         self::assertSame(
@@ -184,7 +191,7 @@ class TransientNodeTest extends TestCase
                 'property-reference' => '',
                 'property-references' => '',
             ],
-            $node->getReferences()
+            $node->references
         );
     }
 
@@ -193,9 +200,13 @@ class TransientNodeTest extends TestCase
         $nodeType = $this->getNodeType($nodeTypeName);
 
         return TransientNode::forRegular(
+            NodeAggregateId::fromString('na'),
+            WorkspaceName::fromString('ws'),
+            OriginDimensionSpacePoint::fromArray([]),
             $nodeType,
+            NodeAggregateIdsByNodePaths::createForNodeType($nodeType->name, $this->nodeTypeManager),
             $this->nodeTypeManager,
-            $this->getMockBuilder(Context::class)->disableOriginalConstructor()->getMock(),
+            $this->getMockBuilder(ContentSubgraphInterface::class)->disableOriginalConstructor()->getMock(),
             []
         );
     }
@@ -203,11 +214,13 @@ class TransientNodeTest extends TestCase
     /**
      * Return a nodetype built from the nodeTypesFixture
      */
-    private function getNodeType(string $nodeTypeName): ?NodeType
+    private function getNodeType(string $nodeTypeName): NodeType
     {
         $nodeType = $this->nodeTypeManager->getNodeType($nodeTypeName);
-        // no di here
-        ObjectAccess::setProperty($nodeType, 'nodeTypeManager', $this->nodeTypeManager, true);
+        if (!$nodeType) {
+            throw new \Exception('Unknown node type ' . $nodeTypeName);
+        }
+
         return $nodeType;
     }
 }

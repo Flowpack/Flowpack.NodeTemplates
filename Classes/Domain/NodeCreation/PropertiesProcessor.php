@@ -26,15 +26,17 @@ class PropertiesProcessor
      *
      * 2. It is checked, that the property value is assignable to the property type.
      *   In case the type is class or an array of classes, the property mapper will be used map the given type to it. If it doesn't succeed, we will log an error.
+     *
+     * @return array<string, mixed>
      */
     public function processAndValidateProperties(TransientNode $node, ProcessingErrors $processingErrors): array
     {
-        $nodeType = $node->getNodeType();
+        $nodeType = $node->nodeType;
         $validProperties = [];
-        foreach ($node->getProperties() as $propertyName => $propertyValue) {
+        foreach ($node->properties as $propertyName => $propertyValue) {
             try {
                 $this->assertValidPropertyName($propertyName);
-                if (!isset($nodeType->getProperties()[$propertyName])) {
+                if (!$nodeType->hasProperty($propertyName)) {
                     throw new PropertyIgnoredException(
                         sprintf(
                             'Because property is not declared in NodeType. Got value `%s`.',
@@ -56,7 +58,7 @@ class PropertiesProcessor
                         // $messages->getFirstError() doesnt work see https://github.com/neos/flow-development-collection/issues/3370
                         $flattenedErrors = $messages->getFlattenedErrors();
                         /** @var Error $firstError */
-                        $firstError = current(current($flattenedErrors));
+                        $firstError = current(current($flattenedErrors) ?: []);
                         throw new PropertyIgnoredException($firstError->getMessage(), 1686779371122);
                     }
                 }
@@ -74,7 +76,7 @@ class PropertiesProcessor
                 $validProperties[$propertyName] = $propertyValue;
             } catch (PropertyIgnoredException|PropertyMappingException $exception) {
                 $processingErrors->add(
-                    ProcessingError::fromException($exception)->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->getName()))
+                    ProcessingError::fromException($exception)->withOrigin(sprintf('Property "%s" in NodeType "%s"', $propertyName, $nodeType->name->value))
                 );
             }
         }
@@ -85,7 +87,7 @@ class PropertiesProcessor
      * In the old CR, it was common practice to set internal or meta properties via this syntax: `_hidden` but we don't allow this anymore.
      * @throws PropertyIgnoredException
      */
-    private function assertValidPropertyName($propertyName): void
+    private function assertValidPropertyName(string|int $propertyName): void
     {
         $legacyInternalProperties = ['_accessRoles', '_contentObject', '_hidden', '_hiddenAfterDateTime', '_hiddenBeforeDateTime', '_hiddenInIndex',
             '_index', '_name', '_nodeType', '_removed', '_workspace'];

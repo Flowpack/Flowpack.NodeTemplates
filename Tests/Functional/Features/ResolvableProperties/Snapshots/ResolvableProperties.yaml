@@ -4,5 +4,5 @@
       properties:
         # asset -> object(Neos\Media\Domain\Model\Asset)
         # images -> array(Neos\Media\Domain\Model\Image)
-        # reference -> Reference of NodeTypes (Neos.Neos:Document) with value Node(some-node-id)
-        # references -> Nodes(some-node-id, other-node-id, real-node-id)
+        # reference -> Reference of NodeTypes (Neos.Neos:Document) with Node: some-node-id
+        # references -> References with Nodes: some-node-id, other-node-id, real-node-id
